@@ -1,0 +1,240 @@
+'use client';
+
+import { useEffect, useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { api } from '@/lib/api';
+import { merchantAuth } from '@/lib/auth';
+import { getProvider, labelVariant } from '@/lib/providers';
+import { formatMoney } from '@/lib/money';
+import { useMerchant } from '../layout';
+
+export default function TransactionsPage() {
+  const router = useRouter();
+  const { merchant } = useMerchant();
+  const currency = merchant?.currency || 'USD';
+  const [txs, setTxs] = useState(null);
+  const [error, setError] = useState(null);
+  const [q, setQ] = useState('');
+  const [tab, setTab] = useState('all');
+
+  const load = async () => {
+    setError(null);
+    const token = merchantAuth.get();
+    try {
+      const params = {};
+      if (tab !== 'all') params.status = tab;
+      if (q.trim())      params.q = q.trim();
+      const r = await api.merchantListTransactions(token, params);
+      setTxs(r.transactions);
+    } catch (e) {
+      if (e.status === 401) { merchantAuth.clear(); router.replace('/login'); }
+      else setError(e.message);
+    }
+  };
+
+  // Reload on filter change (debounced for search)
+  useEffect(() => {
+    const t = setTimeout(load, q ? 250 : 0);
+    return () => clearTimeout(t);
+  }, [q, tab]); // eslint-disable-line
+
+  // Refresh every 5s so APK/manual updates show up
+  useEffect(() => {
+    const t = setInterval(load, 5000);
+    return () => clearInterval(t);
+  }, []); // eslint-disable-line
+
+  const counts = useMemo(() => {
+    const all = txs || [];
+    return {
+      all:     all.length,
+      pending: all.filter((t) => t.status === 'pending').length,
+      success: all.filter((t) => t.status === 'success').length,
+      failed:  all.filter((t) => t.status === 'failed').length,
+    };
+  }, [txs]);
+
+  const onResolve = async (tx, result) => {
+    if (!confirm(`Mark transaction ${tx.txnid_submitted} as ${result.toUpperCase()}?`)) return;
+    const token = merchantAuth.get();
+    try {
+      await api.merchantResolveTransaction(token, tx.id, result, null);
+      load();
+    } catch (e) {
+      alert(e.message);
+    }
+  };
+
+  const TABS = [
+    { key: 'all',     label: 'All',     count: counts.all,     tone: 'slate'  },
+    { key: 'pending', label: 'Pending', count: counts.pending, tone: 'amber'  },
+    { key: 'success', label: 'Done',    count: counts.success, tone: 'emerald'},
+    { key: 'failed',  label: 'Failed',  count: counts.failed,  tone: 'rose'   },
+  ];
+
+  return (
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-5">
+      <div>
+        <h2 className="text-xl font-bold text-slate-900">Transactions</h2>
+        <p className="text-sm text-slate-600 mt-1">
+          Every customer payment attempt, live. Pending rows can be resolved manually while your APK is being built.
+        </p>
+      </div>
+
+      <div className="card p-3 sm:p-4 flex flex-col lg:flex-row gap-3">
+        <div className="flex-1 relative">
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
+            <SearchIcon />
+          </span>
+          <input
+            value={q} onChange={(e) => setQ(e.target.value)}
+            className="input pl-10"
+            placeholder="Search TxnID or Order ID…"
+          />
+        </div>
+
+        <div className="flex gap-1 bg-slate-100 rounded-lg p-1 flex-wrap">
+          {TABS.map((t) => {
+            const active = tab === t.key;
+            return (
+              <button key={t.key} onClick={() => setTab(t.key)}
+                className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition ${
+                  active ? 'bg-white shadow-sm text-slate-900' : 'text-slate-600 hover:text-slate-900'
+                }`}>
+                {t.label}
+                <span className={`rounded px-1.5 py-0.5 text-[11px] font-semibold ${active ? toneClasses(t.tone) : 'text-slate-400'}`}>
+                  {t.count}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {error && (
+        <div className="card p-4 text-sm text-rose-600 bg-rose-50 border-rose-200">{error}</div>
+      )}
+
+      <div className="card overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="bg-slate-50 text-slate-500 text-left text-xs uppercase tracking-wider">
+              <tr>
+                <th className="px-4 sm:px-6 py-3 font-medium">TxnID</th>
+                <th className="px-4 sm:px-6 py-3 font-medium">Method</th>
+                <th className="px-4 sm:px-6 py-3 font-medium">Amount</th>
+                <th className="px-4 sm:px-6 py-3 font-medium">Order</th>
+                <th className="px-4 sm:px-6 py-3 font-medium">Status</th>
+                <th className="px-4 sm:px-6 py-3 font-medium">Date</th>
+                <th className="px-4 sm:px-6 py-3 font-medium text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-200">
+              {!txs && (
+                <tr><td colSpan={7} className="py-10 text-center text-slate-400">Loading…</td></tr>
+              )}
+              {txs && txs.length === 0 && (
+                <tr><td colSpan={7} className="py-16">
+                  <EmptyState filtered={!!(q || tab !== 'all')} onClear={() => { setQ(''); setTab('all'); }} />
+                </td></tr>
+              )}
+              {txs && txs.map((t) => {
+                const p = getProvider(t.provider);
+                return (
+                  <tr key={t.id} className="hover:bg-slate-50">
+                    <td className="px-4 sm:px-6 py-3 font-mono text-xs">{t.txnid_submitted}</td>
+                    <td className="px-4 sm:px-6 py-3">
+                      <div className="flex items-center gap-2">
+                        <span className={`w-6 h-6 rounded ${p.bg} text-white text-[10px] font-bold flex items-center justify-center shrink-0`}>{p.initials}</span>
+                        <div>
+                          <div className="text-slate-700">{p.name}</div>
+                          <div className="text-xs text-slate-400">{labelVariant(t.variant)} · {t.account_number}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-4 sm:px-6 py-3 font-semibold whitespace-nowrap">{formatMoney(t.amount, currency)}</td>
+                    <td className="px-4 sm:px-6 py-3 text-slate-700">{t.order_id}</td>
+                    <td className="px-4 sm:px-6 py-3">
+                      <StatusBadge status={t.status} source={t.result_source} />
+                    </td>
+                    <td className="px-4 sm:px-6 py-3 text-slate-500 whitespace-nowrap">
+                      {new Date(t.created_at).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
+                    </td>
+                    <td className="px-4 sm:px-6 py-3 text-right">
+                      {t.status === 'pending' ? (
+                        <div className="inline-flex gap-1">
+                          <button onClick={() => onResolve(t, 'success')}
+                            className="rounded-md bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-semibold px-2.5 py-1.5">
+                            Mark Paid
+                          </button>
+                          <button onClick={() => onResolve(t, 'failed')}
+                            className="rounded-md bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-semibold px-2.5 py-1.5">
+                            Mark Failed
+                          </button>
+                        </div>
+                      ) : (
+                        <span className="text-xs text-slate-400">—</span>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function EmptyState({ filtered, onClear }) {
+  if (filtered) {
+    return (
+      <div className="text-center">
+        <SearchIcon className="w-8 h-8 mx-auto opacity-40 text-slate-400" />
+        <p className="text-sm mt-2 text-slate-500">No transactions match your filter.</p>
+        <button onClick={onClear} className="mt-3 text-sm text-brand-600 hover:underline">Clear filter</button>
+      </div>
+    );
+  }
+  return (
+    <div className="text-center text-slate-400">
+      <InboxIcon className="w-10 h-10 mx-auto opacity-40" />
+      <p className="text-base mt-2 font-medium text-slate-600">No transactions yet</p>
+      <p className="text-sm mt-1 max-w-md mx-auto">
+        Once a customer submits a payment through your checkout link, they&apos;ll appear here in real time.
+      </p>
+    </div>
+  );
+}
+
+function StatusBadge({ status, source }) {
+  const map = {
+    success: { label: 'Done',    cls: 'bg-emerald-100 text-emerald-700' },
+    pending: { label: 'Pending', cls: 'bg-amber-100   text-amber-700'   },
+    failed:  { label: 'Failed',  cls: 'bg-rose-100    text-rose-700'    },
+  };
+  const s = map[status] || map.pending;
+  return (
+    <span className="inline-flex items-center gap-1.5">
+      <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${s.cls}`}>{s.label}</span>
+      {source === 'manual' && <span className="text-[10px] text-slate-400 uppercase tracking-wider">manual</span>}
+    </span>
+  );
+}
+
+function toneClasses(tone) {
+  switch (tone) {
+    case 'emerald': return 'bg-emerald-100 text-emerald-700';
+    case 'amber':   return 'bg-amber-100 text-amber-700';
+    case 'rose':    return 'bg-rose-100 text-rose-700';
+    default:        return 'bg-slate-100 text-slate-700';
+  }
+}
+
+function SearchIcon({ className = 'w-4 h-4' }) {
+  return <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>;
+}
+function InboxIcon({ className = '' }) {
+  return <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>;
+}
