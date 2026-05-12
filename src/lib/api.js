@@ -56,6 +56,12 @@ export const api = {
   merchantResolveTransaction: (token, id, result, reason) =>
     request(`/api/merchant/transactions/${id}/resolve`, { method: 'POST', body: { result, reason }, token }),
 
+  // SMS (merchant dashboard)
+  merchantListSms: (token, params = {}) => {
+    const qs = new URLSearchParams(params).toString();
+    return request(`/api/merchant/sms${qs ? '?' + qs : ''}`, { token });
+  },
+
   // Public checkout (no auth, by session id)
   checkoutSession:  (id) => request(`/api/checkout/${id}`),
   checkoutGateways: (id) => request(`/api/checkout/${id}/gateways`),

@@ -19,6 +19,7 @@ const NAV = [
       { label: 'Brands',   href: '/dashboard/brands',   icon: <StoreIcon /> },
       { label: 'Devices',  href: '/dashboard/devices',  icon: <PhoneIcon /> },
       { label: 'Gateways', href: '/dashboard/gateways', icon: <CardIcon /> },
+      { label: 'SMS Data', href: '/dashboard/sms',      icon: <MessageIcon /> },
     ],
   },
 ];
@@ -112,6 +113,7 @@ function GridIcon()    { return <I><rect x="3" y="3" width="7" height="7"/><rect
 function SwapIcon()    { return <I><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></I>; }
 function StoreIcon()   { return <I><path d="M3 9l1.5-5h15L21 9"/><path d="M3 9v11a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9"/><path d="M3 9h18"/><path d="M9 22V12h6v10"/></I>; }
 function CardIcon()    { return <I><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></I>; }
+function MessageIcon() { return <I><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></I>; }
 function PhoneIcon()   { return <I><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></I>; }
 function LogoutIcon()  { return <I><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></I>; }
 function CloseIcon()   { return <I><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></I>; }
