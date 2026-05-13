@@ -39,6 +39,10 @@ export default function GatewaysPage() {
     setGateways((gs) => [...(gs || []), r.gateway]);
     setAdding(null);
     setExpandedId(r.gateway.id);
+    if (r.retroactively_matched > 0) {
+      // Small celebratory message — your SMS that were sitting unmatched got linked up.
+      alert(`Gateway created. ${r.retroactively_matched} recent SMS auto-matched to this gateway and are now in Transactions.`);
+    }
   };
 
   const onUpdate = async (id, form) => {
@@ -178,19 +182,21 @@ function AddGatewayModal({ onClose, onPick }) {
           className="input mt-4"
         />
 
-        <div className="mt-4 flex gap-1 bg-slate-100 rounded-lg p-1 self-start">
-          {cats.map((c) => (
-            <button
-              key={c.id}
-              onClick={() => setCat(c.id)}
-              className={`px-3 py-1.5 rounded-md text-sm font-medium transition ${
-                cat === c.id ? 'bg-white shadow-sm text-slate-900' : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              {c.label}
-            </button>
-          ))}
-        </div>
+        {cats.length > 1 && (
+          <div className="mt-4 flex gap-1 bg-slate-100 rounded-lg p-1 self-start">
+            {cats.map((c) => (
+              <button
+                key={c.id}
+                onClick={() => setCat(c.id)}
+                className={`px-3 py-1.5 rounded-md text-sm font-medium transition ${
+                  cat === c.id ? 'bg-white shadow-sm text-slate-900' : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                {c.label}
+              </button>
+            ))}
+          </div>
+        )}
 
         <div className="mt-4 overflow-y-auto pr-1 space-y-4 -mr-1">
           {filtered.length === 0 ? (
