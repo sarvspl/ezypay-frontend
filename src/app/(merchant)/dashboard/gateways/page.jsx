@@ -151,6 +151,7 @@ function AddGatewayModal({ onClose, onPick }) {
   const activeCat = cats.find((c) => c.id === cat);
 
   const filtered = useMemo(() => {
+    if (!activeCat) return [];
     return activeCat.providers
       .map((id) => PROVIDERS[id])
       .filter(Boolean)
