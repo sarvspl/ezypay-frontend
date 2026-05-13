@@ -29,26 +29,27 @@ export function Wordmark({ className = 'text-lg' }) {
   );
 }
 
-/* Icon + wordmark together. Used in nav bars, headers, sidebars. */
+/* Icon + wordmark together. Used in nav bars, headers, sidebars.
+ * Uses the brand logo PNG from /public/logo-payverify.png. */
 export default function Logo({ size = 'md', href = '/', className = '' }) {
   const sizes = {
-    sm: { icon: 'w-7 h-7', text: 'text-base' },
-    md: { icon: 'w-8 h-8', text: 'text-lg' },
-    lg: { icon: 'w-10 h-10', text: 'text-2xl' },
+    sm: 'h-7',   // ~28px tall
+    md: 'h-9',   // ~36px tall
+    lg: 'h-12',  // ~48px tall
   };
-  const s = sizes[size] || sizes.md;
+  const heightClass = sizes[size] || sizes.md;
 
-  const inner = (
-    <span className={`inline-flex items-center gap-2 ${className}`}>
-      <span className="text-brand-600 shrink-0">
-        <LogoMark className={s.icon} />
-      </span>
-      <Wordmark className={s.text} />
-    </span>
+  const img = (
+    /* eslint-disable-next-line @next/next/no-img-element */
+    <img
+      src="/logo-payverify.png"
+      alt="PayVerify"
+      className={`${heightClass} w-auto ${className}`}
+    />
   );
 
   if (href) {
-    return <Link href={href} className="inline-flex items-center" aria-label="PayVerify home">{inner}</Link>;
+    return <Link href={href} className="inline-flex items-center" aria-label="PayVerify home">{img}</Link>;
   }
-  return inner;
+  return img;
 }
