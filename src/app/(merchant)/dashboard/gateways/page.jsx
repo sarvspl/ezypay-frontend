@@ -50,6 +50,9 @@ export default function GatewaysPage() {
     const r = await api.merchantUpdateGateway(token, id, form);
     setGateways((gs) => gs.map((g) => (g.id === id ? r.gateway : g)));
     setExpandedId(null);
+    if (r.retroactively_matched > 0) {
+      alert(`Gateway updated. ${r.retroactively_matched} recent SMS just matched this gateway and are now in Transactions.`);
+    }
   };
 
   const onToggle = async (g) => {
