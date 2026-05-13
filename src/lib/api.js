@@ -61,6 +61,8 @@ export const api = {
     const qs = new URLSearchParams(params).toString();
     return request(`/api/merchant/sms${qs ? '?' + qs : ''}`, { token });
   },
+  merchantVerifyTxnId: (token, txnid) =>
+    request('/api/merchant/verify', { method: 'POST', body: { txnid }, token }),
 
   // Public checkout (no auth, by session id)
   checkoutSession:  (id) => request(`/api/checkout/${id}`),

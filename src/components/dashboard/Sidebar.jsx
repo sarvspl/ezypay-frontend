@@ -19,7 +19,7 @@ const NAV = [
       { label: 'Brands',   href: '/dashboard/brands',   icon: <StoreIcon /> },
       { label: 'Devices',  href: '/dashboard/devices',  icon: <PhoneIcon /> },
       { label: 'Gateways', href: '/dashboard/gateways', icon: <CardIcon /> },
-      { label: 'SMS Data', href: '/dashboard/sms',      icon: <MessageIcon /> },
+      { label: 'Verify',   href: '/dashboard/sms',      icon: <MessageIcon /> },
     ],
   },
 ];

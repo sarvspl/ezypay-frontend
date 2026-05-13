@@ -9,7 +9,7 @@ const TITLES = {
   '/dashboard/transactions': 'Transactions',
   '/dashboard/devices':      'Devices',
   '/dashboard/gateways':     'Gateways',
-  '/dashboard/sms':          'SMS Data',
+  '/dashboard/sms':          'Verify Payment',
   '/dashboard/profile':      'Profile',
 };
 

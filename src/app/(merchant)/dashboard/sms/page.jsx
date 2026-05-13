@@ -1,148 +1,257 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 import { merchantAuth } from '@/lib/auth';
+import { formatMoney } from '@/lib/money';
+import { getProvider, labelVariant } from '@/lib/providers';
+import { useMerchant } from '../layout';
 
-export default function SmsDataPage() {
+export default function VerifyPage() {
   const router = useRouter();
-  const [rows, setRows] = useState(null);
-  const [stats, setStats] = useState(null);
-  const [error, setError] = useState(null);
-  const [filter, setFilter] = useState('all'); // all | matched | unmatched
-  const [q, setQ] = useState('');
+  const { merchant } = useMerchant();
+  const currency = merchant?.currency || 'USD';
 
-  const load = async () => {
-    setError(null);
+  const [txnid, setTxnid] = useState('');
+  const [verifying, setVerifying] = useState(false);
+  const [result, setResult] = useState(null);
+
+  const [sms, setSms] = useState(null);
+  const [smsErr, setSmsErr] = useState(null);
+
+  const loadSms = async () => {
+    setSmsErr(null);
     const token = merchantAuth.get();
     try {
-      const params = {};
-      if (filter === 'matched')   params.matched = 'true';
-      if (filter === 'unmatched') params.matched = 'false';
-      if (q.trim())               params.q = q.trim();
-      const r = await api.merchantListSms(token, params);
-      setRows(r.sms);
-      setStats(r.stats);
+      const r = await api.merchantListSms(token, { limit: 20 });
+      setSms(r.sms);
     } catch (e) {
       if (e.status === 401) { merchantAuth.clear(); router.replace('/login'); }
-      else setError(e.message);
+      else setSmsErr(e.message);
     }
   };
 
+  useEffect(() => { loadSms(); }, []); // eslint-disable-line
   useEffect(() => {
-    const t = setTimeout(load, q ? 250 : 0);
-    return () => clearTimeout(t);
-  }, [q, filter]); // eslint-disable-line
-
-  // Auto-refresh every 5s
-  useEffect(() => {
-    const t = setInterval(load, 5000);
+    const t = setInterval(loadSms, 5000);
     return () => clearInterval(t);
   }, []); // eslint-disable-line
 
+  const onVerify = async (e) => {
+    e.preventDefault();
+    if (!txnid.trim()) return;
+    setVerifying(true);
+    setResult(null);
+    const token = merchantAuth.get();
+    try {
+      const r = await api.merchantVerifyTxnId(token, txnid.trim());
+      setResult(r);
+      if (r.matched) {
+        // refresh SMS list so the just-matched SMS flips to Matched
+        loadSms();
+      }
+    } catch (e) {
+      setResult({ matched: false, message: e.message });
+    } finally {
+      setVerifying(false);
+    }
+  };
+
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-5">
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-5">
       <div>
-        <h2 className="text-xl font-bold text-slate-900">SMS Data</h2>
+        <h2 className="text-xl font-bold text-slate-900">Verify a Payment</h2>
         <p className="text-sm text-slate-600 mt-1 max-w-2xl">
-          Every wallet SMS your bound device has forwarded here. When a customer submits a TxnID,
-          we automatically match it against unmatched messages in this list.
+          Paste the Transaction ID a customer gave you. We&apos;ll check your received SMS,
+          confirm the payment, and mark it as <strong>Done</strong> in Transactions.
         </p>
       </div>
 
-      <section className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <Stat label="Total"     value={stats?.total ?? '—'}     tone="slate"  icon={<MessageIcon />} />
-        <Stat label="Matched"   value={stats?.matched ?? '—'}   tone="emerald" icon={<CheckIcon />} />
-        <Stat label="Unmatched" value={stats?.unmatched ?? '—'} tone="amber"  icon={<HourglassIcon />} />
-        <Stat label="Last 24h"  value={stats?.last_24h ?? '—'}  tone="brand"  icon={<ClockIcon />} />
-      </section>
-
-      <div className="card p-3 sm:p-4 flex flex-col lg:flex-row gap-3">
-        <div className="flex-1 relative">
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
-            <SearchIcon />
-          </span>
+      {/* Verify form */}
+      <form onSubmit={onVerify} className="card p-5 sm:p-6">
+        <label className="block text-sm font-semibold text-slate-900 mb-2">
+          Transaction ID
+        </label>
+        <div className="flex flex-col sm:flex-row gap-2">
           <input
-            value={q} onChange={(e) => setQ(e.target.value)}
-            className="input pl-10"
-            placeholder="Search sender or body…"
+            value={txnid}
+            onChange={(e) => setTxnid(e.target.value)}
+            placeholder="e.g. 613384596583"
+            disabled={verifying}
+            className="input font-mono flex-1"
+            autoFocus
           />
+          <button
+            type="submit"
+            disabled={verifying || !txnid.trim()}
+            className="btn-primary !px-6 whitespace-nowrap"
+          >
+            {verifying ? (
+              <><Spinner /><span className="ml-2">Verifying…</span></>
+            ) : (
+              <>Verify Payment</>
+            )}
+          </button>
         </div>
-        <div className="flex gap-1 bg-slate-100 rounded-lg p-1 flex-wrap">
-          {[{ k: 'all', l: 'All' }, { k: 'matched', l: 'Matched' }, { k: 'unmatched', l: 'Unmatched' }].map((t) => (
-            <button key={t.k} onClick={() => setFilter(t.k)}
-              className={`px-3 py-1.5 rounded-md text-sm font-medium transition ${
-                filter === t.k ? 'bg-white shadow-sm text-slate-900' : 'text-slate-600 hover:text-slate-900'
-              }`}>{t.l}</button>
-          ))}
+        <p className="text-xs text-slate-500 mt-2">
+          We&apos;ll search SMS received in the last 7 days against your bound device.
+        </p>
+      </form>
+
+      {/* Result panel */}
+      {result && <ResultPanel result={result} currency={currency} />}
+
+      {/* Recent SMS section */}
+      <section>
+        <div className="flex items-center justify-between mb-3 mt-2">
+          <h3 className="font-semibold text-slate-900">Recent SMS received</h3>
+          <span className="text-xs text-slate-400">Auto-refreshes every 5s</span>
+        </div>
+
+        {smsErr && <div className="card p-4 text-sm text-rose-600 bg-rose-50 border-rose-200">{smsErr}</div>}
+
+        {!sms && !smsErr && (
+          <div className="card p-6 text-center text-slate-500 text-sm">Loading…</div>
+        )}
+
+        {sms && sms.length === 0 && (
+          <div className="card p-8 text-center">
+            <div className="w-12 h-12 mx-auto rounded-full bg-brand-50 text-brand-600 flex items-center justify-center">
+              <MessageIcon />
+            </div>
+            <p className="text-sm mt-3 text-slate-600">No SMS forwarded yet.</p>
+            <p className="text-xs text-slate-500 mt-1">
+              Make sure your APK is bound (<Link href="/dashboard/devices" className="text-brand-600 hover:underline">Devices</Link>) and is uploading SMS.
+            </p>
+          </div>
+        )}
+
+        {sms && sms.length > 0 && (
+          <div className="space-y-2">
+            {sms.map((s) => <SmsRow key={s.id} s={s} />)}
+          </div>
+        )}
+      </section>
+    </div>
+  );
+}
+
+/* ─── result panel ─── */
+function ResultPanel({ result, currency }) {
+  if (result.matched) {
+    const t = result.transaction;
+    const p = getProvider(t.provider);
+    return (
+      <div className="card p-5 sm:p-6 border-emerald-200 bg-emerald-50/50">
+        <div className="flex items-start gap-3">
+          <div className="w-10 h-10 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
+            <CheckIcon />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h3 className="font-bold text-emerald-900">
+                {result.already_existed ? 'Already verified' : 'Payment verified!'}
+              </h3>
+              {!result.already_existed && (
+                <span className="text-[11px] font-semibold rounded bg-emerald-100 text-emerald-700 px-1.5 py-0.5">NEW</span>
+              )}
+            </div>
+            <p className="text-sm text-emerald-800/90 mt-0.5">
+              {result.already_existed
+                ? 'This Transaction ID has already been recorded — see Transactions.'
+                : 'A new transaction has been created and is now in your Transactions list.'}
+            </p>
+
+            <dl className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-y-3 gap-x-6 text-sm">
+              <div>
+                <dt className="text-xs uppercase tracking-wide text-emerald-700/80">TxnID</dt>
+                <dd className="font-mono text-slate-900 truncate">{t.txnid_submitted}</dd>
+              </div>
+              <div>
+                <dt className="text-xs uppercase tracking-wide text-emerald-700/80">Amount</dt>
+                <dd className="font-semibold text-slate-900">{formatMoney(t.amount, currency)}</dd>
+              </div>
+              <div>
+                <dt className="text-xs uppercase tracking-wide text-emerald-700/80">Gateway</dt>
+                <dd className="text-slate-900 flex items-center gap-1.5">
+                  <span className={`w-5 h-5 rounded ${p.bg} text-white text-[9px] font-bold flex items-center justify-center shrink-0`}>{p.initials}</span>
+                  {p.name} <span className="text-xs text-slate-500">· {labelVariant(t.variant)}</span>
+                </dd>
+              </div>
+              <div>
+                <dt className="text-xs uppercase tracking-wide text-emerald-700/80">Account</dt>
+                <dd className="text-slate-900">{t.account_number}{t.gateway_label && <span className="text-slate-500"> · {t.gateway_label}</span>}</dd>
+              </div>
+            </dl>
+
+            <div className="mt-4 flex gap-2">
+              <Link href="/dashboard/transactions" className="btn-primary !py-1.5 text-sm">
+                Open Transactions →
+              </Link>
+            </div>
+          </div>
         </div>
       </div>
+    );
+  }
 
-      {error && <div className="card p-4 text-sm text-rose-600 bg-rose-50 border-rose-200">{error}</div>}
-
-      {!rows && !error && (
-        <div className="card p-10 text-center text-slate-500">Loading…</div>
-      )}
-
-      {rows && rows.length === 0 && (
-        <div className="card p-12 text-center">
-          <div className="w-14 h-14 mx-auto rounded-full bg-brand-50 text-brand-600 flex items-center justify-center">
-            <MessageIcon />
-          </div>
-          <h3 className="mt-4 font-semibold text-slate-900">No SMS forwarded yet</h3>
-          <p className="text-sm text-slate-500 mt-1 max-w-md mx-auto">
-            Once your APK reads a wallet SMS and uploads it via{' '}
-            <code className="bg-slate-100 rounded px-1 text-xs">POST /api/device/sms</code>,
-            it will appear here within seconds.
-          </p>
-        </div>
-      )}
-
-      {rows && rows.length > 0 && (
-        <div className="space-y-2.5">
-          {rows.map((s) => <SmsRow key={s.id} s={s} />)}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function Stat({ label, value, tone, icon }) {
-  const tones = {
-    slate:   'bg-slate-100 text-slate-600',
-    emerald: 'bg-emerald-100 text-emerald-600',
-    amber:   'bg-amber-100 text-amber-600',
-    brand:   'bg-brand-100 text-brand-600',
-  };
+  // failed
   return (
-    <div className="card p-5">
-      <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${tones[tone]}`}>{icon}</div>
-      <div className="mt-3 text-xs uppercase tracking-wider text-slate-500">{label}</div>
-      <div className="mt-1 text-2xl font-bold text-slate-900">{value}</div>
+    <div className="card p-5 sm:p-6 border-rose-200 bg-rose-50/50">
+      <div className="flex items-start gap-3">
+        <div className="w-10 h-10 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center shrink-0">
+          <XIcon />
+        </div>
+        <div className="flex-1">
+          <h3 className="font-bold text-rose-900">Could not verify</h3>
+          <p className="text-sm text-rose-800/90 mt-0.5">{result.message}</p>
+
+          {result.sms && (
+            <div className="mt-3 rounded-md bg-white border border-rose-200 p-3 text-xs">
+              <div className="text-rose-700/80 font-semibold mb-1">SMS that matched the TxnID:</div>
+              <div className="text-slate-700 break-words">{result.sms.body}</div>
+              <div className="text-slate-400 mt-1">From {result.sms.sender}</div>
+            </div>
+          )}
+
+          {result.reason === 'no_gateways' && (
+            <Link href="/dashboard/gateways" className="btn-primary !py-1.5 text-sm mt-3 inline-flex">
+              Configure a gateway →
+            </Link>
+          )}
+          {result.reason === 'no_gateway_match' && (
+            <Link href="/dashboard/gateways" className="btn-primary !py-1.5 text-sm mt-3 inline-flex">
+              Adjust gateway account →
+            </Link>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
 
+/* ─── SMS row ─── */
 function SmsRow({ s }) {
   const isMatched = !!s.matched_tx_id;
   return (
-    <div className={`card p-4 ${isMatched ? 'border-emerald-200' : ''}`}>
+    <div className={`card p-3.5 ${isMatched ? 'border-emerald-200' : ''}`}>
       <div className="flex items-start gap-3">
-        <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${
+        <div className={`w-8 h-8 rounded-md flex items-center justify-center shrink-0 ${
           isMatched ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-100 text-slate-500'
         }`}>
           <MessageIcon />
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="font-semibold text-slate-900">{s.sender}</span>
+            <span className="font-semibold text-slate-900 text-sm">{s.sender}</span>
             {isMatched ? (
-              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 text-emerald-700 px-2 py-0.5 text-[11px] font-semibold">
-                <CheckIcon /> Matched · {s.matched_txnid}
+              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 text-emerald-700 px-2 py-0.5 text-[10px] font-semibold">
+                Matched
               </span>
             ) : (
-              <span className="inline-flex items-center rounded-full bg-slate-100 text-slate-500 px-2 py-0.5 text-[11px] font-semibold">
+              <span className="inline-flex items-center rounded-full bg-slate-100 text-slate-500 px-2 py-0.5 text-[10px] font-semibold">
                 Unmatched
               </span>
             )}
@@ -167,9 +276,9 @@ function timeAgo(iso) {
   return new Date(iso).toLocaleDateString();
 }
 
+/* ─── icons ─── */
 function I(props) { return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props} />; }
 function MessageIcon() { return <I><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></I>; }
-function CheckIcon()   { return <I width="12" height="12" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></I>; }
-function HourglassIcon(){ return <I><path d="M5 22h14"/><path d="M5 2h14"/><path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22"/><path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2"/></I>; }
-function ClockIcon()   { return <I><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></I>; }
-function SearchIcon()  { return <I width="16" height="16"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></I>; }
+function CheckIcon()   { return <I strokeWidth="3"><polyline points="20 6 9 17 4 12"/></I>; }
+function XIcon()       { return <I strokeWidth="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></I>; }
+function Spinner()     { return <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeOpacity=".3" strokeWidth="3"/><path d="M22 12a10 10 0 0 1-10 10" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/></svg>; }
