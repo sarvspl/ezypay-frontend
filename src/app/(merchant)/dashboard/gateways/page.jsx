@@ -365,7 +365,12 @@ function GatewayForm({ gateway, onSave, onCancel }) {
 
       <div>
         <label className="label">Account Number</label>
-        <input required value={form.account_number} onChange={(e) => set({ account_number: e.target.value })} className="input" placeholder="01XXXXXXXXX" />
+        <input required value={form.account_number} onChange={(e) => set({ account_number: e.target.value })} className="input" placeholder="e.g. 8389834331, XX6788" />
+        <p className="text-xs text-slate-500 mt-1.5">
+          Comma-separate multiple identifiers — e.g. your <strong>mobile number</strong> (what customers know)
+          and your <strong>bank account suffix</strong> (what shows up in your bank SMS). We match if ANY of them
+          appear in the SMS body.
+        </p>
       </div>
 
       <div>
