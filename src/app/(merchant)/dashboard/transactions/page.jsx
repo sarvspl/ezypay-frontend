@@ -123,6 +123,7 @@ export default function TransactionsPage() {
                 <th className="px-4 sm:px-6 py-3 font-medium">TxnID</th>
                 <th className="px-4 sm:px-6 py-3 font-medium">Method</th>
                 <th className="px-4 sm:px-6 py-3 font-medium">Amount</th>
+                <th className="px-4 sm:px-6 py-3 font-medium">From</th>
                 <th className="px-4 sm:px-6 py-3 font-medium">Order</th>
                 <th className="px-4 sm:px-6 py-3 font-medium">Status</th>
                 <th className="px-4 sm:px-6 py-3 font-medium">Date</th>
@@ -159,6 +160,16 @@ export default function TransactionsPage() {
                       </div>
                     </td>
                     <td className="px-4 sm:px-6 py-3 font-semibold whitespace-nowrap">{formatMoney(t.amount, currency)}</td>
+                    <td className="px-4 sm:px-6 py-3">
+                      {t.payer_name || t.payer_phone ? (
+                        <div className="min-w-0">
+                          {t.payer_name && <div className="text-slate-900 truncate max-w-[180px]" title={t.payer_name}>{t.payer_name}</div>}
+                          {t.payer_phone && <div className="text-xs text-slate-500 font-mono">{t.payer_phone}</div>}
+                        </div>
+                      ) : (
+                        <span className="text-slate-400 italic">—</span>
+                      )}
+                    </td>
                     <td className="px-4 sm:px-6 py-3 text-slate-700">
                       {t.order_id || <span className="text-slate-400 italic">—</span>}
                     </td>
