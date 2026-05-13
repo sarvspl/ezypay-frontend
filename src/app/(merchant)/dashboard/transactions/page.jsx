@@ -144,11 +144,17 @@ export default function TransactionsPage() {
                   <tr key={t.id} className="hover:bg-slate-50">
                     <td className="px-4 sm:px-6 py-3 font-mono text-xs">{t.txnid_submitted}</td>
                     <td className="px-4 sm:px-6 py-3">
-                      <div className="flex items-center gap-2">
-                        <span className={`w-6 h-6 rounded ${p.bg} text-white text-[10px] font-bold flex items-center justify-center shrink-0`}>{p.initials}</span>
-                        <div>
-                          <div className="text-slate-700">{p.name}</div>
-                          <div className="text-xs text-slate-400">{labelVariant(t.variant)} · {t.account_number}</div>
+                      <div className="flex items-center gap-2.5">
+                        <span className={`w-7 h-7 rounded-md ${p.bg} text-white text-[10px] font-bold flex items-center justify-center shrink-0`}>{p.initials}</span>
+                        <div className="min-w-0">
+                          <div className="text-slate-900 font-medium flex items-center gap-1.5 flex-wrap">
+                            <span>{p.name}</span>
+                            <span className="text-[10px] font-semibold uppercase tracking-wider rounded bg-slate-100 text-slate-600 px-1.5 py-0.5">{labelVariant(t.variant)}</span>
+                          </div>
+                          <div className="text-xs text-slate-500 mt-0.5 truncate">
+                            {t.account_number}
+                            {t.gateway_label && <span className="text-slate-400"> · {t.gateway_label}</span>}
+                          </div>
                         </div>
                       </div>
                     </td>
