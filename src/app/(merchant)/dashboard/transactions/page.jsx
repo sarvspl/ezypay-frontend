@@ -153,7 +153,9 @@ export default function TransactionsPage() {
                       </div>
                     </td>
                     <td className="px-4 sm:px-6 py-3 font-semibold whitespace-nowrap">{formatMoney(t.amount, currency)}</td>
-                    <td className="px-4 sm:px-6 py-3 text-slate-700">{t.order_id}</td>
+                    <td className="px-4 sm:px-6 py-3 text-slate-700">
+                      {t.order_id || <span className="text-slate-400 italic">—</span>}
+                    </td>
                     <td className="px-4 sm:px-6 py-3">
                       <StatusBadge status={t.status} source={t.result_source} />
                     </td>
@@ -215,10 +217,15 @@ function StatusBadge({ status, source }) {
     failed:  { label: 'Failed',  cls: 'bg-rose-100    text-rose-700'    },
   };
   const s = map[status] || map.pending;
+  const sourceLabel =
+    source === 'manual'      ? 'manual' :
+    source === 'sms_inbound' ? 'auto' :
+    source === 'apk'         ? 'apk' :
+    null;
   return (
     <span className="inline-flex items-center gap-1.5">
       <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${s.cls}`}>{s.label}</span>
-      {source === 'manual' && <span className="text-[10px] text-slate-400 uppercase tracking-wider">manual</span>}
+      {sourceLabel && <span className="text-[10px] text-slate-400 uppercase tracking-wider">{sourceLabel}</span>}
     </span>
   );
 }
