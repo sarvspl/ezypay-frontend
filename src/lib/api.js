@@ -38,8 +38,9 @@ export const api = {
   merchantDeleteBrand:  (token, id) => request(`/api/merchant/brands/${id}`, { method: 'DELETE', token }),
 
   // Devices
-  merchantListDevices:  (token) => request('/api/merchant/devices', { token }),
-  merchantDeleteDevice: (token, id) => request(`/api/merchant/devices/${id}`, { method: 'DELETE', token }),
+  merchantListDevices:        (token) => request('/api/merchant/devices', { token }),
+  merchantListDeviceHistory:  (token) => request('/api/merchant/devices/history', { token }),
+  merchantDeleteDevice:       (token, id) => request(`/api/merchant/devices/${id}`, { method: 'DELETE', token }),
 
   // Gateways
   merchantListGateways:   (token) => request('/api/merchant/gateways', { token }),

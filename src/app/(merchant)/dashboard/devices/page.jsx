@@ -10,6 +10,9 @@ export default function DevicesPage() {
   const router = useRouter();
   const { merchant } = useMerchant();
   const [devices, setDevices] = useState(null);
+  const [pastCount, setPastCount] = useState(0);
+  const [pastDevices, setPastDevices] = useState(null);
+  const [showHistory, setShowHistory] = useState(false);
   const [error, setError] = useState(null);
 
   const load = async () => {
@@ -18,6 +21,7 @@ export default function DevicesPage() {
     try {
       const r = await api.merchantListDevices(token);
       setDevices(r.devices);
+      setPastCount(r.past_count || 0);
     } catch (e) {
       if (e.status === 401) {
         merchantAuth.clear();
@@ -26,6 +30,20 @@ export default function DevicesPage() {
         setError(e.message);
       }
     }
+  };
+
+  const loadHistory = async () => {
+    const token = merchantAuth.get();
+    try {
+      const r = await api.merchantListDeviceHistory(token);
+      setPastDevices(r.devices);
+    } catch (e) { setError(e.message); }
+  };
+
+  const toggleHistory = () => {
+    const next = !showHistory;
+    setShowHistory(next);
+    if (next && pastDevices === null) loadHistory();
   };
 
   useEffect(() => { load(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -86,9 +104,73 @@ export default function DevicesPage() {
           ))}
         </div>
       )}
+
+      {pastCount > 0 && (
+        <section className="mt-4">
+          <button
+            onClick={toggleHistory}
+            className="w-full card px-5 py-3 flex items-center justify-between hover:bg-slate-50 transition-colors text-left"
+          >
+            <div className="flex items-center gap-2">
+              <ClockIcon />
+              <span className="text-sm font-medium text-slate-700">
+                Past devices — {pastCount} previously unbound
+              </span>
+            </div>
+            <ChevronIcon className={showHistory ? 'rotate-180' : ''} />
+          </button>
+
+          {showHistory && (
+            <div className="mt-2 space-y-2">
+              {pastDevices === null ? (
+                <div className="card p-5 text-center text-sm text-slate-500">Loading…</div>
+              ) : pastDevices.length === 0 ? (
+                <div className="card p-5 text-center text-sm text-slate-500">No past devices.</div>
+              ) : (
+                pastDevices.map((d) => <PastDeviceCard key={d.id} device={d} />)
+              )}
+            </div>
+          )}
+        </section>
+      )}
     </div>
   );
 }
+
+/* ─── past device row ─── */
+function PastDeviceCard({ device }) {
+  const title = device.model
+    ? `${device.manufacturer ? device.manufacturer + ' ' : ''}${device.model}`
+    : 'Unknown device';
+  const reason = {
+    apk_unbind:        'Disconnected from app',
+    merchant_delete:   'Removed from dashboard',
+    admin:             'Removed by admin',
+  }[device.unbound_reason] || 'Unbound';
+  return (
+    <div className="card p-4 opacity-75">
+      <div className="flex items-start justify-between gap-3 flex-wrap">
+        <div className="flex items-start gap-3 min-w-0">
+          <div className="w-9 h-9 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center shrink-0">
+            <PhoneIcon />
+          </div>
+          <div className="min-w-0">
+            <h3 className="font-medium text-slate-700 truncate">{title}</h3>
+            <p className="text-xs text-slate-500 mt-0.5">
+              {reason} · {timeAgo(device.unbound_at)}
+              {device.os_version && <span> · Android {device.os_version}</span>}
+            </p>
+            <p className="text-[11px] text-slate-400 font-mono mt-0.5 truncate">{device.device_id}</p>
+          </div>
+        </div>
+        <span className="inline-flex items-center rounded-full bg-slate-100 text-slate-500 px-2.5 py-0.5 text-[11px] font-semibold whitespace-nowrap">
+          Unbound
+        </span>
+      </div>
+    </div>
+  );
+}
+function ChevronIcon({ className = '' }) { return <svg className={`w-4 h-4 transition-transform ${className}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>; }
 
 /* ─── stat card ─── */
 function StatCard({ label, value, icon, tone }) {
