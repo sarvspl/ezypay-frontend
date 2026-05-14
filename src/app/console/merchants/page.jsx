@@ -44,7 +44,9 @@ export default function ConsoleMerchantsPage() {
             </span>
             <span className="ml-1 text-xs font-semibold uppercase tracking-wider text-slate-500">Console</span>
           </Link>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-wrap">
+            <Link href="/console/merchants" className="text-brand-600 font-semibold text-sm">Merchants</Link>
+            <Link href="/console/providers" className="text-slate-600 hover:text-slate-900 text-sm">Providers</Link>
             <Link href="/console/merchants/new" className="btn-primary">+ Create merchant</Link>
             <button onClick={logout} className="btn-secondary">Logout</button>
           </div>

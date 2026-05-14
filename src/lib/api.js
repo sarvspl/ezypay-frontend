@@ -78,4 +78,11 @@ export const api = {
   adminCreateMerchant:(token, body) => request('/api/admin/merchants', { method: 'POST', body, token }),
   adminSuspendMerchant:   (token, id, reason) => request(`/api/admin/merchants/${id}/suspend`, { method: 'POST', body: { reason }, token }),
   adminUnsuspendMerchant: (token, id) => request(`/api/admin/merchants/${id}/unsuspend`, { method: 'POST', token }),
+
+  // Providers (public for merchant catalog, admin CRUD for console)
+  listProviders:         () => request('/api/providers'),
+  adminListProviders:    (token) => request('/api/admin/providers', { token }),
+  adminCreateProvider:   (token, body) => request('/api/admin/providers', { method: 'POST', body, token }),
+  adminUpdateProvider:   (token, id, body) => request(`/api/admin/providers/${id}`, { method: 'PATCH', body, token }),
+  adminDeleteProvider:   (token, id) => request(`/api/admin/providers/${id}`, { method: 'DELETE', token }),
 };

@@ -4,11 +4,12 @@ import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 import { merchantAuth } from '@/lib/auth';
-import { PROVIDERS, PROVIDER_CATEGORIES, getProvider, labelVariant } from '@/lib/providers';
+import { getProviderFromList, labelVariant, FALLBACK_PROVIDERS } from '@/lib/providers';
 
 export default function GatewaysPage() {
   const router = useRouter();
   const [gateways, setGateways] = useState(null);
+  const [providers, setProviders] = useState(FALLBACK_PROVIDERS);
   const [error, setError] = useState(null);
   const [showAdd, setShowAdd] = useState(false);
   const [adding, setAdding] = useState(null);          // { provider, variant }
@@ -18,8 +19,12 @@ export default function GatewaysPage() {
     setError(null);
     const token = merchantAuth.get();
     try {
-      const r = await api.merchantListGateways(token);
-      setGateways(r.gateways);
+      const [g, p] = await Promise.all([
+        api.merchantListGateways(token),
+        api.listProviders(),
+      ]);
+      setGateways(g.gateways);
+      if (p.providers && p.providers.length) setProviders(p.providers);
     } catch (e) {
       if (e.status === 401) { merchantAuth.clear(); router.replace('/login'); }
       else setError(e.message);
@@ -64,7 +69,7 @@ export default function GatewaysPage() {
   };
 
   const onDelete = async (g) => {
-    if (!confirm(`Delete ${getProvider(g.provider).name} ${labelVariant(g.variant)} (${g.account_number})?`)) return;
+    if (!confirm(`Delete ${getProviderFromList(providers, g.provider).name} ${labelVariant(g.variant)} (${g.account_number})?`)) return;
     const token = merchantAuth.get();
     try {
       await api.merchantDeleteGateway(token, g.id);
@@ -96,6 +101,7 @@ export default function GatewaysPage() {
           isNew
           provider={adding.provider}
           variant={adding.variant}
+          providers={providers}
           onSave={onCreate}
           onCancel={() => setAdding(null)}
         />
@@ -128,6 +134,7 @@ export default function GatewaysPage() {
               gateway={g}
               provider={g.provider}
               variant={g.variant}
+              providers={providers}
               expanded={expandedId === g.id}
               onExpand={() => setExpandedId(expandedId === g.id ? null : g.id)}
               onSave={(form) => onUpdate(g.id, form)}
@@ -141,6 +148,7 @@ export default function GatewaysPage() {
 
       {showAdd && (
         <AddGatewayModal
+          providers={providers}
           onClose={() => setShowAdd(false)}
           onPick={onPick}
         />
@@ -150,20 +158,15 @@ export default function GatewaysPage() {
 }
 
 /* ─────────────────────────────────────── Add Gateway Modal */
-function AddGatewayModal({ onClose, onPick }) {
+function AddGatewayModal({ providers, onClose, onPick }) {
   const [q, setQ] = useState('');
-  const [cat, setCat] = useState(PROVIDER_CATEGORIES[0].id);
-
-  const cats = PROVIDER_CATEGORIES;
-  const activeCat = cats.find((c) => c.id === cat);
 
   const filtered = useMemo(() => {
-    if (!activeCat) return [];
-    return activeCat.providers
-      .map((id) => PROVIDERS[id])
-      .filter(Boolean)
-      .filter((p) => !q || p.name.toLowerCase().includes(q.toLowerCase()));
-  }, [activeCat, q]);
+    const list = providers || [];
+    if (!q) return list;
+    const needle = q.toLowerCase();
+    return list.filter((p) => p.name.toLowerCase().includes(needle) || p.id.toLowerCase().includes(needle));
+  }, [providers, q]);
 
   return (
     <div className="fixed inset-0 z-40 flex items-center justify-center p-4" onClick={onClose}>
@@ -185,33 +188,17 @@ function AddGatewayModal({ onClose, onPick }) {
           className="input mt-4"
         />
 
-        {cats.length > 1 && (
-          <div className="mt-4 flex gap-1 bg-slate-100 rounded-lg p-1 self-start">
-            {cats.map((c) => (
-              <button
-                key={c.id}
-                onClick={() => setCat(c.id)}
-                className={`px-3 py-1.5 rounded-md text-sm font-medium transition ${
-                  cat === c.id ? 'bg-white shadow-sm text-slate-900' : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                {c.label}
-              </button>
-            ))}
-          </div>
-        )}
-
         <div className="mt-4 overflow-y-auto pr-1 space-y-4 -mr-1">
           {filtered.length === 0 ? (
             <p className="text-center text-sm text-slate-400 py-8">No gateways match your search.</p>
           ) : filtered.map((p) => (
             <div key={p.id}>
               <div className="flex items-center gap-2.5">
-                <ProviderBadge provider={p.id} size="md" />
+                <ProviderBadge provider={p.id} providers={providers} size="md" />
                 <span className="font-semibold text-slate-900">{p.name}</span>
               </div>
               <div className="mt-2 flex flex-wrap gap-2">
-                {p.variants.map((v) => (
+                {(p.variants || []).map((v) => (
                   <button
                     key={v}
                     onClick={() => onPick(p.id, v)}
@@ -230,16 +217,16 @@ function AddGatewayModal({ onClose, onPick }) {
 }
 
 /* ─────────────────────────────────────── Gateway Card (list item + inline form) */
-function GatewayCard({ gateway, provider, variant, isNew, expanded, onExpand, onSave, onCancel, onToggle, onDelete }) {
+function GatewayCard({ gateway, provider, variant, providers, isNew, expanded, onExpand, onSave, onCancel, onToggle, onDelete }) {
   const open = isNew || expanded;
-  const p = getProvider(provider);
+  const p = getProviderFromList(providers, provider);
   const accountDisplay = gateway?.account_number || (isNew ? 'Not configured' : '');
 
   return (
     <div className={`card overflow-hidden ${open ? 'ring-1 ring-brand-200' : ''}`}>
       {/* Header row */}
       <div className="p-4 sm:p-5 flex items-center gap-3">
-        <ProviderBadge provider={provider} size="md" />
+        <ProviderBadge provider={provider} providers={providers} size="md" />
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 flex-wrap">
             <span className="font-semibold text-slate-900">{p.name}</span>
@@ -415,8 +402,8 @@ function Toggle({ on, onChange }) {
 }
 
 /* ─────────────────────────────────────── Provider badge */
-function ProviderBadge({ provider, size = 'md' }) {
-  const p = getProvider(provider);
+function ProviderBadge({ provider, providers, size = 'md' }) {
+  const p = getProviderFromList(providers, provider);
   const sizes = {
     sm: 'w-8 h-8 text-xs',
     md: 'w-11 h-11 text-sm',
