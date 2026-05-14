@@ -34,6 +34,7 @@ const SECTIONS = [
   { id: 'api-verify',     label: 'Manual Verify',         group: 'API Reference' },
   { id: 'api-devices',    label: 'Devices (APK)',         group: 'API Reference' },
   { id: 'errors',         label: 'Errors & Status Codes', group: 'API Reference' },
+  { id: 'troubleshoot',   label: 'Troubleshooting',       group: 'API Reference' },
   { id: 'best',           label: 'Best Practices',        group: 'Production' },
   { id: 'webhooks',       label: 'Webhooks',              group: 'Production' },
   { id: 'support',        label: 'Support',               group: 'Production' },
@@ -127,7 +128,7 @@ function ContentArea() {
           <li><span className="font-semibold text-slate-900">5.</span> Test with a checkout session (see below)</li>
         </ol>
 
-        <CodeBlock language="bash" caption="Test the API now — replace pk_live_... with your key">{`curl -X POST https://api.payverify.com/api/payment/sessions \\
+        <CodeBlock language="bash" caption="Test the API now — replace pk_live_... with your key">{`curl -X POST https://pay.trsinternational.cloud/api/payment/sessions \\
   -H "X-API-Key: pk_live_xxxxxxxxxxxxxxxxxxxxxxxx" \\
   -H "Content-Type: application/json" \\
   -d '{
@@ -247,7 +248,7 @@ function ContentArea() {
         <TabGroup tabs={['Node.js', 'PHP', 'Python', 'cURL']}>
           <CodeBlock language="js">{`// Node.js (Express)
 app.post('/checkout', async (req, res) => {
-  const r = await fetch('https://api.payverify.com/api/payment/sessions', {
+  const r = await fetch('https://pay.trsinternational.cloud/api/payment/sessions', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -266,7 +267,7 @@ app.post('/checkout', async (req, res) => {
 
           <CodeBlock language="php">{`<?php
 // PHP
-$ch = curl_init('https://api.payverify.com/api/payment/sessions');
+$ch = curl_init('https://pay.trsinternational.cloud/api/payment/sessions');
 curl_setopt_array($ch, [
   CURLOPT_RETURNTRANSFER => true,
   CURLOPT_POST           => true,
@@ -287,7 +288,7 @@ header('Location: ' . $body['checkout_url']);`}</CodeBlock>
 import os, requests
 
 r = requests.post(
-    'https://api.payverify.com/api/payment/sessions',
+    'https://pay.trsinternational.cloud/api/payment/sessions',
     headers={'X-API-Key': os.environ['PAYVERIFY_API_KEY']},
     json={
         'amount':       request.form['amount'],
@@ -298,7 +299,7 @@ r = requests.post(
 )
 return redirect(r.json()['checkout_url'])`}</CodeBlock>
 
-          <CodeBlock language="bash">{`curl -X POST https://api.payverify.com/api/payment/sessions \\
+          <CodeBlock language="bash">{`curl -X POST https://pay.trsinternational.cloud/api/payment/sessions \\
   -H "X-API-Key: pk_live_xxxxxxxxxxxx" \\
   -H "Content-Type: application/json" \\
   -d '{
@@ -330,7 +331,7 @@ return redirect(r.json()['checkout_url'])`}</CodeBlock>
         <TabGroup tabs={['Node.js', 'PHP', 'cURL']}>
           <CodeBlock language="js">{`app.get('/payment/result', async (req, res) => {
   const r = await fetch(
-    \`https://api.payverify.com/api/payment/sessions/\${req.query.session_id}\`,
+    \`https://pay.trsinternational.cloud/api/payment/sessions/\${req.query.session_id}\`,
     { headers: { 'X-API-Key': process.env.PAYVERIFY_API_KEY } }
   );
   const { session } = await r.json();
@@ -344,7 +345,7 @@ return redirect(r.json()['checkout_url'])`}</CodeBlock>
 
           <CodeBlock language="php">{`<?php
 $id = $_GET['session_id'];
-$ch = curl_init("https://api.payverify.com/api/payment/sessions/$id");
+$ch = curl_init("https://pay.trsinternational.cloud/api/payment/sessions/$id");
 curl_setopt_array($ch, [
   CURLOPT_RETURNTRANSFER => true,
   CURLOPT_HTTPHEADER     => ['X-API-Key: ' . getenv('PAYVERIFY_API_KEY')],
@@ -354,7 +355,7 @@ if ($body['session']['status'] === 'success') {
   mark_order_paid($body['session']['order_id']);
 }`}</CodeBlock>
 
-          <CodeBlock language="bash">{`curl https://api.payverify.com/api/payment/sessions/eNOuUpsg2IGX4ko4HbFL \\
+          <CodeBlock language="bash">{`curl https://pay.trsinternational.cloud/api/payment/sessions/eNOuUpsg2IGX4ko4HbFL \\
   -H "X-API-Key: pk_live_xxxxxxxxxxxx"`}</CodeBlock>
         </TabGroup>
       </Section>
@@ -376,7 +377,7 @@ if ($body['session']['status'] === 'success') {
 }`}
           response={`{
   "session_id":   "eNOuUpsg2IGX4ko4HbFL",
-  "checkout_url": "https://payverify.com/pay/eNOuUpsg2IGX4ko4HbFL",
+  "checkout_url": "https://ezypay.it.com/pay/eNOuUpsg2IGX4ko4HbFL",
   "expires_at":   "2026-05-12T12:00:00Z",
   "status":       "pending"
 }`}
@@ -499,6 +500,146 @@ if ($body['session']['status'] === 'success') {
             ))}
           </tbody>
         </table>
+      </Section>
+
+      <Section id="troubleshoot" eyebrow="API Reference" title="Troubleshooting">
+        <p className="text-slate-600">
+          Issues integrators hit most often, with the fix.
+        </p>
+
+        <h3 className="mt-6 font-semibold text-slate-900">
+          PHP cURL: <code className="text-xs">SSL routines:ssl3_read_bytes:tlsv1 unrecognized name</code>
+        </h3>
+        <p className="mt-2 text-sm text-slate-700">
+          TLS handshake error. The client didn&apos;t send a Server Name Indication (SNI) the cert
+          recognizes, and old OpenSSL (≤ 1.0.x, common in PHP 5.x / 7.0–7.3) treats it as fatal
+          instead of a warning. Three checks, in order:
+        </p>
+        <ol className="mt-3 space-y-2 text-sm text-slate-700 list-decimal pl-5">
+          <li>
+            <strong>Hostname must be exact.</strong> Use{' '}
+            <code className="text-xs">https://pay.trsinternational.cloud</code> — not an IP, not{' '}
+            <code className="text-xs">www.</code>, not a CDN alias. Calling by IP doesn&apos;t send SNI at all.
+          </li>
+          <li>
+            <strong>Don&apos;t bypass DNS.</strong> Do NOT set <code className="text-xs">CURLOPT_RESOLVE</code> or pass{' '}
+            <code className="text-xs">--resolve</code> on the CLI — both can send the wrong SNI name.
+          </li>
+          <li>
+            <strong>Force TLS 1.2 and keep verification on.</strong> Don&apos;t disable{' '}
+            <code className="text-xs">CURLOPT_SSL_VERIFYPEER</code> or{' '}
+            <code className="text-xs">CURLOPT_SSL_VERIFYHOST</code> — that often makes the problem
+            worse, not better.
+          </li>
+        </ol>
+
+        <p className="mt-4 text-sm font-semibold text-slate-900">Working PHP example:</p>
+        <CodeBlock language="php">{`<?php
+$ch = curl_init('https://pay.trsinternational.cloud/api/payment/sessions');
+curl_setopt_array($ch, [
+    CURLOPT_RETURNTRANSFER => true,
+    CURLOPT_POST           => true,
+    CURLOPT_HTTPHEADER     => [
+        'Content-Type: application/json',
+        'X-API-Key: pk_live_...',
+    ],
+    CURLOPT_POSTFIELDS     => json_encode([
+        'amount'         => 1.00,
+        'order_id'       => 'ORD-1',
+        'redirect_url'   => 'https://yoursite.com/payment/result',
+        'customer_phone' => '7557012345',
+        'customer_name'  => 'Customer Name',
+    ]),
+    CURLOPT_SSLVERSION     => CURL_SSLVERSION_TLSv1_2,
+    CURLOPT_SSL_VERIFYPEER => true,
+    CURLOPT_SSL_VERIFYHOST => 2,
+]);
+$response = curl_exec($ch);
+if (curl_errno($ch)) {
+    error_log('PayVerify cURL error: ' . curl_error($ch));
+}
+curl_close($ch);
+$body = json_decode($response, true);
+header('Location: ' . $body['checkout_url']);`}</CodeBlock>
+
+        <p className="mt-4 text-sm text-slate-700">
+          Still failing? Test from the shell first:
+        </p>
+        <CodeBlock language="bash">{`curl -v https://pay.trsinternational.cloud/api/providers`}</CodeBlock>
+        <ul className="mt-2 text-sm text-slate-700 list-disc pl-5 space-y-1">
+          <li><code className="text-xs">curl</code> works, PHP fails → upgrade PHP/OpenSSL (PHP ≥ 7.4 with OpenSSL ≥ 1.1.1 fixes it permanently).</li>
+          <li>Both fail with the same SNI error → you&apos;re on the wrong hostname, or behind a corporate proxy mangling SNI.</li>
+          <li>Both succeed but your code still errors → it&apos;s your request body, not TLS. Check the response status &amp; body.</li>
+        </ul>
+
+        <h3 className="mt-8 font-semibold text-slate-900">
+          404 from <code className="text-xs">/api/payment/sessions</code>
+        </h3>
+        <p className="mt-2 text-sm text-slate-700">
+          You&apos;re hitting the wrong host. PayVerify has two services — the dashboard UI and the
+          API — on different domains. The API base URL is{' '}
+          <code className="text-xs">https://pay.trsinternational.cloud</code>. Pointing your backend
+          at the dashboard URL returns 404 because the dashboard doesn&apos;t serve the API.
+        </p>
+        <p className="mt-2 text-sm text-slate-700">
+          Sanity check: <code className="text-xs">curl https://pay.trsinternational.cloud/api/providers</code>{' '}
+          should return JSON with the provider list (no auth needed). If it does, the URL is correct;
+          if it doesn&apos;t, fix the base URL first.
+        </p>
+
+        <h3 className="mt-8 font-semibold text-slate-900">
+          401 <code className="text-xs">Invalid or expired token</code>
+        </h3>
+        <p className="mt-2 text-sm text-slate-700">
+          You sent the wrong header for the wrong endpoint:
+        </p>
+        <ul className="mt-2 text-sm text-slate-700 list-disc pl-5 space-y-1">
+          <li>
+            Backend-to-PayVerify (<code className="text-xs">/api/payment/...</code>): use{' '}
+            <code className="text-xs">X-API-Key: pk_live_...</code>
+          </li>
+          <li>
+            Merchant dashboard / your own JWT calls (<code className="text-xs">/api/merchant/...</code>):{' '}
+            use <code className="text-xs">Authorization: Bearer &lt;jwt&gt;</code>
+          </li>
+          <li>
+            APK calls (<code className="text-xs">/api/device/...</code>): use the{' '}
+            <code className="text-xs">auth_key</code> field in the JSON body.
+          </li>
+        </ul>
+
+        <h3 className="mt-8 font-semibold text-slate-900">
+          Trailing-slash double-slash <code className="text-xs">//api/...</code>
+        </h3>
+        <p className="mt-2 text-sm text-slate-700">
+          If your config stores the base URL with a trailing slash and your code appends{' '}
+          <code className="text-xs">/api/payment/...</code>, you&apos;ll request{' '}
+          <code className="text-xs">https://pay.trsinternational.cloud//api/payment/sessions</code>.
+          Some nginx setups normalize this; others 404. Strip the trailing slash from your base URL.
+        </p>
+
+        <h3 className="mt-8 font-semibold text-slate-900">Transactions stuck on Pending</h3>
+        <p className="mt-2 text-sm text-slate-700">
+          The customer submitted a TxnID but no matching SMS has reached the backend. Two common
+          causes:
+        </p>
+        <ul className="mt-2 text-sm text-slate-700 list-disc pl-5 space-y-1">
+          <li>
+            <strong>No bound device.</strong> Check Dashboard → Devices. An &quot;Online&quot;
+            row means the APK is heartbeating; it does NOT guarantee SMS is being forwarded. If the
+            SMS log (Dashboard → SMS) is empty, the APK isn&apos;t uploading.
+          </li>
+          <li>
+            <strong>Gateway identifier mismatch.</strong> The number you set on the gateway must
+            appear in the SMS body. For SMS that show only a masked bank suffix (e.g.{' '}
+            <code className="text-xs">XX6788</code>), store multiple identifiers comma-separated.
+          </li>
+        </ul>
+        <p className="mt-2 text-sm text-slate-700">
+          As a fallback, the merchant can resolve any pending row from Dashboard → Transactions
+          (Mark Paid / Mark Failed). The customer&apos;s checkout polls and reflects the decision
+          within a few seconds.
+        </p>
       </Section>
 
       <Section id="best" eyebrow="Production" title="Best Practices">
