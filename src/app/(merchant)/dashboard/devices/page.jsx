@@ -345,3 +345,4 @@ function OffIcon()    { return <I><line x1="2" y1="2" x2="22" y2="22"/><path d="
 function TrashIcon()  { return <I><polyline points="3 6 5 6 21 6"/><path d="M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/></I>; }
 function CopyIcon()   { return <I width="14" height="14"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></I>; }
 function CheckIcon()  { return <I width="14" height="14"><polyline points="20 6 9 17 4 12"/></I>; }
+function ClockIcon()  { return <I width="16" height="16"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></I>; }
