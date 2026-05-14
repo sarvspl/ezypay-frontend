@@ -445,6 +445,7 @@ function Footer() {
             <li><a href="#features"   className="hover:text-brand-600">Features</a></li>
             <li><a href="#compare"    className="hover:text-brand-600">Why us</a></li>
             <li><a href="#faq"        className="hover:text-brand-600">FAQ</a></li>
+            <li><Link href="/docs"    className="hover:text-brand-600">Developer Docs</Link></li>
           </ul>
         </div>
         <div>

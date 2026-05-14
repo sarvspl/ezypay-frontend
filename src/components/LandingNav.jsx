@@ -11,6 +11,10 @@ const LINKS = [
   { id: 'faq',      label: 'FAQ' },
 ];
 
+const EXTERNAL_LINKS = [
+  { href: '/docs', label: 'Docs' },
+];
+
 export default function LandingNav() {
   const [active, setActive] = useState(null);
 
@@ -82,6 +86,15 @@ export default function LandingNav() {
               </a>
             );
           })}
+          {EXTERNAL_LINKS.map((l) => (
+            <Link
+              key={l.href}
+              href={l.href}
+              className="px-3 py-2 rounded-md text-slate-600 hover:text-slate-900 transition-colors"
+            >
+              {l.label}
+            </Link>
+          ))}
         </nav>
 
         <div className="flex items-center gap-2">
