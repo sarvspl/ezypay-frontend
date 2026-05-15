@@ -467,6 +467,95 @@ if ($body['session']['status'] === 'success') {
   }]
 }`} />
 
+        <ApiEndpoint method="POST" path="/api/device/poll"
+          auth="device_auth_key"
+          description="Fetch pending verifications waiting for a decision. Call on a timer (every 10–30s). Each returned row has the data needed to render an Approve/Reject prompt offline."
+          request={`{ "auth_key": "PV-XXXXXX", "device_id": "android-stable-id" }`}
+          response={`{
+  "verifications": [{
+    "verification_id": 421,
+    "txnid_submitted": "BKX92H1",
+    "amount":          500.00,
+    "currency":        "BDT",
+    "customer_phone":  "01712345678",
+    "customer_name":   "Customer Name",
+    "order_id":        "ORD-9911",
+    "provider":        "bkash",
+    "variant":         "personal",
+    "account_number":  "01799999999",
+    "created_at":      "2026-05-12T11:25:30Z"
+  }]
+}`} />
+
+        <ApiEndpoint method="POST" path="/api/device/report"
+          auth="device_auth_key"
+          description='Resolve a pending verification from the APK ("Approve" / "Reject" buttons). Mirrors the web dashboard\'s Mark Paid / Mark Failed.'
+          request={`{
+  "auth_key":        "PV-XXXXXX",
+  "device_id":       "android-stable-id",
+  "verification_id": 421,
+  "result":          "success",
+  "matched_sms":     "Cash In Tk 500.00 successful. TrxID: BKX92H1...",
+  "failure_reason":  null
+}`}
+          response={`{ "ok": true }`} />
+
+        <ApiEndpoint method="POST" path="/api/device/transactions"
+          auth="device_auth_key"
+          description="List recent transactions (pending + history) for the merchant on the APK. Filter by status, search by TxnID or order_id."
+          request={`{
+  "auth_key":  "PV-XXXXXX",
+  "device_id": "android-stable-id",
+  "status":    "pending",
+  "q":         "BKX92",
+  "limit":     50
+}`}
+          response={`{
+  "transactions": [{
+    "id":              421,
+    "txnid_submitted": "BKX92H1",
+    "amount":          500.00,
+    "status":          "pending",
+    "result_source":   null,
+    "verified_at":     null,
+    "failure_reason":  null,
+    "provider":        "bkash",
+    "account_number":  "01799999999",
+    "order_id":        "ORD-9911",
+    "customer_name":   "Customer Name",
+    "created_at":      "2026-05-12T11:25:30Z"
+  }]
+}`} />
+
+        <ApiEndpoint method="POST" path="/api/device/verify"
+          auth="device_auth_key"
+          description="Paste a TxnID into the APK. Backend searches received SMS, validates against a configured gateway, creates a successful transaction if everything aligns. Mirrors the web Verify page."
+          request={`{
+  "auth_key":  "PV-XXXXXX",
+  "device_id": "android-stable-id",
+  "txnid":     "BKX92H1"
+}`}
+          response={`{
+  "matched": true,
+  "already_existed": false,
+  "transaction": {
+    "id": 422, "txnid_submitted": "BKX92H1", "amount": 500.00,
+    "status": "success", "result_source": "manual_verify",
+    "provider": "bkash", "account_number": "01799999999"
+  },
+  "sms": { "id": 7711, "sender": "bKash", "body": "...", "received_at": "..." }
+}`} />
+
+        <Callout tone="slate" title="Manual verification flow inside the APK">
+          The APK has the same verification powers as the web dashboard:
+          <ul className="mt-2 list-disc pl-5 space-y-1">
+            <li><strong>List view:</strong> call <code className="text-xs">/api/device/transactions</code> for full history, or <code className="text-xs">/api/device/poll</code> for pending-only.</li>
+            <li><strong>Approve / Reject:</strong> call <code className="text-xs">/api/device/report</code> with <code className="text-xs">result: &quot;success&quot;</code> or <code className="text-xs">&quot;failed&quot;</code>.</li>
+            <li><strong>Type-a-TxnID verify:</strong> call <code className="text-xs">/api/device/verify</code> — searches SMS, auto-resolves.</li>
+          </ul>
+          All of these flip the same <code className="text-xs">transactions</code> row that the web dashboard reads, so a decision from the phone shows up on the dashboard immediately.
+        </Callout>
+
         <p className="mt-4 text-sm text-slate-600">
           Full APK contract (poll/report patterns, SMS matching rules, permissions) lives in{' '}
           <code className="text-xs">docs/APK_API.md</code>.
