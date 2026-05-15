@@ -1,11 +1,23 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { api } from '@/lib/api';
 import { formatMoney } from '@/lib/money';
 
 const REDIRECT_SECONDS = 5;
+const POLL_MS = 3000;
+const POLL_MAX_MS = 90_000;
+
+// The effective state shown to the customer.  A failed transaction trumps a
+// still-pending session (the session stays pending so the customer could retry
+// with a different TxnID, but the latest verdict is what they care about).
+function deriveStatus(sessionStatus, txStatus) {
+  if (sessionStatus && sessionStatus !== 'pending') return sessionStatus;
+  if (txStatus === 'failed')  return 'failed';
+  if (txStatus === 'success') return 'success';
+  return 'pending';
+}
 
 export default function CheckoutResultPage() {
   const { sessionId } = useParams();
@@ -13,39 +25,71 @@ export default function CheckoutResultPage() {
   const [error, setError] = useState(null);
   const [seconds, setSeconds] = useState(REDIRECT_SECONDS);
 
+  const pollStarted = useRef(0);
+  const pollTimer   = useRef(null);
+
+  // Initial load + poll while pending
   useEffect(() => {
-    (async () => {
+    let cancelled = false;
+    pollStarted.current = Date.now();
+
+    const fetchOnce = async () => {
       try {
-        const [sess, st] = await Promise.all([api.checkoutSession(sessionId), api.checkoutStatus(sessionId)]);
-        setData({
+        const [sess, st] = await Promise.all([
+          api.checkoutSession(sessionId),
+          api.checkoutStatus(sessionId),
+        ]);
+        if (cancelled) return;
+        const next = {
           session: sess.session,
           status: st.status,
           transaction: st.transaction,
           redirect_url: st.redirect_url,
-        });
+        };
+        setData(next);
+
+        const effective = deriveStatus(next.status, next.transaction?.status);
+        if (effective !== 'pending') {
+          if (pollTimer.current) clearTimeout(pollTimer.current);
+          return;
+        }
+        // Still pending — keep polling until budget exhausted
+        if (Date.now() - pollStarted.current < POLL_MAX_MS) {
+          pollTimer.current = setTimeout(fetchOnce, POLL_MS);
+        }
       } catch (e) {
-        setError(e.message);
+        if (!cancelled) setError(e.message);
       }
-    })();
+    };
+
+    fetchOnce();
+    return () => {
+      cancelled = true;
+      if (pollTimer.current) clearTimeout(pollTimer.current);
+    };
   }, [sessionId]);
 
+  const effectiveStatus = data ? deriveStatus(data.status, data.transaction?.status) : 'pending';
+
+  // Redirect countdown — only when effective status has resolved
   useEffect(() => {
     if (!data || !data.redirect_url) return;
-    if (data.status === 'pending') return; // don't auto-redirect on pending
+    if (effectiveStatus === 'pending') return;
     const t = setInterval(() => setSeconds((s) => Math.max(0, s - 1)), 1000);
     return () => clearInterval(t);
-  }, [data]);
+  }, [data, effectiveStatus]);
 
   useEffect(() => {
-    if (seconds === 0 && data?.redirect_url && data.status !== 'pending') {
-      window.location.href = withParams(data.redirect_url, { session_id: sessionId, status: data.status });
+    if (seconds === 0 && data?.redirect_url && effectiveStatus !== 'pending') {
+      window.location.href = withParams(data.redirect_url, { session_id: sessionId, status: effectiveStatus });
     }
-  }, [seconds, data, sessionId]);
+  }, [seconds, data, effectiveStatus, sessionId]);
 
   if (error) return <div className="max-w-xl mx-auto px-6 py-16 text-center text-rose-600">{error}</div>;
   if (!data)  return <div className="max-w-xl mx-auto px-6 py-16 text-center text-slate-400">Loading…</div>;
 
-  const { session, status, transaction, redirect_url } = data;
+  const { session, transaction, redirect_url } = data;
+  const status  = effectiveStatus;
   const variant = STATES[status] || STATES.pending;
 
   return (
