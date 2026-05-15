@@ -128,7 +128,7 @@ function ContentArea() {
           <li><span className="font-semibold text-slate-900">5.</span> Test with a checkout session (see below)</li>
         </ol>
 
-        <CodeBlock language="bash" caption="Test the API now — replace pk_live_... with your key">{`curl -X POST https://pay.trsinternational.cloud/api/payment/sessions \\
+        <CodeBlock language="bash" caption="Test the API now — replace pk_live_... with your key">{`curl -X POST https://checkout.ezypay.it.com/api/payment/sessions \\
   -H "X-API-Key: pk_live_xxxxxxxxxxxxxxxxxxxxxxxx" \\
   -H "Content-Type: application/json" \\
   -d '{
@@ -248,7 +248,7 @@ function ContentArea() {
         <TabGroup tabs={['Node.js', 'PHP', 'Python', 'cURL']}>
           <CodeBlock language="js">{`// Node.js (Express)
 app.post('/checkout', async (req, res) => {
-  const r = await fetch('https://pay.trsinternational.cloud/api/payment/sessions', {
+  const r = await fetch('https://checkout.ezypay.it.com/api/payment/sessions', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -267,7 +267,7 @@ app.post('/checkout', async (req, res) => {
 
           <CodeBlock language="php">{`<?php
 // PHP
-$ch = curl_init('https://pay.trsinternational.cloud/api/payment/sessions');
+$ch = curl_init('https://checkout.ezypay.it.com/api/payment/sessions');
 curl_setopt_array($ch, [
   CURLOPT_RETURNTRANSFER => true,
   CURLOPT_POST           => true,
@@ -288,7 +288,7 @@ header('Location: ' . $body['checkout_url']);`}</CodeBlock>
 import os, requests
 
 r = requests.post(
-    'https://pay.trsinternational.cloud/api/payment/sessions',
+    'https://checkout.ezypay.it.com/api/payment/sessions',
     headers={'X-API-Key': os.environ['PAYVERIFY_API_KEY']},
     json={
         'amount':       request.form['amount'],
@@ -299,7 +299,7 @@ r = requests.post(
 )
 return redirect(r.json()['checkout_url'])`}</CodeBlock>
 
-          <CodeBlock language="bash">{`curl -X POST https://pay.trsinternational.cloud/api/payment/sessions \\
+          <CodeBlock language="bash">{`curl -X POST https://checkout.ezypay.it.com/api/payment/sessions \\
   -H "X-API-Key: pk_live_xxxxxxxxxxxx" \\
   -H "Content-Type: application/json" \\
   -d '{
@@ -331,7 +331,7 @@ return redirect(r.json()['checkout_url'])`}</CodeBlock>
         <TabGroup tabs={['Node.js', 'PHP', 'cURL']}>
           <CodeBlock language="js">{`app.get('/payment/result', async (req, res) => {
   const r = await fetch(
-    \`https://pay.trsinternational.cloud/api/payment/sessions/\${req.query.session_id}\`,
+    \`https://checkout.ezypay.it.com/api/payment/sessions/\${req.query.session_id}\`,
     { headers: { 'X-API-Key': process.env.PAYVERIFY_API_KEY } }
   );
   const { session } = await r.json();
@@ -345,7 +345,7 @@ return redirect(r.json()['checkout_url'])`}</CodeBlock>
 
           <CodeBlock language="php">{`<?php
 $id = $_GET['session_id'];
-$ch = curl_init("https://pay.trsinternational.cloud/api/payment/sessions/$id");
+$ch = curl_init("https://checkout.ezypay.it.com/api/payment/sessions/$id");
 curl_setopt_array($ch, [
   CURLOPT_RETURNTRANSFER => true,
   CURLOPT_HTTPHEADER     => ['X-API-Key: ' . getenv('PAYVERIFY_API_KEY')],
@@ -355,7 +355,7 @@ if ($body['session']['status'] === 'success') {
   mark_order_paid($body['session']['order_id']);
 }`}</CodeBlock>
 
-          <CodeBlock language="bash">{`curl https://pay.trsinternational.cloud/api/payment/sessions/eNOuUpsg2IGX4ko4HbFL \\
+          <CodeBlock language="bash">{`curl https://checkout.ezypay.it.com/api/payment/sessions/eNOuUpsg2IGX4ko4HbFL \\
   -H "X-API-Key: pk_live_xxxxxxxxxxxx"`}</CodeBlock>
         </TabGroup>
       </Section>
@@ -607,7 +607,7 @@ if ($body['session']['status'] === 'success') {
         <ol className="mt-3 space-y-2 text-sm text-slate-700 list-decimal pl-5">
           <li>
             <strong>Hostname must be exact.</strong> Use{' '}
-            <code className="text-xs">https://pay.trsinternational.cloud</code> — not an IP, not{' '}
+            <code className="text-xs">https://checkout.ezypay.it.com</code> — not an IP, not{' '}
             <code className="text-xs">www.</code>, not a CDN alias. Calling by IP doesn&apos;t send SNI at all.
           </li>
           <li>
@@ -624,7 +624,7 @@ if ($body['session']['status'] === 'success') {
 
         <p className="mt-4 text-sm font-semibold text-slate-900">Working PHP example:</p>
         <CodeBlock language="php">{`<?php
-$ch = curl_init('https://pay.trsinternational.cloud/api/payment/sessions');
+$ch = curl_init('https://checkout.ezypay.it.com/api/payment/sessions');
 curl_setopt_array($ch, [
     CURLOPT_RETURNTRANSFER => true,
     CURLOPT_POST           => true,
@@ -654,7 +654,7 @@ header('Location: ' . $body['checkout_url']);`}</CodeBlock>
         <p className="mt-4 text-sm text-slate-700">
           Still failing? Test from the shell first:
         </p>
-        <CodeBlock language="bash">{`curl -v https://pay.trsinternational.cloud/api/providers`}</CodeBlock>
+        <CodeBlock language="bash">{`curl -v https://checkout.ezypay.it.com/api/providers`}</CodeBlock>
         <ul className="mt-2 text-sm text-slate-700 list-disc pl-5 space-y-1">
           <li><code className="text-xs">curl</code> works, PHP fails → upgrade PHP/OpenSSL (PHP ≥ 7.4 with OpenSSL ≥ 1.1.1 fixes it permanently).</li>
           <li>Both fail with the same SNI error → you&apos;re on the wrong hostname, or behind a corporate proxy mangling SNI.</li>
@@ -667,11 +667,11 @@ header('Location: ' . $body['checkout_url']);`}</CodeBlock>
         <p className="mt-2 text-sm text-slate-700">
           You&apos;re hitting the wrong host. PayVerify has two services — the dashboard UI and the
           API — on different domains. The API base URL is{' '}
-          <code className="text-xs">https://pay.trsinternational.cloud</code>. Pointing your backend
+          <code className="text-xs">https://checkout.ezypay.it.com</code>. Pointing your backend
           at the dashboard URL returns 404 because the dashboard doesn&apos;t serve the API.
         </p>
         <p className="mt-2 text-sm text-slate-700">
-          Sanity check: <code className="text-xs">curl https://pay.trsinternational.cloud/api/providers</code>{' '}
+          Sanity check: <code className="text-xs">curl https://checkout.ezypay.it.com/api/providers</code>{' '}
           should return JSON with the provider list (no auth needed). If it does, the URL is correct;
           if it doesn&apos;t, fix the base URL first.
         </p>
@@ -703,7 +703,7 @@ header('Location: ' . $body['checkout_url']);`}</CodeBlock>
         <p className="mt-2 text-sm text-slate-700">
           If your config stores the base URL with a trailing slash and your code appends{' '}
           <code className="text-xs">/api/payment/...</code>, you&apos;ll request{' '}
-          <code className="text-xs">https://pay.trsinternational.cloud//api/payment/sessions</code>.
+          <code className="text-xs">https://checkout.ezypay.it.com//api/payment/sessions</code>.
           Some nginx setups normalize this; others 404. Strip the trailing slash from your base URL.
         </p>
 
