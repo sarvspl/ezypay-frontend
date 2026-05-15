@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { useMerchant } from './layout';
 import { formatMoney, currencySymbol } from '@/lib/money';
 
@@ -99,6 +100,12 @@ function PlanSection({ merchant }) {
             <div className="mt-1 text-3xl sm:text-4xl font-extrabold">
               {formatMoney(balance, merchant.currency)}
             </div>
+            <Link
+              href="/dashboard/wallet"
+              className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-white/20 hover:bg-white/30 backdrop-blur px-4 py-1.5 text-sm font-semibold transition"
+            >
+              + Add Balance
+            </Link>
           </div>
           <div className="text-right">
             <div className="text-xs uppercase tracking-wider text-white/70">Expires On</div>

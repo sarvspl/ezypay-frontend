@@ -11,6 +11,7 @@ const NAV = [
     items: [
       { label: 'Overview',     href: '/dashboard',              icon: <GridIcon /> },
       { label: 'Transactions', href: '/dashboard/transactions', icon: <SwapIcon /> },
+      { label: 'Wallet',       href: '/dashboard/wallet',       icon: <WalletIcon /> },
     ],
   },
   {
@@ -116,4 +117,5 @@ function CardIcon()    { return <I><rect x="2" y="5" width="20" height="14" rx="
 function MessageIcon() { return <I><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></I>; }
 function PhoneIcon()   { return <I><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></I>; }
 function LogoutIcon()  { return <I><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></I>; }
+function WalletIcon()  { return <I><path d="M20 12V7a2 2 0 0 0-2-2H5a2 2 0 0 1 0-4h13"/><path d="M2 9v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2H4a2 2 0 0 1-2-2z"/><circle cx="17" cy="14" r="1"/></I>; }
 function CloseIcon()   { return <I><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></I>; }

@@ -78,6 +78,11 @@ export const api = {
   merchantVerifyTxnId: (token, txnid) =>
     request('/api/merchant/verify', { method: 'POST', body: { txnid }, token }),
 
+  // Wallet (merchant dashboard)
+  merchantGetWallet:        (token) => request('/api/merchant/wallet', { token }),
+  merchantListRecharges:    (token) => request('/api/merchant/wallet/recharges', { token }),
+  merchantStartRecharge:    (token, amount) => request('/api/merchant/wallet/recharge', { method: 'POST', body: { amount }, token }),
+
   // Public checkout (no auth, by session id)
   checkoutSession:  (id) => request(`/api/checkout/${id}`),
   checkoutGateways: (id) => request(`/api/checkout/${id}/gateways`),
@@ -104,4 +109,24 @@ export const api = {
   getSupport:             () => request('/api/support'),
   adminGetSupport:        (token) => request('/api/admin/support', { token }),
   adminUpdateSupport:     (token, body) => request('/api/admin/support', { method: 'PUT', body, token }),
+
+  // Platform merchant (admin-managed receiving accounts for wallet topups)
+  adminGetPlatform:           (token) => request('/api/admin/platform', { token }),
+  adminListPlatformRecharges: (token, params = {}) => {
+    const qs = new URLSearchParams(params).toString();
+    return request(`/api/admin/platform/recharges${qs ? '?' + qs : ''}`, { token });
+  },
+  adminListPlatformGateways:   (token) => request('/api/admin/platform/gateways', { token }),
+  adminCreatePlatformGateway:  (token, body) => request('/api/admin/platform/gateways', { method: 'POST', body, token }),
+  adminUpdatePlatformGateway:  (token, id, body) => request(`/api/admin/platform/gateways/${id}`, { method: 'PATCH', body, token }),
+  adminTogglePlatformGateway:  (token, id) => request(`/api/admin/platform/gateways/${id}/toggle`, { method: 'POST', token }),
+  adminDeletePlatformGateway:  (token, id) => request(`/api/admin/platform/gateways/${id}`, { method: 'DELETE', token }),
+  adminListPlatformDevices:        (token) => request('/api/admin/platform/devices', { token }),
+  adminDeletePlatformDevice:       (token, id) => request(`/api/admin/platform/devices/${id}`, { method: 'DELETE', token }),
+  adminListPlatformTransactions:   (token, params = {}) => {
+    const qs = new URLSearchParams(params).toString();
+    return request(`/api/admin/platform/transactions${qs ? '?' + qs : ''}`, { token });
+  },
+  adminResolvePlatformTransaction: (token, id, result, reason) =>
+    request(`/api/admin/platform/transactions/${id}/resolve`, { method: 'POST', body: { result, reason }, token }),
 };
