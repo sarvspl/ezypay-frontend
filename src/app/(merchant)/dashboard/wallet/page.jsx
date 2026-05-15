@@ -6,6 +6,7 @@ import { api } from '@/lib/api';
 import { merchantAuth } from '@/lib/auth';
 import { formatMoney } from '@/lib/money';
 import { useMerchant } from '../layout';
+import SupportContactCard from '@/components/SupportContactCard';
 
 const QUICK_AMOUNTS = [100, 500, 1000, 2000, 5000];
 
@@ -210,7 +211,12 @@ function WalletPageBody() {
               </div>
 
               {startError && (
-                <div className="text-sm text-rose-600 bg-rose-50 border border-rose-200 rounded p-3">{startError}</div>
+                <div className="space-y-3">
+                  <div className="text-sm text-rose-600 bg-rose-50 border border-rose-200 rounded p-3">{startError}</div>
+                  {/contact support/i.test(startError) && (
+                    <SupportContactCard tone="rose" title="Contact support" />
+                  )}
+                </div>
               )}
 
               <div className="flex justify-end gap-2 pt-2">

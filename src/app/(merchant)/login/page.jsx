@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { api } from '@/lib/api';
 import { merchantAuth } from '@/lib/auth';
 import Logo from '@/components/Logo';
+import SupportContactCard from '@/components/SupportContactCard';
 
 // Next.js 14 requires useSearchParams() to live inside a Suspense boundary
 // when the page is statically rendered. The actual page body is split out so
@@ -158,8 +159,11 @@ function LoginPageBody() {
           )}
 
           {error && (
-            <div className="text-sm text-rose-600 bg-rose-50 border border-rose-200 rounded p-3">
-              {error}
+            <div className="space-y-3">
+              <div className="text-sm text-rose-600 bg-rose-50 border border-rose-200 rounded p-3">
+                {error}
+              </div>
+              {/contact support/i.test(error) && <SupportContactCard tone="rose" title="Contact support" />}
             </div>
           )}
 
