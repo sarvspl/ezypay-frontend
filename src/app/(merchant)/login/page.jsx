@@ -1,13 +1,24 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { api } from '@/lib/api';
 import { merchantAuth } from '@/lib/auth';
 import Logo from '@/components/Logo';
 
+// Next.js 14 requires useSearchParams() to live inside a Suspense boundary
+// when the page is statically rendered. The actual page body is split out so
+// we can wrap it here.
 export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginPageBody />
+    </Suspense>
+  );
+}
+
+function LoginPageBody() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [form, setForm] = useState({ identifier: '', password: '' });
