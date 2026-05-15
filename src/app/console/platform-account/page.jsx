@@ -18,6 +18,7 @@ export default function ConsolePlatformAccountPage() {
   const [providers, setProviders] = useState([]);
   const [error, setError] = useState(null);
   const [showKey, setShowKey] = useState(false);
+  const [showAddGateway, setShowAddGateway] = useState(false);
 
   const reload = async () => {
     const token = adminAuth.get();
@@ -97,45 +98,71 @@ export default function ConsolePlatformAccountPage() {
         {/* Gateways */}
         <div>
           <div className="flex items-center justify-between mb-3">
-            <h2 className="font-semibold text-slate-900">Receiving gateways</h2>
-            <AddGatewayInline
-              providers={providers}
-              onCreated={reload}
-            />
+            <div>
+              <h2 className="font-semibold text-slate-900">Receiving gateways</h2>
+              <p className="text-xs text-slate-500 mt-0.5">Wallet accounts merchants pay into when topping up their balance.</p>
+            </div>
+            {!showAddGateway && (gateways && gateways.length > 0) && (
+              <button onClick={() => setShowAddGateway(true)} className="btn-primary !py-2">+ Add gateway</button>
+            )}
           </div>
-          <div className="card overflow-hidden">
-            {!gateways ? (
-              <div className="p-6 text-slate-500 text-sm">Loading…</div>
-            ) : gateways.length === 0 ? (
-              <div className="p-8 text-center text-slate-500 text-sm">
-                No gateways yet. Add one above so merchants can pay into it.
+
+          {/* The add-form sits prominently at the top of the section when open. */}
+          {showAddGateway && (
+            <AddGatewayForm
+              providers={providers}
+              onCreated={() => { setShowAddGateway(false); reload(); }}
+              onCancel={() => setShowAddGateway(false)}
+            />
+          )}
+
+          {/* List / empty state */}
+          {!gateways ? (
+            <div className="card p-6 text-slate-500 text-sm">Loading…</div>
+          ) : gateways.length === 0 ? (
+            !showAddGateway && (
+              <div className="card p-10 text-center">
+                <div className="mx-auto w-12 h-12 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mb-3">
+                  <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/>
+                  </svg>
+                </div>
+                <div className="font-semibold text-slate-900">No receiving gateways yet</div>
+                <p className="text-sm text-slate-500 mt-1 max-w-sm mx-auto">
+                  Add at least one bKash / Nagad / Rocket / Upay account so merchants can top up their wallets.
+                </p>
+                <button onClick={() => setShowAddGateway(true)} className="btn-primary mt-5 !py-2">
+                  + Add your first gateway
+                </button>
               </div>
-            ) : (
+            )
+          ) : (
+            <div className="card overflow-hidden">
               <table className="w-full text-sm">
-                <thead className="bg-slate-50 text-slate-600 text-left">
+                <thead className="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider">
                   <tr>
-                    <th className="px-4 py-3 font-medium">Provider</th>
-                    <th className="px-4 py-3 font-medium">Account</th>
-                    <th className="px-4 py-3 font-medium">Label</th>
-                    <th className="px-4 py-3 font-medium">Status</th>
-                    <th className="px-4 py-3 font-medium text-right">Actions</th>
+                    <th className="px-4 py-3 text-left font-medium">Provider</th>
+                    <th className="px-4 py-3 text-left font-medium">Account</th>
+                    <th className="px-4 py-3 text-left font-medium">Label</th>
+                    <th className="px-4 py-3 text-left font-medium">Status</th>
+                    <th className="px-4 py-3 text-right font-medium">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-200">
+                <tbody className="divide-y divide-slate-100">
                   {gateways.map((g) => (
-                    <tr key={g.id} className="hover:bg-slate-50">
-                      <td className="px-4 py-3 font-medium text-slate-900 capitalize">{g.provider}</td>
+                    <tr key={g.id} className="hover:bg-slate-50/60">
+                      <td className="px-4 py-3 font-semibold text-slate-900 capitalize">{g.provider}</td>
                       <td className="px-4 py-3 font-mono text-xs text-slate-700">{g.account_number}</td>
                       <td className="px-4 py-3 text-slate-700">{g.label || <span className="text-slate-400">—</span>}</td>
                       <td className="px-4 py-3">
                         {g.is_enabled
-                          ? <span className="inline-flex rounded-full bg-emerald-100 text-emerald-700 px-2 py-0.5 text-[11px] font-semibold">Active</span>
-                          : <span className="inline-flex rounded-full bg-slate-100 text-slate-600 px-2 py-0.5 text-[11px] font-semibold">Disabled</span>}
+                          ? <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 px-2 py-0.5 text-[11px] font-semibold"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500"/>Active</span>
+                          : <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-50 border border-slate-200 text-slate-600 px-2 py-0.5 text-[11px] font-semibold"><span className="w-1.5 h-1.5 rounded-full bg-slate-400"/>Disabled</span>}
                       </td>
-                      <td className="px-4 py-3 text-right space-x-3">
+                      <td className="px-4 py-3 text-right space-x-2">
                         <button
                           onClick={async () => { const token = adminAuth.get(); await api.adminTogglePlatformGateway(token, g.id); reload(); }}
-                          className="text-xs text-slate-600 hover:text-slate-900 hover:underline"
+                          className="text-xs font-semibold text-slate-600 hover:text-slate-900 px-2.5 py-1 rounded-md hover:bg-slate-100"
                         >
                           {g.is_enabled ? 'Disable' : 'Enable'}
                         </button>
@@ -148,7 +175,7 @@ export default function ConsolePlatformAccountPage() {
                               reload();
                             } catch (e) { alert(e.message); }
                           }}
-                          className="text-xs text-rose-600 hover:text-rose-700 hover:underline"
+                          className="text-xs font-semibold text-rose-600 hover:text-rose-700 px-2.5 py-1 rounded-md hover:bg-rose-50"
                         >
                           Delete
                         </button>
@@ -157,8 +184,8 @@ export default function ConsolePlatformAccountPage() {
                   ))}
                 </tbody>
               </table>
-            )}
-          </div>
+            </div>
+          )}
         </div>
 
         {/* Devices */}
@@ -267,15 +294,27 @@ function RechargeStatusPill({ tx, session }) {
   return <span className="inline-flex rounded-full bg-amber-100 text-amber-700 px-2.5 py-0.5 text-[11px] font-semibold">Pending</span>;
 }
 
-function AddGatewayInline({ providers, onCreated }) {
-  const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({ provider: '', variant: 'personal', account_number: '', label: '' });
+function prettyVariant(v) {
+  // Built-ins get a nicer label; anything custom an admin invented is title-cased.
+  const map = { personal: 'Personal', agent: 'Agent', merchant: 'Merchant', business: 'Business' };
+  return map[v] || (v ? v.charAt(0).toUpperCase() + v.slice(1) : '');
+}
+
+function AddGatewayForm({ providers, onCreated, onCancel }) {
+  const [form, setForm] = useState({ provider: '', variant: '', account_number: '', label: '' });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
 
-  if (!open) {
-    return <button onClick={() => setOpen(true)} className="btn-primary !py-2">+ Add gateway</button>;
-  }
+  const selectedProvider = providers.find((p) => p.id === form.provider);
+  const variants = selectedProvider?.variants?.length ? selectedProvider.variants : [];
+
+  // When the provider changes, default the variant to the first one this
+  // provider supports (so we never submit a variant that doesn't belong).
+  const onProviderChange = (providerId) => {
+    const p = providers.find((x) => x.id === providerId);
+    const firstVariant = p?.variants?.[0] || '';
+    setForm({ ...form, provider: providerId, variant: firstVariant });
+  };
 
   const onSubmit = async (e) => {
     e.preventDefault();
@@ -283,8 +322,6 @@ function AddGatewayInline({ providers, onCreated }) {
     try {
       const token = adminAuth.get();
       await api.adminCreatePlatformGateway(token, form);
-      setOpen(false);
-      setForm({ provider: '', variant: 'personal', account_number: '', label: '' });
       onCreated();
     } catch (e2) {
       setError(e2.message);
@@ -294,56 +331,117 @@ function AddGatewayInline({ providers, onCreated }) {
   };
 
   return (
-    <form onSubmit={onSubmit} className="card p-4 flex flex-wrap items-end gap-3 max-w-3xl">
-      <div>
-        <label className="label">Provider</label>
-        <select
-          required
-          value={form.provider}
-          onChange={(e) => setForm({ ...form, provider: e.target.value })}
-          className="input !w-40"
-        >
-          <option value="">Select…</option>
-          {providers.map((p) => (
-            <option key={p.id} value={p.id}>{p.name}</option>
-          ))}
-        </select>
+    <div className="card p-5 sm:p-6 mb-4 border-brand-200/60 ring-1 ring-brand-500/10">
+      <div className="flex items-center justify-between gap-3 mb-5">
+        <div>
+          <h3 className="font-semibold text-slate-900">Add receiving gateway</h3>
+          <p className="text-xs text-slate-500 mt-0.5">
+            The wallet account merchants will pay into. Make sure the account number matches what appears in your wallet SMS.
+          </p>
+        </div>
+        <button onClick={onCancel} type="button" className="text-slate-400 hover:text-slate-700 p-1 rounded-md hover:bg-slate-100">
+          <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
       </div>
-      <div>
-        <label className="label">Variant</label>
-        <select
-          value={form.variant}
-          onChange={(e) => setForm({ ...form, variant: e.target.value })}
-          className="input !w-32"
-        >
-          <option value="personal">Personal</option>
-          <option value="agent">Agent</option>
-        </select>
-      </div>
-      <div className="flex-1 min-w-[200px]">
-        <label className="label">Account number</label>
-        <input
-          required
-          value={form.account_number}
-          onChange={(e) => setForm({ ...form, account_number: e.target.value })}
-          placeholder="01799999999"
-          className="input"
-        />
-      </div>
-      <div className="flex-1 min-w-[180px]">
-        <label className="label">Label (optional)</label>
-        <input
-          value={form.label}
-          onChange={(e) => setForm({ ...form, label: e.target.value })}
-          placeholder="Primary"
-          className="input"
-        />
-      </div>
-      <div className="flex gap-2">
-        <button type="button" onClick={() => setOpen(false)} disabled={saving} className="btn-secondary !py-2">Cancel</button>
-        <button type="submit" disabled={saving} className="btn-primary !py-2">{saving ? 'Adding…' : 'Add'}</button>
-      </div>
-      {error && <div className="basis-full text-sm text-rose-600">{error}</div>}
-    </form>
+
+      <form onSubmit={onSubmit} className="grid sm:grid-cols-2 gap-4">
+        <div className="sm:col-span-1">
+          <label className="label">Provider</label>
+          <select
+            required
+            value={form.provider}
+            onChange={(e) => onProviderChange(e.target.value)}
+            className="input"
+          >
+            <option value="">Select a wallet…</option>
+            {providers.map((p) => (
+              <option key={p.id} value={p.id}>{p.name}</option>
+            ))}
+          </select>
+        </div>
+
+        <div className="sm:col-span-1">
+          <label className="label">
+            Account type
+            {!selectedProvider && <span className="text-slate-400 font-normal ml-1">(pick a provider first)</span>}
+          </label>
+          {!selectedProvider ? (
+            <div className="input bg-slate-50 text-slate-400 cursor-not-allowed flex items-center">—</div>
+          ) : variants.length === 1 ? (
+            // Single-variant provider: no choice to make, just show the label.
+            <div className="input bg-slate-50 text-slate-700 flex items-center">
+              {prettyVariant(variants[0])}
+            </div>
+          ) : variants.length <= 3 ? (
+            // 2–3 variants render as inline pills.
+            <div className="flex gap-2 flex-wrap">
+              {variants.map((v) => (
+                <button
+                  key={v}
+                  type="button"
+                  onClick={() => setForm({ ...form, variant: v })}
+                  className={`flex-1 min-w-[100px] px-3 py-2 text-sm font-medium rounded-md border transition ${
+                    form.variant === v
+                      ? 'bg-brand-50 border-brand-300 text-brand-700'
+                      : 'bg-white border-slate-300 text-slate-700 hover:border-slate-400'
+                  }`}
+                >
+                  {prettyVariant(v)}
+                </button>
+              ))}
+            </div>
+          ) : (
+            // 4+ variants — too many for pills, fall back to a dropdown.
+            <select
+              value={form.variant}
+              onChange={(e) => setForm({ ...form, variant: e.target.value })}
+              className="input"
+            >
+              {variants.map((v) => (
+                <option key={v} value={v}>{prettyVariant(v)}</option>
+              ))}
+            </select>
+          )}
+        </div>
+
+        <div className="sm:col-span-1">
+          <label className="label">Account number</label>
+          <input
+            required
+            value={form.account_number}
+            onChange={(e) => setForm({ ...form, account_number: e.target.value })}
+            placeholder={selectedProvider?.id === 'bkash' || selectedProvider?.id === 'nagad' ? '01799999999' : 'Account / wallet number'}
+            className="input font-mono"
+            inputMode="numeric"
+          />
+          <p className="text-xs text-slate-500 mt-1">Use the exact format that appears in your wallet's confirmation SMS.</p>
+        </div>
+
+        <div className="sm:col-span-1">
+          <label className="label">Label <span className="text-slate-400 font-normal">(optional)</span></label>
+          <input
+            value={form.label}
+            onChange={(e) => setForm({ ...form, label: e.target.value })}
+            placeholder="Primary / Backup / Personal phone"
+            className="input"
+          />
+        </div>
+
+        {error && (
+          <div className="sm:col-span-2 text-sm text-rose-600 bg-rose-50 border border-rose-200 rounded p-3">
+            {error}
+          </div>
+        )}
+
+        <div className="sm:col-span-2 flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+          <button type="button" onClick={onCancel} disabled={saving} className="text-sm text-slate-600 hover:text-slate-900 px-3 py-2">
+            Cancel
+          </button>
+          <button type="submit" disabled={saving || !form.provider || !form.account_number.trim()} className="btn-primary !py-2">
+            {saving ? 'Adding…' : 'Add gateway'}
+          </button>
+        </div>
+      </form>
+    </div>
   );
 }
