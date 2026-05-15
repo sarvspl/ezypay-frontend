@@ -489,7 +489,7 @@ if ($body['session']['status'] === 'success') {
 
         <ApiEndpoint method="POST" path="/api/device/report"
           auth="device_auth_key"
-          description='Resolve a pending verification from the APK ("Approve" / "Reject" buttons). Mirrors the web dashboard\'s Mark Paid / Mark Failed.'
+          description={`Resolve a pending verification from the APK ("Approve" / "Reject" buttons). Mirrors the web dashboard's Mark Paid / Mark Failed.`}
           request={`{
   "auth_key":        "PV-XXXXXX",
   "device_id":       "android-stable-id",
