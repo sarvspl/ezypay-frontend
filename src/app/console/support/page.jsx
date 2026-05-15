@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { api } from '@/lib/api';
 import { adminAuth } from '@/lib/auth';
 import { useGuard } from '@/lib/guard';
-import { LogoMark } from '@/components/Logo';
+import ConsoleShell from '@/components/console/ConsoleShell';
 
 const FIELDS = [
   { name: 'email',    label: 'Support Email',    placeholder: 'support@yourcompany.com', type: 'email' },
@@ -47,8 +47,6 @@ export default function ConsoleSupportPage() {
       .finally(() => setLoaded(true));
   }, [ready, router]);
 
-  const logout = () => { adminAuth.clear(); router.replace('/console/login'); };
-
   const onChange = (e) => setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
 
   const onSave = async (e) => {
@@ -71,27 +69,8 @@ export default function ConsoleSupportPage() {
   if (!ready) return null;
 
   return (
-    <>
-      <header className="border-b border-slate-200 bg-white">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <Link href="/console/merchants" className="flex items-center gap-2">
-            <span className="text-brand-600"><LogoMark className="w-7 h-7" /></span>
-            <span className="text-lg font-bold tracking-tight text-slate-900">
-              Pay<span className="text-brand-600">Verify</span>
-            </span>
-            <span className="ml-1 text-xs font-semibold uppercase tracking-wider text-slate-500">Console</span>
-          </Link>
-          <div className="flex items-center gap-3 flex-wrap">
-            <Link href="/console/merchants" className="text-slate-600 hover:text-slate-900 text-sm">Merchants</Link>
-            <Link href="/console/providers" className="text-slate-600 hover:text-slate-900 text-sm">Providers</Link>
-            <Link href="/console/platform-account" className="text-slate-600 hover:text-slate-900 text-sm">Platform</Link>
-            <Link href="/console/support" className="text-brand-600 font-semibold text-sm">Support</Link>
-            <button onClick={logout} className="btn-secondary">Logout</button>
-          </div>
-        </div>
-      </header>
-
-      <div className="max-w-3xl mx-auto px-6 py-8">
+    <ConsoleShell>
+      <div className="max-w-3xl mx-auto">
         <h1 className="text-2xl font-bold text-slate-900">Support Contact</h1>
         <p className="text-sm text-slate-600 mt-1">
           These details appear on the merchant login page whenever a suspended merchant attempts to sign in. Leave a field blank to hide it.
@@ -155,6 +134,6 @@ export default function ConsoleSupportPage() {
           Preview the merchant-facing view at <Link href="/login?suspended=Preview+mode" className="text-brand-600 hover:underline">/login?suspended=...</Link>
         </div>
       </div>
-    </>
+    </ConsoleShell>
   );
 }

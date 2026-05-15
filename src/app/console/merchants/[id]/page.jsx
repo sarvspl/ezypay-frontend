@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { api } from '@/lib/api';
 import { adminAuth } from '@/lib/auth';
 import { useGuard } from '@/lib/guard';
-import { LogoMark } from '@/components/Logo';
+import ConsoleShell from '@/components/console/ConsoleShell';
 
 export default function ConsoleMerchantDetailPage() {
   const router = useRouter();
@@ -31,7 +31,6 @@ export default function ConsoleMerchantDetailPage() {
     load();
   }, [ready, router, id]); // eslint-disable-line
 
-  const logout = () => { adminAuth.clear(); router.replace('/console/login'); };
 
   const onSuspend = async () => {
     const reason = prompt(`Suspend ${merchant.name}? Reason (optional, shown to the merchant):`, '');
@@ -58,21 +57,8 @@ export default function ConsoleMerchantDetailPage() {
   if (!ready) return null;
 
   return (
-    <>
-      <header className="border-b border-slate-200 bg-white">
-        <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
-          <Link href="/console/merchants" className="flex items-center gap-2">
-            <span className="text-brand-600"><LogoMark className="w-7 h-7" /></span>
-            <span className="text-lg font-bold tracking-tight text-slate-900">
-              Pay<span className="text-brand-600">Verify</span>
-            </span>
-            <span className="ml-1 text-xs font-semibold uppercase tracking-wider text-slate-500">Console</span>
-          </Link>
-          <button onClick={logout} className="btn-secondary">Logout</button>
-        </div>
-      </header>
-
-      <div className="max-w-5xl mx-auto px-6 py-8">
+    <ConsoleShell>
+      <div className="max-w-5xl mx-auto">
         <Link href="/console/merchants" className="text-sm text-slate-600 hover:text-brand-600">← All merchants</Link>
 
         {error && (
@@ -130,7 +116,7 @@ export default function ConsoleMerchantDetailPage() {
           </>
         )}
       </div>
-    </>
+    </ConsoleShell>
   );
 }
 

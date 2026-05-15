@@ -7,7 +7,7 @@ import { api } from '@/lib/api';
 import { adminAuth } from '@/lib/auth';
 import { COUNTRIES } from '@/lib/countries';
 import Combobox from '@/components/Combobox';
-import { LogoMark } from '@/components/Logo';
+import ConsoleShell from '@/components/console/ConsoleShell';
 import { useGuard } from '@/lib/guard';
 
 export default function ConsoleCreateMerchantPage() {
@@ -47,21 +47,14 @@ export default function ConsoleCreateMerchantPage() {
   if (!ready) return null;
 
   return (
-    <>
-      <header className="border-b border-slate-200 bg-white">
-        <div className="max-w-3xl mx-auto px-6 py-4 flex items-center justify-between">
-          <Link href="/console/merchants" className="flex items-center gap-2">
-            <span className="text-brand-600"><LogoMark className="w-7 h-7" /></span>
-            <span className="text-lg font-bold tracking-tight text-slate-900">
-              Pay<span className="text-brand-600">Verify</span>
-            </span>
-            <span className="ml-1 text-xs font-semibold uppercase tracking-wider text-slate-500">Console</span>
-          </Link>
-          <Link href="/console/merchants" className="text-sm text-slate-600 hover:text-brand-600">← Back to list</Link>
-        </div>
-      </header>
-
-      <div className="max-w-3xl mx-auto px-6 py-8">
+    <ConsoleShell
+      action={
+        <Link href="/console/merchants" className="text-sm text-slate-600 hover:text-slate-900 px-3 py-1.5 rounded-md hover:bg-slate-100">
+          ← Back to list
+        </Link>
+      }
+    >
+      <div className="max-w-3xl mx-auto">
         <h1 className="text-2xl font-bold text-slate-900">Create merchant</h1>
         <p className="text-sm text-slate-600 mt-1">Manually onboard a merchant. Their keys will be shown once after creation — copy and share them.</p>
 
@@ -135,7 +128,7 @@ export default function ConsoleCreateMerchantPage() {
           </form>
         )}
       </div>
-    </>
+    </ConsoleShell>
   );
 }
 

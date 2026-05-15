@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { api } from '@/lib/api';
 import { adminAuth } from '@/lib/auth';
 import { useGuard } from '@/lib/guard';
-import { LogoMark } from '@/components/Logo';
+import ConsoleShell from '@/components/console/ConsoleShell';
 import { COLOR_TO_BG } from '@/lib/providers';
 
 const PALETTE = ['pink', 'orange', 'purple', 'emerald', 'blue', 'indigo', 'red', 'amber', 'teal', 'rose', 'slate'];
@@ -32,8 +32,6 @@ export default function ConsoleProvidersPage() {
   };
   useEffect(() => { if (ready) load(); }, [ready]); // eslint-disable-line
 
-  const logout = () => { adminAuth.clear(); router.replace('/console/login'); };
-
   if (!ready) return null;
 
   const onDelete = async (p) => {
@@ -50,27 +48,8 @@ export default function ConsoleProvidersPage() {
   };
 
   return (
-    <>
-      <header className="border-b border-slate-200 bg-white">
-        <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between flex-wrap gap-3">
-          <Link href="/console/merchants" className="flex items-center gap-2">
-            <span className="text-brand-600"><LogoMark className="w-7 h-7" /></span>
-            <span className="text-lg font-bold tracking-tight text-slate-900">
-              Pay<span className="text-brand-600">Verify</span>
-            </span>
-            <span className="ml-1 text-xs font-semibold uppercase tracking-wider text-slate-500">Console</span>
-          </Link>
-          <nav className="flex items-center gap-3 text-sm">
-            <Link href="/console/merchants" className="text-slate-600 hover:text-slate-900">Merchants</Link>
-            <Link href="/console/providers" className="text-brand-600 font-semibold">Providers</Link>
-            <Link href="/console/platform-account" className="text-slate-600 hover:text-slate-900">Platform</Link>
-            <Link href="/console/support" className="text-slate-600 hover:text-slate-900">Support</Link>
-            <button onClick={logout} className="btn-secondary !py-1.5 ml-2">Logout</button>
-          </nav>
-        </div>
-      </header>
-
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-5">
+    <ConsoleShell>
+      <div className="max-w-5xl mx-auto space-y-5">
         <div className="flex items-start justify-between flex-wrap gap-3">
           <div>
             <h2 className="text-xl font-bold text-slate-900">Provider catalog</h2>
@@ -115,7 +94,7 @@ export default function ConsoleProvidersPage() {
           />
         )}
       </div>
-    </>
+    </ConsoleShell>
   );
 }
 
