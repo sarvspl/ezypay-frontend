@@ -15,6 +15,19 @@ async function request(path, { method = 'GET', body, token } = {}) {
   try { data = await res.json(); } catch (_) {}
 
   if (!res.ok) {
+    // Global handler: a logged-in merchant whose account just got suspended
+    // gets booted back to login with a banner explaining why.
+    if (res.status === 403 && data && data.suspended && typeof window !== 'undefined') {
+      try {
+        const m = require('./auth');
+        if (m && m.merchantAuth) m.merchantAuth.clear();
+      } catch {}
+      const reason = data.error ? `?suspended=${encodeURIComponent(data.error)}` : '?suspended=1';
+      // Only redirect if we're inside the merchant dashboard (don't trash the public/admin flow).
+      if (window.location.pathname.startsWith('/dashboard')) {
+        window.location.replace('/login' + reason);
+      }
+    }
     const err = new Error((data && data.error) || `Request failed: ${res.status}`);
     err.status = res.status;
     err.data = data;
@@ -77,7 +90,7 @@ export const api = {
   adminListMerchants:(token) => request('/api/admin/merchants', { token }),
   adminGetMerchant:  (token, id) => request(`/api/admin/merchants/${id}`, { token }),
   adminCreateMerchant:(token, body) => request('/api/admin/merchants', { method: 'POST', body, token }),
-  adminSuspendMerchant:   (token, id, reason) => request(`/api/admin/merchants/${id}/suspend`, { method: 'POST', body: { reason }, token }),
+  adminSuspendMerchant:   (token, id, body) => request(`/api/admin/merchants/${id}/suspend`, { method: 'POST', body: body || {}, token }),
   adminUnsuspendMerchant: (token, id) => request(`/api/admin/merchants/${id}/unsuspend`, { method: 'POST', token }),
 
   // Providers (public for merchant catalog, admin CRUD for console)
@@ -86,4 +99,9 @@ export const api = {
   adminCreateProvider:   (token, body) => request('/api/admin/providers', { method: 'POST', body, token }),
   adminUpdateProvider:   (token, id, body) => request(`/api/admin/providers/${id}`, { method: 'PATCH', body, token }),
   adminDeleteProvider:   (token, id) => request(`/api/admin/providers/${id}`, { method: 'DELETE', token }),
+
+  // Support contact config
+  getSupport:             () => request('/api/support'),
+  adminGetSupport:        (token) => request('/api/admin/support', { token }),
+  adminUpdateSupport:     (token, body) => request('/api/admin/support', { method: 'PUT', body, token }),
 };

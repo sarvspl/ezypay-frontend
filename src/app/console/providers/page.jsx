@@ -63,6 +63,7 @@ export default function ConsoleProvidersPage() {
           <nav className="flex items-center gap-3 text-sm">
             <Link href="/console/merchants" className="text-slate-600 hover:text-slate-900">Merchants</Link>
             <Link href="/console/providers" className="text-brand-600 font-semibold">Providers</Link>
+            <Link href="/console/support" className="text-slate-600 hover:text-slate-900">Support</Link>
             <button onClick={logout} className="btn-secondary !py-1.5 ml-2">Logout</button>
           </nav>
         </div>
