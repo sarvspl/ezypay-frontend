@@ -112,6 +112,8 @@ export const api = {
 
   // Platform merchant (admin-managed receiving accounts for wallet topups)
   adminGetPlatform:           (token) => request('/api/admin/platform', { token }),
+  adminGetPlatformSettings:   (token) => request('/api/admin/platform/settings', { token }),
+  adminUpdatePlatformSettings:(token, body) => request('/api/admin/platform/settings', { method: 'PUT', body, token }),
   adminListPlatformRecharges: (token, params = {}) => {
     const qs = new URLSearchParams(params).toString();
     return request(`/api/admin/platform/recharges${qs ? '?' + qs : ''}`, { token });

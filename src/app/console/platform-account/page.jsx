@@ -19,22 +19,25 @@ export default function ConsolePlatformAccountPage() {
   const [error, setError] = useState(null);
   const [showKey, setShowKey] = useState(false);
   const [showAddGateway, setShowAddGateway] = useState(false);
+  const [settings, setSettings] = useState(null);
 
   const reload = async () => {
     const token = adminAuth.get();
     try {
-      const [i, g, d, r, p] = await Promise.all([
+      const [i, g, d, r, p, s] = await Promise.all([
         api.adminGetPlatform(token),
         api.adminListPlatformGateways(token),
         api.adminListPlatformDevices(token),
         api.adminListPlatformRecharges(token, { limit: 30 }),
         api.listProviders(),
+        api.adminGetPlatformSettings(token),
       ]);
       setInfo(i.platform);
       setGateways(g.gateways || []);
       setDevices(d.devices || []);
       setRecharges(r.recharges || []);
       setProviders(p.providers || []);
+      setSettings(s.settings || null);
     } catch (e) {
       if (e.status === 401) { adminAuth.clear(); router.replace('/console/login'); }
       else setError(e.message);
@@ -94,6 +97,13 @@ export default function ConsolePlatformAccountPage() {
             </div>
           </div>
         )}
+
+        {/* Pricing */}
+        <PricingSection
+          settings={settings}
+          onSaved={(next) => setSettings(next)}
+          currency={info?.currency || 'BDT'}
+        />
 
         {/* Gateways */}
         <div>
@@ -292,6 +302,173 @@ function RechargeStatusPill({ tx, session }) {
   if (session === 'cancelled')
     return <span className="inline-flex rounded-full bg-slate-100 text-slate-700 px-2.5 py-0.5 text-[11px] font-semibold">Cancelled</span>;
   return <span className="inline-flex rounded-full bg-amber-100 text-amber-700 px-2.5 py-0.5 text-[11px] font-semibold">Pending</span>;
+}
+
+function PricingSection({ settings, onSaved, currency: defaultCurrency }) {
+  const [form, setForm] = useState({
+    verify_charge_enabled: false,
+    verify_charge_amount: '',
+    verify_charge_currency: defaultCurrency || 'BDT',
+    low_balance_threshold: '',
+  });
+  const [saving, setSaving] = useState(false);
+  const [savedAt, setSavedAt] = useState(null);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    if (!settings) return;
+    setForm({
+      verify_charge_enabled: !!settings.verify_charge_enabled,
+      verify_charge_amount: settings.verify_charge_amount != null ? String(settings.verify_charge_amount) : '',
+      verify_charge_currency: settings.verify_charge_currency || defaultCurrency || 'BDT',
+      low_balance_threshold: settings.low_balance_threshold != null ? String(settings.low_balance_threshold) : '',
+    });
+  }, [settings, defaultCurrency]);
+
+  const onSubmit = async (e) => {
+    e.preventDefault();
+    setError(null);
+    setSaving(true);
+    setSavedAt(null);
+    try {
+      const token = adminAuth.get();
+      const r = await api.adminUpdatePlatformSettings(token, {
+        verify_charge_enabled: form.verify_charge_enabled,
+        verify_charge_amount: Number(form.verify_charge_amount) || 0,
+        verify_charge_currency: form.verify_charge_currency,
+        low_balance_threshold: Number(form.low_balance_threshold) || 0,
+      });
+      onSaved?.(r.settings);
+      setSavedAt(new Date());
+    } catch (e2) {
+      setError(e2.message || 'Failed to save');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (!settings) {
+    return (
+      <div className="card p-6 text-slate-500 text-sm">Loading pricing…</div>
+    );
+  }
+
+  return (
+    <div>
+      <div className="mb-3">
+        <h2 className="font-semibold text-slate-900">Pricing</h2>
+        <p className="text-xs text-slate-500 mt-0.5">
+          Per-verification fee debited from each merchant's wallet on a successful payment verification.
+        </p>
+      </div>
+
+      <form onSubmit={onSubmit} className="card p-5 sm:p-6 space-y-5">
+        {/* Enable toggle */}
+        <label className="flex items-start gap-3 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={form.verify_charge_enabled}
+            onChange={(e) => setForm({ ...form, verify_charge_enabled: e.target.checked })}
+            className="mt-1"
+          />
+          <span>
+            <span className="font-semibold text-slate-900">Charge merchants per verification</span>
+            <span className="block text-xs text-slate-500 mt-0.5">
+              When enabled, every successful payment verification debits the configured fee from the merchant's wallet.
+            </span>
+          </span>
+        </label>
+
+        <div className="grid sm:grid-cols-3 gap-4">
+          <div className="sm:col-span-1">
+            <label className="label">Fee per verification</label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">
+                {currencySymbol(form.verify_charge_currency)}
+              </span>
+              <input
+                type="number"
+                inputMode="decimal"
+                step="0.01"
+                min="0"
+                value={form.verify_charge_amount}
+                onChange={(e) => setForm({ ...form, verify_charge_amount: e.target.value })}
+                placeholder="0.50"
+                className="input !pl-8"
+                disabled={!form.verify_charge_enabled}
+              />
+            </div>
+            <p className="text-xs text-slate-500 mt-1">0 means free — same as leaving it disabled.</p>
+          </div>
+
+          <div className="sm:col-span-1">
+            <label className="label">Currency</label>
+            <select
+              value={form.verify_charge_currency}
+              onChange={(e) => setForm({ ...form, verify_charge_currency: e.target.value })}
+              className="input"
+              disabled={!form.verify_charge_enabled}
+            >
+              <option value="BDT">BDT — Bangladeshi Taka</option>
+              <option value="INR">INR — Indian Rupee</option>
+              <option value="USD">USD — US Dollar</option>
+              <option value="EUR">EUR — Euro</option>
+              <option value="GBP">GBP — Pound Sterling</option>
+            </select>
+          </div>
+
+          <div className="sm:col-span-1">
+            <label className="label">Low balance warning</label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">
+                {currencySymbol(form.verify_charge_currency)}
+              </span>
+              <input
+                type="number"
+                inputMode="decimal"
+                step="0.01"
+                min="0"
+                value={form.low_balance_threshold}
+                onChange={(e) => setForm({ ...form, low_balance_threshold: e.target.value })}
+                placeholder="50"
+                className="input !pl-8"
+              />
+            </div>
+            <p className="text-xs text-slate-500 mt-1">Merchants below this are flagged on their dashboard.</p>
+          </div>
+        </div>
+
+        {/* Preview */}
+        {form.verify_charge_enabled && Number(form.verify_charge_amount) > 0 && (
+          <div className="rounded-lg bg-brand-50 border border-brand-200 p-3 text-sm">
+            <span className="font-semibold text-brand-900">Preview: </span>
+            <span className="text-brand-800">
+              Each verification will deduct{' '}
+              <strong>{form.verify_charge_currency} {Number(form.verify_charge_amount).toFixed(2)}</strong>{' '}
+              from the merchant's wallet. So 1,000 successful verifications cost{' '}
+              <strong>{form.verify_charge_currency} {(Number(form.verify_charge_amount) * 1000).toFixed(2)}</strong>.
+            </span>
+          </div>
+        )}
+
+        {error && <div className="text-sm text-rose-600 bg-rose-50 border border-rose-200 rounded p-3">{error}</div>}
+        {savedAt && !error && <div className="text-sm text-emerald-700 bg-emerald-50 border border-emerald-200 rounded p-3">Saved.</div>}
+
+        <div className="flex items-center justify-between gap-3 pt-3 border-t border-slate-100">
+          <div className="text-xs text-slate-500">
+            {settings?.updated_at ? `Last updated ${new Date(settings.updated_at).toLocaleString()}` : 'Not yet saved'}
+          </div>
+          <button type="submit" disabled={saving} className="btn-primary !py-2">
+            {saving ? 'Saving…' : 'Save pricing'}
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
+function currencySymbol(code) {
+  return ({ BDT: '৳', INR: '₹', USD: '$', EUR: '€', GBP: '£' })[code] || code + ' ';
 }
 
 function prettyVariant(v) {
