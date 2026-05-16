@@ -365,7 +365,7 @@ if ($body['session']['status'] === 'success') {
           method="POST"
           path="/api/payment/sessions"
           auth="X-API-Key"
-          description="Create a new checkout session for a customer."
+          description="Create a new checkout session for a customer. order_id is enforced unique-per-merchant (see status codes below)."
           request={`{
   "amount":         500.00,
   "order_id":       "ORD-1001",
@@ -375,13 +375,37 @@ if ($body['session']['status'] === 'success') {
   "customer_name":  "Rahim Khan",
   "metadata":       { "cart_id": "cart-42" }
 }`}
-          response={`{
+          response={`// 201 Created — fresh session
+{
   "session_id":   "eNOuUpsg2IGX4ko4HbFL",
   "checkout_url": "https://ezypay.it.com/pay/eNOuUpsg2IGX4ko4HbFL",
   "expires_at":   "2026-05-12T12:00:00Z",
   "status":       "pending"
-}`}
+}
+
+// 200 OK — idempotent: same order_id while a prior session is still alive
+{
+  "session_id":   "eNOuUpsg2IGX4ko4HbFL",
+  "checkout_url": "https://ezypay.it.com/pay/eNOuUpsg2IGX4ko4HbFL",
+  "expires_at":   "2026-05-12T12:00:00Z",
+  "status":       "pending",
+  "existed":      true
+}
+
+// 409 Conflict — order already paid (any prior session is success)
+{ "error": "This order has already been paid.", "existing_session_id": "..." }
+
+// 402 Payment Required — merchant wallet too low to cover verification fee
+{ "error": "Merchant wallet has insufficient balance. Top up to resume.",
+  "insufficient_balance": true, "balance": 0, "fee": 2, "threshold": 10 }`}
         />
+
+        <Callout tone="slate" title="Handling the response">
+          Always use <code className="text-xs">data.checkout_url</code> regardless of whether you get 201 or 200 —
+          the URL is the same when <code className="text-xs">existed: true</code>. Treat <strong>409</strong> as
+          "this order is done — show the customer the paid state, don&apos;t retry." Treat <strong>402</strong>{' '}
+          as "merchant configuration issue — surface a friendly retry-later message."
+        </Callout>
 
         <ApiEndpoint
           method="GET"
@@ -436,6 +460,14 @@ if ($body['session']['status'] === 'success') {
           These endpoints are called by your <strong>Android APK</strong>, authenticated by{' '}
           <code className="text-xs">device_auth_key</code> in the body. Never call from a server or browser.
         </p>
+
+        <Callout tone="amber" title="Wallet-empty (402) handling">
+          Every APK endpoint EXCEPT <code className="text-xs">/bind</code> and <code className="text-xs">/unbind</code> returns{' '}
+          <strong>402</strong> with <code className="text-xs">{'{ insufficient_balance: true, balance, fee, threshold }'}</code>{' '}
+          when the merchant&apos;s wallet doesn&apos;t have enough to cover the per-verification fee. The APK
+          should switch to a <em>"Wallet empty — please top up"</em> screen and keep heartbeating; when{' '}
+          <code className="text-xs">/heartbeat</code> returns 200 again, auto-recover.
+        </Callout>
 
         <ApiEndpoint method="POST" path="/api/device/bind"
           auth="device_auth_key"
@@ -498,7 +530,17 @@ if ($body['session']['status'] === 'success') {
   "matched_sms":     "Cash In Tk 500.00 successful. TrxID: BKX92H1...",
   "failure_reason":  null
 }`}
-          response={`{ "ok": true }`} />
+          response={`{
+  "ok":              true,
+  "verification_id": 421,
+  "status":          "success",
+  "session_id":      "Y_giE7l9...",
+  "transaction": {
+    "id":            421,
+    "status":        "success",
+    "result_source": "apk"
+  }
+}`} />
 
         <ApiEndpoint method="POST" path="/api/device/transactions"
           auth="device_auth_key"
@@ -577,9 +619,10 @@ if ($body['session']['status'] === 'success') {
               ['202', 'Accepted (TxnID submitted, verification pending)'],
               ['400', 'Bad request — check error message; usually a missing/invalid field'],
               ['401', 'Invalid or missing API key (X-API-Key or JWT)'],
+              ['402', 'Merchant wallet has insufficient balance — top up to resume'],
               ['403', 'Forbidden — usually merchant suspended'],
               ['404', 'Resource not found (wrong id, or not yours)'],
-              ['409', 'Conflict — duplicate (TxnID reused, session in wrong state)'],
+              ['409', 'Conflict — duplicate (TxnID reused, order already paid, session in wrong state)'],
               ['5xx', 'Server error — retry with exponential backoff'],
             ].map(([c, m]) => (
               <tr key={c}>
@@ -707,6 +750,33 @@ header('Location: ' . $body['checkout_url']);`}</CodeBlock>
           Some nginx setups normalize this; others 404. Strip the trailing slash from your base URL.
         </p>
 
+        <h3 className="mt-8 font-semibold text-slate-900">
+          402 <code className="text-xs">insufficient_balance</code>
+        </h3>
+        <p className="mt-2 text-sm text-slate-700">
+          PayVerify charges merchants a small per-verification fee, debited from the merchant&apos;s wallet on
+          every successful verification. When the wallet drops below that fee, the merchant&apos;s operations
+          are paused:
+        </p>
+        <ul className="mt-2 text-sm text-slate-700 list-disc pl-5 space-y-1">
+          <li>New <code className="text-xs">POST /api/payment/sessions</code> calls return 402 — xyz.com can&apos;t create new checkouts.</li>
+          <li>APK endpoints (poll/sms/report/verify/heartbeat) return 402 — the phone shows a "Wallet empty" screen.</li>
+          <li><code className="text-xs">/bind</code> and <code className="text-xs">/unbind</code> stay available so the phone can disconnect/reconnect.</li>
+        </ul>
+        <p className="mt-2 text-sm text-slate-700">
+          <strong>Fix:</strong> log into the merchant dashboard → <strong>Wallet</strong> → <strong>Add Balance</strong>{' '}
+          → pay via wallet. Operations resume on the next request after the recharge confirms.
+        </p>
+
+        <h3 className="mt-8 font-semibold text-slate-900">
+          409 <code className="text-xs">"This order has already been paid"</code>
+        </h3>
+        <p className="mt-2 text-sm text-slate-700">
+          You called <code className="text-xs">POST /sessions</code> with an <code className="text-xs">order_id</code>{' '}
+          that already has a successful session. Don&apos;t retry — fetch the existing session via{' '}
+          <code className="text-xs">existing_session_id</code> in the error body and treat the order as fulfilled.
+        </p>
+
         <h3 className="mt-8 font-semibold text-slate-900">Transactions stuck on Pending</h3>
         <p className="mt-2 text-sm text-slate-700">
           The customer submitted a TxnID but no matching SMS has reached the backend. Two common
@@ -739,6 +809,8 @@ header('Location: ' . $body['checkout_url']);`}</CodeBlock>
           <li><strong>4. Use HTTPS for <code className="text-xs">redirect_url</code>.</strong> No exceptions in production.</li>
           <li><strong>5. Configure multiple identifiers per gateway.</strong> Mobile + bank suffix (comma-separated) means new banks rolling out won&apos;t silently stop working.</li>
           <li><strong>6. Monitor <code className="text-xs">/dashboard/devices</code>.</strong> If the bound phone goes offline, verifications queue but don&apos;t complete. Set a backup phone if you can.</li>
+          <li><strong>7. Keep your wallet topped up.</strong> Each successful verification debits a small fee from your wallet balance. Below the per-verification fee, all your endpoints return 402 and your APK is paused. The dashboard shows an amber warning before you hit empty — top up then. <Link href="/dashboard/wallet" className="text-brand-600 hover:underline">Wallet →</Link></li>
+          <li><strong>8. Handle the order_id idempotency response.</strong> POST /sessions can return 200 (with <code className="text-xs">existed:true</code>) when the same order_id has a live pending session — use the URL it returns, don&apos;t create a parallel checkout.</li>
         </ul>
       </Section>
 
