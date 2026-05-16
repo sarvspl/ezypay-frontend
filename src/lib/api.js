@@ -28,6 +28,16 @@ async function request(path, { method = 'GET', body, token } = {}) {
         window.location.replace('/login' + reason);
       }
     }
+    // 402 insufficient balance — push the merchant to the wallet page where
+    // they can top up. Not destructive (no logout); just redirect.
+    if (
+      res.status === 402 && data && data.insufficient_balance &&
+      typeof window !== 'undefined' &&
+      window.location.pathname.startsWith('/dashboard') &&
+      !window.location.pathname.startsWith('/dashboard/wallet')
+    ) {
+      window.location.replace('/dashboard/wallet?low_balance=1');
+    }
     const err = new Error((data && data.error) || `Request failed: ${res.status}`);
     err.status = res.status;
     err.data = data;

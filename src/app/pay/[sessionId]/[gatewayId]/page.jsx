@@ -90,10 +90,15 @@ export default function PayWithGatewayPage() {
 
   const p = getProvider(gateway.provider);
 
+  // Total customer pays = session.amount + gateway charge − gateway discount.
+  const charge   = computeFee(session.amount, gateway.charge_value,   gateway.charge_type);
+  const discount = computeFee(session.amount, gateway.discount_value, gateway.discount_type);
+  const total    = Math.max(0, Number(session.amount) + charge - discount);
+
   return (
     <div className="max-w-2xl mx-auto px-4 sm:px-6 py-8 space-y-4">
       <MerchantBar session={session} />
-      <AmountHero session={session} />
+      <AmountHero session={session} total={total} charge={charge} discount={discount} />
 
       <div className="card p-5">
         <div className="flex items-center gap-3">
@@ -134,7 +139,7 @@ export default function PayWithGatewayPage() {
           <ol className="mt-2 text-sm text-slate-600 list-decimal pl-5 space-y-1">
             <li>Open the {p.name} app on your phone.</li>
             <li>Choose <strong>Send Money</strong> ({labelVariant(gateway.variant)} number).</li>
-            <li>Enter the number above and amount <strong>{formatMoney(session.amount, session.currency)}</strong>.</li>
+            <li>Enter the number above and amount <strong>{formatMoney(total, session.currency)}</strong>.</li>
             <li>Confirm with your PIN.</li>
             <li>Copy the <strong>Transaction ID (TrxID)</strong> from the confirmation SMS and paste it below.</li>
           </ol>
@@ -193,15 +198,46 @@ function MerchantBar({ session }) {
   );
 }
 
-function AmountHero({ session }) {
+function AmountHero({ session, total, charge, discount }) {
+  const hasAdjustment = (charge > 0) || (discount > 0);
   return (
-    <div className="rounded-2xl p-6 text-white text-center bg-gradient-to-br from-brand-500 via-brand-600 to-indigo-600 relative overflow-hidden">
-      <div className="text-3xl sm:text-4xl font-extrabold">
-        {formatMoney(session.amount, session.currency)}
+    <div className="rounded-2xl p-6 text-white bg-gradient-to-br from-brand-500 via-brand-600 to-indigo-600 relative overflow-hidden">
+      <div className="text-center">
+        <div className="text-3xl sm:text-4xl font-extrabold">
+          {formatMoney(total, session.currency)}
+        </div>
+        <div className="mt-1 text-white/80 text-sm">Total to pay</div>
       </div>
-      <div className="mt-1 text-white/80 text-sm">Total Payment</div>
+      {hasAdjustment && (
+        <div className="mt-4 pt-4 border-t border-white/20 text-sm space-y-1.5">
+          <Row label="Bill amount"      value={formatMoney(session.amount, session.currency)} />
+          {charge > 0   && <Row label="Gateway charge"  value={`+ ${formatMoney(charge,   session.currency)}`} />}
+          {discount > 0 && <Row label="Discount"        value={`− ${formatMoney(discount, session.currency)}`} />}
+          <div className="pt-1.5 border-t border-white/20 flex items-center justify-between font-semibold">
+            <span className="text-white/90">Total</span>
+            <span>{formatMoney(total, session.currency)}</span>
+          </div>
+        </div>
+      )}
     </div>
   );
+}
+
+function Row({ label, value }) {
+  return (
+    <div className="flex items-center justify-between text-white/85">
+      <span>{label}</span>
+      <span>{value}</span>
+    </div>
+  );
+}
+
+// Mirror of computeFee in backend/payment.controller.js — keep in sync.
+function computeFee(base, value, type) {
+  const v = Number(value || 0);
+  if (!v) return 0;
+  if (String(type).toLowerCase() === 'percent') return Number(base) * (v / 100);
+  return v;
 }
 
 function Loading() {

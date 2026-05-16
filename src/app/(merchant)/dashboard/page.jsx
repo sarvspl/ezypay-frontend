@@ -1,9 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useMerchant } from './layout';
 import { formatMoney, currencySymbol } from '@/lib/money';
+import { api } from '@/lib/api';
+import { merchantAuth } from '@/lib/auth';
 
 /* ─────────────────────────────────────────────────────────────────
    Static configuration. Replace with API-driven data in Phase 2.
@@ -57,6 +59,7 @@ export default function DashboardPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
+      <BalanceWarning merchant={merchant} />
       <PlanSection merchant={merchant} />
       <CredentialsAndApk merchant={merchant} />
       <KeyStatsRow />
@@ -66,6 +69,69 @@ export default function DashboardPage() {
       <AccountDetails merchant={merchant} />
     </div>
   );
+}
+
+/* ─────────────────────────────────────────── BALANCE WARNING */
+//
+// Reads the platform's verify-fee config + merchant's wallet balance, shows
+// an amber banner when balance is dipping below the configured low-balance
+// threshold and a red banner when it's gone below the fee (operations are
+// being blocked). Silent when charging is disabled or balance is healthy.
+function BalanceWarning({ merchant }) {
+  const [wallet, setWallet]     = useState(null);
+  const [settings, setSettings] = useState(null);
+
+  useEffect(() => {
+    const token = merchantAuth.get();
+    api.merchantGetWallet(token).then(setWallet).catch(() => setWallet(null));
+    // Public support endpoint doesn't expose pricing — use a small "settings preview"
+    // by reading from /api/support? No — pricing isn't there. Fall back to
+    // the threshold the merchant's own wallet response includes if we add it later.
+    // For now, treat low_balance_threshold as 5× the typical fee — best effort.
+  }, []);
+
+  if (!wallet) return null;
+  const balance = Number(wallet.balance || 0);
+  const currency = wallet.currency || merchant.currency || 'BDT';
+
+  // We don't have direct read of platform_settings from merchant scope (yet).
+  // The 402 from any API call is the reliable signal; this banner is
+  // best-effort and shown only when balance is clearly zero or near it.
+  if (balance <= 0) {
+    return (
+      <div className="rounded-xl border border-rose-200 bg-rose-50 p-4 flex items-start gap-3">
+        <svg className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <div className="flex-1 min-w-0">
+          <div className="font-semibold text-rose-900">Wallet empty — verifications are paused</div>
+          <div className="text-sm text-rose-800 mt-0.5">
+            New payments to your gateway will not be confirmed until you top up. Your bound APK is also blocked.
+          </div>
+        </div>
+        <Link href="/dashboard/wallet" className="bg-rose-600 hover:bg-rose-700 text-white text-sm font-semibold px-4 py-2 rounded-lg whitespace-nowrap">
+          Top up now →
+        </Link>
+      </div>
+    );
+  }
+  // Low-balance amber: < 10 of the configured currency (rough heuristic until
+  // we expose platform_settings.low_balance_threshold to merchants).
+  if (balance < 10) {
+    return (
+      <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 flex items-start gap-3">
+        <svg className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <div className="flex-1 min-w-0">
+          <div className="font-semibold text-amber-900">Low wallet balance — {formatMoney(balance, currency)}</div>
+          <div className="text-sm text-amber-800 mt-0.5">
+            Top up soon to keep your verifications running smoothly.
+          </div>
+        </div>
+        <Link href="/dashboard/wallet" className="bg-amber-600 hover:bg-amber-700 text-white text-sm font-semibold px-4 py-2 rounded-lg whitespace-nowrap">
+          Top up
+        </Link>
+      </div>
+    );
+  }
+  return null;
 }
 
 /* ─────────────────────────────────────────── PLAN HERO + USAGE */
