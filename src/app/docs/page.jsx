@@ -638,6 +638,43 @@ if ($body['session']['status'] === 'success') {
             ))}
           </tbody>
         </table>
+
+        <h3 className="mt-8 font-semibold text-slate-900">Error response shape</h3>
+        <p className="mt-2 text-sm text-slate-700">
+          Customer-facing endpoints (<code className="text-xs">/api/payment/sessions</code>,{' '}
+          <code className="text-xs">/api/checkout/:id/submit</code>) split every error into two
+          tiers so you can safely route the right text to each audience:
+        </p>
+        <CodeBlock language="json">{`{
+  "error":            "Services currently unavailable.",
+  "merchant_message": "Merchant wallet has insufficient balance to cover the per-verification fee. Top up at the dashboard.",
+  "insufficient_balance": true,
+  "code":             "merchant_wallet_empty"
+}`}</CodeBlock>
+        <ul className="mt-2 text-sm text-slate-700 list-disc pl-5 space-y-1">
+          <li><code className="text-xs">error</code> — <strong>safe to display to your customer</strong>. Neutral, no PayVerify-specific language, no numeric leaks.</li>
+          <li><code className="text-xs">merchant_message</code> — <strong>for your server logs / admin alerts only</strong>. Tells you exactly what to fix. Never render this to the end customer.</li>
+          <li><code className="text-xs">code</code> — stable machine-readable identifier (e.g. <code className="text-xs">merchant_wallet_empty</code>, <code className="text-xs">order_already_paid</code>). Use this for programmatic branching.</li>
+          <li>Other fields like <code className="text-xs">insufficient_balance</code> or <code className="text-xs">existing_session_id</code> are programmatic hints — safe but uninformative if shown.</li>
+        </ul>
+
+        <Callout tone="rose" title="Don't dump the whole response to the customer">
+          A common integration bug: <code className="text-xs">alert(JSON.stringify(response))</code> on
+          the customer's screen. They see "Merchant wallet has insufficient balance" and lose trust
+          in your site. <strong>Always read <code className="text-xs">error</code> and display only that.</strong>
+        </Callout>
+
+        <p className="mt-3 text-sm text-slate-700">
+          Reference handler (Node):
+        </p>
+        <CodeBlock language="js">{`const r = await fetch(...);
+const body = await r.json();
+if (!r.ok) {
+  // Log the technical detail for ops
+  console.warn('[payverify]', body.merchant_message || body.error, '— code:', body.code);
+  // Show ONLY the safe text to the customer
+  return res.status(503).json({ error: body.error });
+}`}</CodeBlock>
       </Section>
 
       <Section id="troubleshoot" eyebrow="API Reference" title="Troubleshooting">
