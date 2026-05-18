@@ -7,7 +7,10 @@ import { LogoMark } from '@/components/Logo';
 
 const NAV = [
   { href: '/console/merchants',        label: 'Merchants', icon: <UsersIcon /> },
-  { href: '/console/providers',        label: 'Providers', icon: <GridIcon /> },
+  // Providers (catalog management) hidden in this phase — admins only use the
+  // pre-seeded bKash / Nagad / Rocket / Upay set. Re-add this entry to expose
+  // /console/providers when we're ready to let admins add custom providers.
+  // { href: '/console/providers',        label: 'Providers', icon: <GridIcon /> },
   { href: '/console/platform-account', label: 'Platform',  icon: <ServerIcon /> },
   { href: '/console/support',          label: 'Support',   icon: <HelpIcon /> },
 ];
