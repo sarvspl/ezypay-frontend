@@ -153,9 +153,9 @@ function ContentArea() {
         <ul className="mt-4 space-y-2 text-sm text-slate-700">
           <li><span className="text-brand-600 font-semibold">1.</span> Customer hits your checkout — your backend calls <code className="text-xs">POST /api/payment/sessions</code></li>
           <li><span className="text-brand-600 font-semibold">2.</span> We return a hosted <code className="text-xs">checkout_url</code> — you redirect the customer</li>
-          <li><span className="text-brand-600 font-semibold">3.</span> Customer pays via their wallet app, pastes the TxnID, clicks Verify</li>
-          <li><span className="text-brand-600 font-semibold">4.</span> Your bound APK forwards the incoming SMS — we match it against the pending TxnID</li>
-          <li><span className="text-brand-600 font-semibold">5.</span> Match found → transaction marked <strong>Done</strong>, customer redirected back to you</li>
+          <li><span className="text-brand-600 font-semibold">3.</span> Customer pays from their wallet app, then pastes the TxnID on the checkout and clicks Verify</li>
+          <li><span className="text-brand-600 font-semibold">4.</span> Your bound APK forwards the incoming wallet SMS to our backend (pure staging — nothing is auto-created from random SMS)</li>
+          <li><span className="text-brand-600 font-semibold">5.</span> The customer&apos;s TxnID is matched against the staged SMS — match found, transaction marked <strong>Done</strong>, customer redirected back to you</li>
         </ul>
       </Section>
 
@@ -185,8 +185,14 @@ function ContentArea() {
       <Section id="apk" eyebrow="Concepts" title="The APK">
         <p>
           The PayVerify Android app runs on the phone you use to receive wallet SMS. It does one job:{' '}
-          <strong>read incoming wallet SMS and forward them to our backend</strong>. The backend then
-          matches them against pending verifications or creates new "inbound" transactions automatically.
+          <strong>read incoming wallet SMS and forward them to our backend</strong> as data staging.
+          The SMS only becomes a verification when a customer submits a matching TxnID through your
+          checkout — random unrelated SMS sit unused and never become orphan transactions.
+        </p>
+        <p className="mt-3">
+          The APK also receives <strong>verify requests</strong> for any pending row a customer
+          submits that hasn&apos;t auto-matched yet, so the merchant can Approve / Reject from the phone
+          (mirror of the dashboard&apos;s Mark Paid / Mark Failed).
         </p>
         <p className="mt-3">
           Install the APK on the SIM-receiving device, open it on first launch, paste your{' '}
@@ -488,7 +494,7 @@ if ($body['session']['status'] === 'success') {
 
         <ApiEndpoint method="POST" path="/api/device/sms"
           auth="device_auth_key"
-          description="Forward incoming wallet SMS. Backend stores + auto-matches against pending transactions, OR creates new inbound transactions if it finds a configured gateway + TxnID + amount."
+          description="Forward incoming wallet SMS. Backend stores the SMS as staging data only — it becomes a verification when a customer submits a matching TxnID through the checkout. Unmatched SMS never become orphan transactions."
           request={`{
   "auth_key":  "PV-XXXXXX",
   "device_id": "android-stable-id",
