@@ -202,7 +202,26 @@ export default function PayWithGatewayPage() {
       </form>
 
       <div className="text-center pt-1">
-        <a href={`/pay/${sessionId}`} className="text-sm text-slate-500 hover:text-slate-800">← Choose a different method</a>
+        {verifying ? (
+          (() => {
+            // Once they've submitted, the gateway-picker isn't useful — they
+            // can't change methods now. Send them back to the merchant site instead.
+            let host = '';
+            let href = session.redirect_url;
+            try {
+              const u = new URL(session.redirect_url);
+              const port = (u.port && u.port !== '80' && u.port !== '443') ? ':' + u.port : '';
+              host = u.hostname + port;
+            } catch {}
+            return (
+              <a href={href} className="text-sm text-slate-500 hover:text-slate-800">
+                ← Back to {host || 'merchant site'}
+              </a>
+            );
+          })()
+        ) : (
+          <a href={`/pay/${sessionId}`} className="text-sm text-slate-500 hover:text-slate-800">← Choose a different method</a>
+        )}
       </div>
     </div>
   );

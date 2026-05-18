@@ -175,11 +175,21 @@ export default function TransactionsPage() {
                         <div className="truncate max-w-[220px]" title={t.order_id || ''}>
                           {t.order_id || <span className="text-slate-400 italic">—</span>}
                         </div>
-                        {t.brand_domain && (
-                          <div className="text-xs text-slate-500 mt-0.5 truncate max-w-[220px]" title={`${t.brand_name || ''} · ${t.brand_domain}`}>
-                            {t.brand_domain}
-                          </div>
-                        )}
+                        {(() => {
+                          // Prefer redirect_url hostname (actual site customer paid from);
+                          // fall back to brand_domain.
+                          let src = t.brand_domain || '';
+                          try {
+                            const u = new URL(t.redirect_url);
+                            const port = (u.port && u.port !== '80' && u.port !== '443') ? ':' + u.port : '';
+                            src = u.hostname + port;
+                          } catch {}
+                          return src ? (
+                            <div className="text-xs text-slate-500 mt-0.5 truncate max-w-[220px]" title={src}>
+                              {src}
+                            </div>
+                          ) : null;
+                        })()}
                       </div>
                     </td>
                     <td className="px-4 sm:px-6 py-3">
