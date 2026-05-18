@@ -6,8 +6,9 @@ import { api } from '@/lib/api';
 import { getProvider, labelVariant } from '@/lib/providers';
 import { formatMoney } from '@/lib/money';
 
-const POLL_MS = 2000;
-const POLL_MAX_MS = 90_000;
+const POLL_MS         = 2000;
+const POLL_MAX_MS     = 90_000;   // total time we keep polling
+const PATIENT_AFTER_MS = 20_000;  // switch to reassuring "we'll notify you" copy after this
 
 export default function PayWithGatewayPage() {
   const { sessionId, gatewayId } = useParams();
@@ -19,8 +20,21 @@ export default function PayWithGatewayPage() {
   const [txnid, setTxnid] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [verifying, setVerifying] = useState(false);
+  const [verifyPhase, setVerifyPhase] = useState('fast'); // 'fast' | 'patient'
   const [showHow, setShowHow] = useState(false);
   const [copied, setCopied] = useState(false);
+
+  // After PATIENT_AFTER_MS of verifying, swap the spinner text to a calmer
+  // "we'll update you when it's done — no need to wait here" message so the
+  // customer doesn't think the page is stuck or suspect fraud.
+  useEffect(() => {
+    if (!verifying) {
+      setVerifyPhase('fast');
+      return;
+    }
+    const t = setTimeout(() => setVerifyPhase('patient'), PATIENT_AFTER_MS);
+    return () => clearTimeout(t);
+  }, [verifying]);
 
   useEffect(() => {
     (async () => {
@@ -169,9 +183,20 @@ export default function PayWithGatewayPage() {
         {error && (
           <div className="mt-3 text-sm text-rose-600 bg-rose-50 border border-rose-200 rounded p-3">{error}</div>
         )}
-        {verifying && !error && (
+        {verifying && !error && verifyPhase === 'fast' && (
           <div className="mt-3 text-sm text-brand-700 bg-brand-50 border border-brand-200 rounded p-3 flex items-center gap-2">
             <Spinner /> Matching your TxnID against the SMS — this usually takes 2–10 seconds…
+          </div>
+        )}
+        {verifying && !error && verifyPhase === 'patient' && (
+          <div className="mt-3 text-sm text-emerald-800 bg-emerald-50 border border-emerald-200 rounded p-3 flex items-start gap-2">
+            <span className="mt-0.5"><CheckmarkBadgeIcon /></span>
+            <div>
+              <div className="font-semibold">Your payment is being verified — nothing to worry about.</div>
+              <div className="mt-0.5 text-emerald-700">
+                You can safely close this page. Once it's verified, your order status will update automatically and the merchant will be notified.
+              </div>
+            </div>
           </div>
         )}
       </form>
@@ -264,6 +289,14 @@ function Spinner() {
     <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none">
       <circle cx="12" cy="12" r="10" stroke="currentColor" strokeOpacity=".3" strokeWidth="3"/>
       <path d="M22 12a10 10 0 0 1-10 10" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/>
+    </svg>
+  );
+}
+function CheckmarkBadgeIcon() {
+  return (
+    <svg className="w-5 h-5 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+      <polyline points="22 4 12 14.01 9 11.01"/>
     </svg>
   );
 }
