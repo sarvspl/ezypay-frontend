@@ -18,6 +18,7 @@ export default function ConsoleMerchantsPage() {
   const [filter, setFilter]       = useState('all'); // all | active | suspended
   const [suspendTarget, setSuspendTarget]   = useState(null);
   const [activateTarget, setActivateTarget] = useState(null);
+  const [walletTarget, setWalletTarget]     = useState(null);
   const [working, setWorking]               = useState(false);
   const [actionError, setActionError]       = useState(null);
 
@@ -79,6 +80,18 @@ export default function ConsoleMerchantsPage() {
       await reload();
     } catch (e) {
       setActionError(e.message || 'Failed to activate');
+    } finally { setWorking(false); }
+  };
+
+  const doAdjustWallet = async (amount, note) => {
+    setWorking(true); setActionError(null);
+    try {
+      const token = adminAuth.get();
+      await api.adminAdjustWallet(token, walletTarget.id, { amount, note });
+      setWalletTarget(null);
+      await reload();
+    } catch (e) {
+      setActionError(e.message || 'Failed to adjust wallet');
     } finally { setWorking(false); }
   };
 
@@ -198,8 +211,16 @@ export default function ConsoleMerchantsPage() {
                   </td>
                   <td className="px-4 py-3 text-slate-700">{m.domain}</td>
                   <td className="px-4 py-3 text-slate-700 font-mono text-xs">{m.mobile}</td>
-                  <td className="px-4 py-3 text-right text-slate-900 font-semibold tabular-nums">
-                    ₹{Number(m.wallet_balance || 0).toFixed(2)}
+                  <td className="px-4 py-3 text-right">
+                    <div className="inline-flex items-center gap-2">
+                      <span className="text-slate-900 font-semibold tabular-nums">
+                        ₹{Number(m.wallet_balance || 0).toFixed(2)}
+                      </span>
+                      <button
+                        onClick={() => setWalletTarget(m)}
+                        className="text-[11px] font-semibold text-brand-600 hover:text-brand-700 px-2 py-0.5 rounded-md hover:bg-brand-50 whitespace-nowrap border border-brand-100"
+                      >Top up</button>
+                    </div>
                   </td>
                   <td className="px-4 py-3 text-slate-500 hidden lg:table-cell">{new Date(m.created_at).toLocaleDateString()}</td>
                   <td className="px-4 py-3 text-right">
@@ -240,7 +261,121 @@ export default function ConsoleMerchantsPage() {
           onConfirm={doActivate}
         />
       )}
+      {walletTarget && (
+        <WalletAdjustModal
+          merchant={walletTarget}
+          working={working}
+          error={actionError}
+          onCancel={() => { setWalletTarget(null); setActionError(null); }}
+          onConfirm={doAdjustWallet}
+        />
+      )}
     </ConsoleShell>
+  );
+}
+
+/* ─── Wallet adjustment modal ─── */
+function WalletAdjustModal({ merchant, working, error, onCancel, onConfirm }) {
+  const [amount, setAmount] = useState('');
+  const [direction, setDirection] = useState('credit'); // 'credit' | 'debit'
+  const [note, setNote] = useState('');
+
+  const parsed = Number(amount);
+  const valid = Number.isFinite(parsed) && parsed > 0;
+  const signed = direction === 'credit' ? parsed : -parsed;
+  const newBal = Number(merchant.wallet_balance || 0) + (valid ? signed : 0);
+  const tooLow = direction === 'debit' && valid && newBal < 0;
+
+  const submit = (e) => {
+    e?.preventDefault?.();
+    if (!valid || tooLow || working) return;
+    onConfirm(signed, note.trim());
+  };
+
+  return (
+    <div className="fixed inset-0 z-30 flex items-center justify-center p-4 bg-slate-900/50">
+      <form
+        onSubmit={submit}
+        className="bg-white rounded-xl shadow-2xl w-full max-w-md p-6"
+      >
+        <div className="flex items-start gap-3 mb-4">
+          <div className="w-10 h-10 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center shrink-0 text-lg font-bold">
+            ₹
+          </div>
+          <div className="min-w-0">
+            <div className="font-semibold text-slate-900 truncate">{merchant.name}</div>
+            <div className="text-xs text-slate-500">
+              Current balance: ₹{Number(merchant.wallet_balance || 0).toFixed(2)}
+            </div>
+          </div>
+        </div>
+
+        <div className="inline-flex bg-slate-100 rounded-lg p-1 mb-3">
+          {[['credit', 'Credit'], ['debit', 'Debit']].map(([k, label]) => (
+            <button
+              key={k}
+              type="button"
+              onClick={() => setDirection(k)}
+              className={`px-3 py-1.5 text-sm font-medium rounded-md transition ${
+                direction === k ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >{label}</button>
+          ))}
+        </div>
+
+        <label className="block text-xs font-medium text-slate-600 mb-1">Amount (BDT)</label>
+        <input
+          type="number"
+          step="0.01"
+          min="0.01"
+          autoFocus
+          value={amount}
+          onChange={(e) => setAmount(e.target.value)}
+          placeholder="0.00"
+          className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/25 focus:border-brand-500 tabular-nums"
+        />
+
+        <label className="block text-xs font-medium text-slate-600 mb-1 mt-3">Note (optional)</label>
+        <input
+          type="text"
+          value={note}
+          onChange={(e) => setNote(e.target.value)}
+          maxLength={500}
+          placeholder="e.g. Promotional credit / Manual reconciliation"
+          className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/25 focus:border-brand-500"
+        />
+
+        {valid && (
+          <div className="mt-3 text-xs text-slate-600">
+            New balance will be{' '}
+            <span className={`font-semibold tabular-nums ${tooLow ? 'text-rose-700' : 'text-slate-900'}`}>
+              ₹{newBal.toFixed(2)}
+            </span>
+            {tooLow && <span className="text-rose-600"> · insufficient for debit</span>}
+          </div>
+        )}
+
+        {error && (
+          <div className="mt-3 text-sm text-rose-600 bg-rose-50 border border-rose-200 rounded-lg p-2">
+            {error}
+          </div>
+        )}
+
+        <div className="flex justify-end gap-2 mt-5">
+          <button
+            type="button"
+            onClick={onCancel}
+            disabled={working}
+            className="px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 rounded-md"
+          >Cancel</button>
+          <button
+            type="submit"
+            disabled={!valid || tooLow || working}
+            className="btn-primary !py-2 disabled:opacity-50"
+          >{working ? 'Saving…' : direction === 'credit' ? 'Credit wallet' : 'Debit wallet'}</button>
+        </div>
+      </form>
+    </div>
   );
 }
 

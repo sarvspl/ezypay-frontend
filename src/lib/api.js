@@ -107,6 +107,7 @@ export const api = {
   adminCreateMerchant:(token, body) => request('/api/admin/merchants', { method: 'POST', body, token }),
   adminSuspendMerchant:   (token, id, body) => request(`/api/admin/merchants/${id}/suspend`, { method: 'POST', body: body || {}, token }),
   adminUnsuspendMerchant: (token, id) => request(`/api/admin/merchants/${id}/unsuspend`, { method: 'POST', token }),
+  adminAdjustWallet:      (token, id, body) => request(`/api/admin/merchants/${id}/wallet`, { method: 'POST', body, token }),
 
   // Providers (public for merchant catalog, admin CRUD for console)
   listProviders:         () => request('/api/providers'),

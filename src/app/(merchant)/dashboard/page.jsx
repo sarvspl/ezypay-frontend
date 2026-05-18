@@ -255,14 +255,15 @@ function CredentialsAndApk({ merchant }) {
           Install on the Android phone receiving your wallet SMS. Open the app and paste your Device Auth Key to bind it.
         </p>
         <div className="mt-auto pt-4 space-y-2">
-          <button
-            onClick={() => alert('APK will be available once the Flutter build is ready. (Phase 2)')}
-            className="btn-primary w-full"
+          <a
+            href="/payverify.apk"
+            download="payverify.apk"
+            className="btn-primary w-full inline-flex items-center justify-center"
           >
             <DownloadIcon className="w-4 h-4 mr-2" />
             Download APK
-          </button>
-          <p className="text-xs text-slate-400 text-center">Universal build · ARM64 / ARM32 / x86_64 coming soon</p>
+          </a>
+          <p className="text-xs text-slate-400 text-center">Android · ARM64 / ARM32 / x86_64 (universal)</p>
         </div>
       </div>
     </section>
