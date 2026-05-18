@@ -82,11 +82,46 @@ function WalletPageBody() {
   if (error) return <div className="text-rose-600 bg-rose-50 border border-rose-200 rounded p-3 text-sm">{error}</div>;
   if (!wallet) return <div className="text-slate-500 text-sm">Loading…</div>;
 
+  const isEmpty = Number(wallet.balance) <= 0;
+  const isLow   = !isEmpty && Number(wallet.balance) < 10; // soft heuristic until we expose the configured threshold
+
   return (
     <div className="space-y-6">
       {toast && (
         <div className="text-sm text-emerald-700 bg-emerald-50 border border-emerald-200 rounded p-3">
           {toast}
+        </div>
+      )}
+
+      {/* Empty / low balance warning. Loud red banner at the top when the wallet is at zero
+          (operations are paused), softer amber when balance is low but not yet blocked. */}
+      {isEmpty && (
+        <div className="rounded-xl border border-rose-200 bg-rose-50 p-4 flex items-start gap-3">
+          <svg className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+          <div className="flex-1 min-w-0">
+            <div className="font-semibold text-rose-900">Wallet empty — payments are paused</div>
+            <div className="text-sm text-rose-800 mt-0.5">
+              Your customers can't complete new payments and your bound APK is blocked until you top up.
+              Click <strong>Add Balance</strong> below.
+            </div>
+          </div>
+        </div>
+      )}
+      {isLow && (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 flex items-start gap-3">
+          <svg className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+            <line x1="12" y1="9"  x2="12" y2="13"/>
+            <line x1="12" y1="17" x2="12.01" y2="17"/>
+          </svg>
+          <div className="flex-1 min-w-0">
+            <div className="font-semibold text-amber-900">Low wallet balance</div>
+            <div className="text-sm text-amber-800 mt-0.5">
+              Only {formatMoney(wallet.balance, currency)} remaining — top up soon to avoid interruption.
+            </div>
+          </div>
         </div>
       )}
 
