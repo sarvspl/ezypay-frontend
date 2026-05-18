@@ -205,11 +205,17 @@ export default function PayWithGatewayPage() {
         {verifying ? (
           (() => {
             // Once they've submitted, the gateway-picker isn't useful — they
-            // can't change methods now. Send them back to the merchant site instead.
+            // can't change methods now. Send them back to the merchant site
+            // WITH the same ?session_id=&status=pending query string PayVerify
+            // would have used on its automatic redirect — so the merchant's
+            // result page can still look up the order.
             let host = '';
             let href = session.redirect_url;
             try {
               const u = new URL(session.redirect_url);
+              u.searchParams.set('session_id', sessionId);
+              u.searchParams.set('status', 'pending');
+              href = u.toString();
               const port = (u.port && u.port !== '80' && u.port !== '443') ? ':' + u.port : '';
               host = u.hostname + port;
             } catch {}
