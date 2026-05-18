@@ -58,6 +58,9 @@ export default function CheckoutSessionPage() {
 
 /* ─── Sub-views ─── */
 function MerchantHero({ session }) {
+  // The site the customer was actually on when they clicked Pay — derived from
+  // the redirect_url xyz.com set. Falls back to the brand's registered domain.
+  const sourceHost = sourceHostFromSession(session);
   return (
     <div className="card p-4 sm:p-5 flex items-center justify-between gap-3">
       <div className="flex items-center gap-3 min-w-0">
@@ -69,7 +72,7 @@ function MerchantHero({ session }) {
             <span className="font-semibold text-slate-900 truncate">{session.merchant_name}</span>
             <VerifiedBadge />
           </div>
-          <div className="text-xs text-slate-500 truncate">{session.brand_domain}</div>
+          <div className="text-xs text-slate-500 truncate">{sourceHost}</div>
         </div>
       </div>
       <button onClick={() => alert(`Contact ${session.merchant_name}`)} className="btn-secondary !py-1.5 !px-3 text-sm">
@@ -77,6 +80,19 @@ function MerchantHero({ session }) {
       </button>
     </div>
   );
+}
+
+// Pull the most accurate "where the customer came from" host:
+// 1. redirect_url's hostname (port included if non-standard) — that's the URL
+//    the integrator told us to send the customer back to. It's the actual site.
+// 2. fall back to the brand's registered domain.
+function sourceHostFromSession(session) {
+  try {
+    const u = new URL(session.redirect_url);
+    const port = (u.port && u.port !== '80' && u.port !== '443') ? `:${u.port}` : '';
+    return u.hostname + port;
+  } catch { /* fallthrough */ }
+  return session.brand_domain || '';
 }
 
 function AmountBanner({ session }) {

@@ -171,7 +171,16 @@ export default function TransactionsPage() {
                       )}
                     </td>
                     <td className="px-4 sm:px-6 py-3 text-slate-700">
-                      {t.order_id || <span className="text-slate-400 italic">—</span>}
+                      <div className="min-w-0">
+                        <div className="truncate max-w-[220px]" title={t.order_id || ''}>
+                          {t.order_id || <span className="text-slate-400 italic">—</span>}
+                        </div>
+                        {t.brand_domain && (
+                          <div className="text-xs text-slate-500 mt-0.5 truncate max-w-[220px]" title={`${t.brand_name || ''} · ${t.brand_domain}`}>
+                            {t.brand_domain}
+                          </div>
+                        )}
+                      </div>
                     </td>
                     <td className="px-4 sm:px-6 py-3">
                       <StatusBadge status={t.status} source={t.result_source} />

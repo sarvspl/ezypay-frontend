@@ -189,11 +189,11 @@ export default function PayWithGatewayPage() {
           </div>
         )}
         {verifying && !error && verifyPhase === 'patient' && (
-          <div className="mt-3 text-sm text-emerald-800 bg-emerald-50 border border-emerald-200 rounded p-3 flex items-start gap-2">
-            <span className="mt-0.5"><CheckmarkBadgeIcon /></span>
+          <div className="mt-3 text-sm text-amber-900 bg-amber-50 border border-amber-200 rounded p-3 flex items-start gap-2">
+            <span className="mt-0.5"><HourglassIcon /></span>
             <div>
               <div className="font-semibold">Your payment is being verified — nothing to worry about.</div>
-              <div className="mt-0.5 text-emerald-700">
+              <div className="mt-0.5 text-amber-800">
                 You can safely close this page. Once it's verified, your order status will update automatically and the merchant will be notified.
               </div>
             </div>
@@ -210,6 +210,14 @@ export default function PayWithGatewayPage() {
 
 /* ─── Sub-views ─── */
 function MerchantBar({ session }) {
+  // Show the actual site the customer came from (redirect_url host), not the
+  // brand's static registered domain. Falls back to brand_domain.
+  let sourceHost = session.brand_domain || '';
+  try {
+    const u = new URL(session.redirect_url);
+    const port = (u.port && u.port !== '80' && u.port !== '443') ? `:${u.port}` : '';
+    sourceHost = u.hostname + port;
+  } catch {}
   return (
     <div className="card p-3 flex items-center gap-3">
       <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-brand-500 to-indigo-500 text-white font-bold flex items-center justify-center text-sm">
@@ -217,7 +225,7 @@ function MerchantBar({ session }) {
       </div>
       <div className="min-w-0">
         <div className="font-semibold text-slate-900 text-sm truncate">{session.merchant_name}</div>
-        <div className="text-xs text-slate-500 truncate">{session.brand_domain}</div>
+        <div className="text-xs text-slate-500 truncate">{sourceHost}</div>
       </div>
     </div>
   );
@@ -292,11 +300,10 @@ function Spinner() {
     </svg>
   );
 }
-function CheckmarkBadgeIcon() {
+function HourglassIcon() {
   return (
-    <svg className="w-5 h-5 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-      <polyline points="22 4 12 14.01 9 11.01"/>
+    <svg className="w-5 h-5 text-amber-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M6 2h12M6 22h12M6 2v6a6 6 0 0 0 12 0V2M6 22v-6a6 6 0 0 1 12 0v6"/>
     </svg>
   );
 }
