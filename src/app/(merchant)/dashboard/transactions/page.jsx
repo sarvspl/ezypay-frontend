@@ -54,14 +54,39 @@ export default function TransactionsPage() {
     };
   }, [txs]);
 
-  const onResolve = async (tx, result) => {
-    if (!confirm(`Mark transaction ${tx.txnid_submitted} as ${result.toUpperCase()}?`)) return;
-    const token = merchantAuth.get();
+  // Manual resolve modal state. Opening it doesn't fire the API call yet —
+  // gives the merchant a chance to add an optional reason / note before
+  // committing.
+  const [resolveTarget, setResolveTarget] = useState(null); // { tx, result }
+  const [resolveReason, setResolveReason] = useState('');
+  const [resolveBusy, setResolveBusy]     = useState(false);
+  const [resolveError, setResolveError]   = useState(null);
+
+  const onResolve = (tx, result) => {
+    setResolveTarget({ tx, result });
+    setResolveReason('');
+    setResolveError(null);
+  };
+
+  const submitResolve = async () => {
+    if (!resolveTarget) return;
+    setResolveBusy(true);
+    setResolveError(null);
     try {
-      await api.merchantResolveTransaction(token, tx.id, result, null);
+      const token = merchantAuth.get();
+      await api.merchantResolveTransaction(
+        token,
+        resolveTarget.tx.id,
+        resolveTarget.result,
+        resolveReason.trim() || null,
+      );
+      setResolveTarget(null);
+      setResolveReason('');
       load();
     } catch (e) {
-      alert(e.message);
+      setResolveError(e.message || 'Failed to update');
+    } finally {
+      setResolveBusy(false);
     }
   };
 
@@ -219,6 +244,75 @@ export default function TransactionsPage() {
               })}
             </tbody>
           </table>
+        </div>
+      </div>
+
+      {resolveTarget && (
+        <ResolveModal
+          tx={resolveTarget.tx}
+          result={resolveTarget.result}
+          reason={resolveReason}
+          onReasonChange={setResolveReason}
+          busy={resolveBusy}
+          error={resolveError}
+          onCancel={() => { setResolveTarget(null); setResolveReason(''); setResolveError(null); }}
+          onConfirm={submitResolve}
+        />
+      )}
+    </div>
+  );
+}
+
+function ResolveModal({ tx, result, reason, onReasonChange, busy, error, onCancel, onConfirm }) {
+  const isSuccess = result === 'success';
+  return (
+    <div className="fixed inset-0 z-30 flex items-center justify-center p-4 bg-slate-900/50">
+      <div className="bg-white rounded-xl shadow-2xl w-full max-w-md p-6">
+        <div className="flex items-start gap-3">
+          <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${isSuccess ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}>
+            {isSuccess ? (
+              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            ) : (
+              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            )}
+          </div>
+          <div className="min-w-0 flex-1">
+            <h2 className="text-lg font-bold text-slate-900">
+              {isSuccess ? 'Mark as Paid?' : 'Mark as Failed?'}
+            </h2>
+            <p className="mt-1 text-sm text-slate-600">
+              TxnID <code className="text-xs font-mono">{tx.txnid_submitted}</code>{tx.order_id ? <> · Order <code className="text-xs font-mono">{tx.order_id}</code></> : null}
+            </p>
+          </div>
+        </div>
+
+        <label className="block text-xs font-semibold text-slate-700 mt-5 mb-1 uppercase tracking-wider">
+          Reason / note <span className="text-slate-400 font-normal normal-case">(optional)</span>
+        </label>
+        <textarea
+          rows={3}
+          value={reason}
+          onChange={(e) => onReasonChange(e.target.value)}
+          placeholder={isSuccess
+            ? 'e.g. "Confirmed via WhatsApp message from customer"'
+            : 'e.g. "Customer never paid, abandoned cart"'}
+          className={`w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:border-${isSuccess ? 'emerald' : 'rose'}-500 focus:ring-${isSuccess ? 'emerald' : 'rose'}-500/30`}
+          disabled={busy}
+          maxLength={240}
+        />
+        <div className="text-xs text-slate-400 mt-1 text-right">{reason.length}/240</div>
+
+        {error && <div className="mt-3 text-sm text-rose-600 bg-rose-50 border border-rose-200 rounded p-2">{error}</div>}
+
+        <div className="mt-5 flex justify-end gap-2">
+          <button onClick={onCancel} disabled={busy} className="text-sm text-slate-600 hover:text-slate-900 px-3 py-2">Cancel</button>
+          <button
+            onClick={onConfirm}
+            disabled={busy}
+            className={`disabled:opacity-60 text-white text-sm font-semibold px-4 py-2 rounded-md ${isSuccess ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-rose-600 hover:bg-rose-700'}`}
+          >
+            {busy ? 'Working…' : (isSuccess ? 'Confirm Paid' : 'Confirm Failed')}
+          </button>
         </div>
       </div>
     </div>
