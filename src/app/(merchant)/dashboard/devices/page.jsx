@@ -287,6 +287,15 @@ function EmptyState({ merchant }) {
           app and paste your <strong>Device Auth Key</strong>.
         </p>
 
+        <a
+          href="/payverify.apk"
+          download
+          className="inline-flex items-center gap-2 mt-5 bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold rounded-lg px-4 py-2.5 shadow-sm shadow-brand-500/20"
+        >
+          <DownloadIcon /> Download APK
+        </a>
+        <div className="text-[11px] text-slate-400 mt-1.5">Android only · ~12&nbsp;MB</div>
+
         {authKey && (
           <div className="mt-5 inline-flex items-center gap-2 rounded-md bg-slate-100 px-3 py-2">
             <span className="text-xs text-slate-500 uppercase tracking-wide">Your Device Auth Key:</span>
@@ -346,3 +355,4 @@ function TrashIcon()  { return <I><polyline points="3 6 5 6 21 6"/><path d="M19 
 function CopyIcon()   { return <I width="14" height="14"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></I>; }
 function CheckIcon()  { return <I width="14" height="14"><polyline points="20 6 9 17 4 12"/></I>; }
 function ClockIcon()  { return <I width="16" height="16"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></I>; }
+function DownloadIcon() { return <I width="16" height="16"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></I>; }
