@@ -96,8 +96,9 @@ export default function ConsoleMerchantsPage() {
   return (
     <ConsoleShell
       action={
-        <Link href="/console/merchants/new" className="btn-primary !py-2">
-          + Create merchant
+        <Link href="/console/merchants/new" className="btn-primary !py-2 whitespace-nowrap">
+          <span className="sm:hidden">+ New</span>
+          <span className="hidden sm:inline">+ Create merchant</span>
         </Link>
       }
     >
@@ -177,87 +178,142 @@ export default function ConsoleMerchantsPage() {
       )}
 
       {filtered.length > 0 && (
-        <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
-          <table className="w-full text-sm">
-            <thead className="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider">
-              <tr>
-                <th className="text-left px-4 py-3 font-medium">Merchant</th>
-                <th className="text-left px-4 py-3 font-medium">Status</th>
-                <th className="text-left px-4 py-3 font-medium">Domain</th>
-                <th className="text-left px-4 py-3 font-medium">Mobile</th>
-                <th className="text-right px-4 py-3 font-medium">Wallet</th>
-                <th className="text-left px-4 py-3 font-medium hidden lg:table-cell">Joined</th>
-                <th className="text-right px-4 py-3 font-medium">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {filtered.map((m) => (
-                <tr key={m.id} className="group hover:bg-slate-50/60">
-                  <td className="px-4 py-3">
-                    <Link href={`/console/merchants/${m.id}`} className="flex items-center gap-3 group/avatar">
-                      <Avatar name={m.name} />
+        <>
+          {/* Desktop table (md+) */}
+          <div className="hidden md:block bg-white border border-slate-200 rounded-xl overflow-x-auto">
+            <table className="w-full text-sm min-w-[760px]">
+              <thead className="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider">
+                <tr>
+                  <th className="text-left px-4 py-3 font-medium">Merchant</th>
+                  <th className="text-left px-4 py-3 font-medium">Status</th>
+                  <th className="text-left px-4 py-3 font-medium">Domain</th>
+                  <th className="text-left px-4 py-3 font-medium">Mobile</th>
+                  <th className="text-right px-4 py-3 font-medium">Wallet</th>
+                  <th className="text-left px-4 py-3 font-medium hidden lg:table-cell">Joined</th>
+                  <th className="text-right px-4 py-3 font-medium">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {filtered.map((m) => (
+                  <tr key={m.id} className="group hover:bg-slate-50/60">
+                    <td className="px-4 py-3">
+                      <Link href={`/console/merchants/${m.id}`} className="flex items-center gap-3 group/avatar">
+                        <Avatar name={m.name} />
+                        <div className="min-w-0">
+                          <div className="font-semibold text-slate-900 group-hover/avatar:text-brand-700 truncate">{m.name}</div>
+                          <div className="text-xs text-slate-500 truncate">{m.email}</div>
+                        </div>
+                      </Link>
+                    </td>
+                    <td className="px-4 py-3">
+                      <StatusPill suspended={m.is_suspended} reason={m.suspended_reason} />
+                    </td>
+                    <td className="px-4 py-3 text-slate-700">{m.domain}</td>
+                    <td className="px-4 py-3 text-slate-700 font-mono text-xs">{m.mobile}</td>
+                    <td className="px-4 py-3 text-right">
+                      <div className="inline-flex items-center gap-2">
+                        <span className="text-slate-900 font-semibold tabular-nums">
+                          ₹{Number(m.wallet_balance || 0).toFixed(2)}
+                        </span>
+                        <button
+                          onClick={() => setWalletTarget(m)}
+                          className="text-[11px] font-semibold text-brand-600 hover:text-brand-700 px-2 py-0.5 rounded-md hover:bg-brand-50 whitespace-nowrap border border-brand-100"
+                        >Top up</button>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-slate-500 hidden lg:table-cell">{new Date(m.created_at).toLocaleDateString()}</td>
+                    <td className="px-4 py-3 text-right">
+                      {m.is_suspended ? (
+                        <button
+                          onClick={() => setActivateTarget(m)}
+                          className="text-xs font-semibold text-emerald-700 hover:text-emerald-800 px-2.5 py-1 rounded-md hover:bg-emerald-50 whitespace-nowrap"
+                        >Activate</button>
+                      ) : (
+                        <button
+                          onClick={() => setSuspendTarget(m)}
+                          className="text-xs font-semibold text-rose-600 hover:text-rose-700 px-2.5 py-1 rounded-md hover:bg-rose-50 whitespace-nowrap"
+                        >Suspend</button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Mobile cards (< md) */}
+          <div className="md:hidden space-y-3">
+            {filtered.map((m) => (
+              <div key={m.id} className="bg-white border border-slate-200 rounded-xl p-4">
+                <Link href={`/console/merchants/${m.id}`} className="flex items-start gap-3">
+                  <Avatar name={m.name} />
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0">
-                        <div className="font-semibold text-slate-900 group-hover/avatar:text-brand-700 truncate">{m.name}</div>
+                        <div className="font-semibold text-slate-900 truncate">{m.name}</div>
                         <div className="text-xs text-slate-500 truncate">{m.email}</div>
                       </div>
-                    </Link>
-                  </td>
-                  <td className="px-4 py-3">
-                    <StatusPill suspended={m.is_suspended} reason={m.suspended_reason} />
-                  </td>
-                  <td className="px-4 py-3 text-slate-700">{m.domain}</td>
-                  <td className="px-4 py-3 text-slate-700 font-mono text-xs">{m.mobile}</td>
-                  <td className="px-4 py-3 text-right">
-                    <div className="inline-flex items-center gap-2">
-                      <span className="text-slate-900 font-semibold tabular-nums">
-                        ₹{Number(m.wallet_balance || 0).toFixed(2)}
-                      </span>
-                      <button
-                        onClick={() => setWalletTarget(m)}
-                        className="text-[11px] font-semibold text-brand-600 hover:text-brand-700 px-2 py-0.5 rounded-md hover:bg-brand-50 whitespace-nowrap border border-brand-100"
-                      >Top up</button>
+                      <StatusPill suspended={m.is_suspended} reason={m.suspended_reason} />
                     </div>
-                  </td>
-                  <td className="px-4 py-3 text-slate-500 hidden lg:table-cell">{new Date(m.created_at).toLocaleDateString()}</td>
-                  <td className="px-4 py-3 text-right">
-                    {m.is_suspended ? (
-                      <button
-                        onClick={() => setActivateTarget(m)}
-                        className="text-xs font-semibold text-emerald-700 hover:text-emerald-800 px-2.5 py-1 rounded-md hover:bg-emerald-50 whitespace-nowrap"
-                      >Activate</button>
-                    ) : (
-                      <button
-                        onClick={() => setSuspendTarget(m)}
-                        className="text-xs font-semibold text-rose-600 hover:text-rose-700 px-2.5 py-1 rounded-md hover:bg-rose-50 whitespace-nowrap"
-                      >Suspend</button>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                  </div>
+                </Link>
+
+                <dl className="mt-3 grid grid-cols-2 gap-y-1.5 gap-x-3 text-xs">
+                  <dt className="text-slate-500">Domain</dt>
+                  <dd className="text-slate-700 truncate text-right">{m.domain || '—'}</dd>
+                  <dt className="text-slate-500">Mobile</dt>
+                  <dd className="text-slate-700 font-mono text-right">{m.mobile || '—'}</dd>
+                  <dt className="text-slate-500">Wallet</dt>
+                  <dd className="text-slate-900 font-semibold tabular-nums text-right">
+                    ₹{Number(m.wallet_balance || 0).toFixed(2)}
+                  </dd>
+                  <dt className="text-slate-500">Joined</dt>
+                  <dd className="text-slate-700 text-right">{new Date(m.created_at).toLocaleDateString()}</dd>
+                </dl>
+
+                <div className="mt-3 pt-3 border-t border-slate-100 flex items-center gap-2">
+                  <button
+                    onClick={() => setWalletTarget(m)}
+                    className="flex-1 text-xs font-semibold text-brand-700 bg-brand-50 hover:bg-brand-100 px-3 py-2 rounded-md transition-colors"
+                  >Top up</button>
+                  {m.is_suspended ? (
+                    <button
+                      onClick={() => setActivateTarget(m)}
+                      className="flex-1 text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 px-3 py-2 rounded-md transition-colors"
+                    >Activate</button>
+                  ) : (
+                    <button
+                      onClick={() => setSuspendTarget(m)}
+                      className="flex-1 text-xs font-semibold text-rose-700 bg-rose-50 hover:bg-rose-100 px-3 py-2 rounded-md transition-colors"
+                    >Suspend</button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
       )}
 
       {/* Pagination footer — only when we actually have more than one page */}
       {merchants && total > LIMIT && (
-        <div className="mt-4 flex items-center justify-between text-sm">
-          <div className="text-slate-500">
+        <div className="mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-sm">
+          <div className="text-slate-500 text-center sm:text-left">
             Showing <strong>{page * LIMIT + 1}</strong>–<strong>{Math.min(total, (page + 1) * LIMIT)}</strong> of <strong>{total}</strong>
+            <span className="sm:hidden"> · Page <strong>{page + 1}</strong> of <strong>{Math.max(1, Math.ceil(total / LIMIT))}</strong></span>
           </div>
-          <div className="inline-flex items-center gap-1">
+          <div className="flex items-center justify-center gap-2">
             <button
               disabled={page === 0}
               onClick={() => setPage((p) => Math.max(0, p - 1))}
-              className="px-3 py-1.5 rounded-md border border-slate-200 bg-white disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50"
+              className="flex-1 sm:flex-none px-4 py-2 rounded-md border border-slate-200 bg-white disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50 whitespace-nowrap"
             >← Prev</button>
-            <span className="px-3 py-1.5 text-slate-700">
+            <span className="hidden sm:inline px-3 py-1.5 text-slate-700 whitespace-nowrap">
               Page {page + 1} of {Math.max(1, Math.ceil(total / LIMIT))}
             </span>
             <button
               disabled={(page + 1) * LIMIT >= total}
               onClick={() => setPage((p) => p + 1)}
-              className="px-3 py-1.5 rounded-md border border-slate-200 bg-white disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50"
+              className="flex-1 sm:flex-none px-4 py-2 rounded-md border border-slate-200 bg-white disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50 whitespace-nowrap"
             >Next →</button>
           </div>
         </div>
