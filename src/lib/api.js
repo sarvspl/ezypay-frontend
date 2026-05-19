@@ -93,6 +93,12 @@ export const api = {
   merchantListRecharges:    (token) => request('/api/merchant/wallet/recharges', { token }),
   merchantStartRecharge:    (token, amount) => request('/api/merchant/wallet/recharge', { method: 'POST', body: { amount }, token }),
 
+  // Support tickets (merchant)
+  merchantListTickets:      (token) => request('/api/merchant/tickets', { token }),
+  merchantCreateTicket:     (token, body) => request('/api/merchant/tickets', { method: 'POST', body, token }),
+  merchantGetTicket:        (token, id) => request(`/api/merchant/tickets/${id}`, { token }),
+  merchantReplyTicket:      (token, id, body) => request(`/api/merchant/tickets/${id}/messages`, { method: 'POST', body: { body }, token }),
+
   // Public checkout (no auth, by session id)
   checkoutSession:  (id) => request(`/api/checkout/${id}`),
   checkoutGateways: (id) => request(`/api/checkout/${id}/gateways`),
@@ -155,4 +161,13 @@ export const api = {
   },
   adminResolvePlatformTransaction: (token, id, result, reason) =>
     request(`/api/admin/platform/transactions/${id}/resolve`, { method: 'POST', body: { result, reason }, token }),
+
+  // Support tickets (admin)
+  adminListTickets:    (token, params = {}) => {
+    const qs = new URLSearchParams(params).toString();
+    return request(`/api/admin/tickets${qs ? '?' + qs : ''}`, { token });
+  },
+  adminGetTicket:      (token, id) => request(`/api/admin/tickets/${id}`, { token }),
+  adminReplyTicket:    (token, id, body) => request(`/api/admin/tickets/${id}/messages`, { method: 'POST', body: { body }, token }),
+  adminUpdateTicket:   (token, id, body) => request(`/api/admin/tickets/${id}`, { method: 'PATCH', body, token }),
 };

@@ -26,6 +26,7 @@ const NAV = [
     section: 'Account',
     items: [
       { label: 'Profile',  href: '/dashboard/profile',  icon: <UserIcon /> },
+      { label: 'Support',  href: '/dashboard/support',  icon: <LifeBuoyIcon /> },
     ],
   },
 ];
@@ -42,7 +43,7 @@ export default function Sidebar({ onClose }) {
   return (
     <aside className="w-64 bg-white border-r border-slate-200 flex flex-col shrink-0 h-screen sticky top-0">
       <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between">
-        <Logo size="md" href="/dashboard" />
+        <Logo size="lg" href="/dashboard" />
         {onClose && (
           <button onClick={onClose} className="md:hidden text-slate-400 hover:text-slate-700">
             <CloseIcon />
@@ -124,4 +125,5 @@ function PhoneIcon()   { return <I><rect x="5" y="2" width="14" height="20" rx="
 function LogoutIcon()  { return <I><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></I>; }
 function WalletIcon()  { return <I><path d="M20 12V7a2 2 0 0 0-2-2H5a2 2 0 0 1 0-4h13"/><path d="M2 9v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2H4a2 2 0 0 1-2-2z"/><circle cx="17" cy="14" r="1"/></I>; }
 function UserIcon()    { return <I><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></I>; }
+function LifeBuoyIcon(){ return <I><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/><line x1="4.93" y1="4.93" x2="9.17" y2="9.17"/><line x1="14.83" y1="14.83" x2="19.07" y2="19.07"/><line x1="14.83" y1="9.17" x2="19.07" y2="4.93"/><line x1="14.83" y1="9.17" x2="18.36" y2="5.64"/><line x1="4.93" y1="19.07" x2="9.17" y2="14.83"/></I>; }
 function CloseIcon()   { return <I><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></I>; }

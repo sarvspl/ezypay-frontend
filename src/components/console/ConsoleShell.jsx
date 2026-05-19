@@ -12,6 +12,7 @@ const NAV = [
   // /console/providers when we're ready to let admins add custom providers.
   // { href: '/console/providers',        label: 'Providers', icon: <GridIcon /> },
   { href: '/console/platform-account', label: 'Platform',  icon: <ServerIcon /> },
+  { href: '/console/tickets',          label: 'Tickets',   icon: <TicketIcon /> },
   { href: '/console/support',          label: 'Support',   icon: <HelpIcon /> },
 ];
 
@@ -28,8 +29,8 @@ export default function ConsoleShell({ children, action }) {
       <header className="sticky top-0 z-20 bg-white border-b border-slate-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
           <Link href="/console/merchants" className="flex items-center gap-2 shrink-0">
-            <span className="text-brand-600"><LogoMark className="w-7 h-7" /></span>
-            <span className="text-lg font-bold tracking-tight text-slate-900 hidden sm:inline">
+            <span className="text-brand-600"><LogoMark className="w-10 h-10" /></span>
+            <span className="text-xl font-bold tracking-tight text-slate-900 hidden sm:inline">
               Ezy<span className="text-brand-600">Pay</span>
             </span>
             <span className="ml-1 text-[10px] font-bold uppercase tracking-wider text-slate-400 border border-slate-300 rounded px-1.5 py-0.5">
@@ -99,3 +100,4 @@ function UsersIcon()  { return <I><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4
 function GridIcon()   { return <I><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></I>; }
 function ServerIcon() { return <I><rect x="2" y="3" width="20" height="8" rx="2"/><rect x="2" y="13" width="20" height="8" rx="2"/><line x1="6" y1="7" x2="6.01" y2="7"/><line x1="6" y1="17" x2="6.01" y2="17"/></I>; }
 function HelpIcon()   { return <I><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></I>; }
+function TicketIcon() { return <I><path d="M2 9a3 3 0 0 1 3-3h14a3 3 0 0 1 3 3 2 2 0 0 0 0 4 3 3 0 0 1-3 3H5a3 3 0 0 1-3-3 2 2 0 0 0 0-4Z"/><line x1="13" y1="5" x2="13" y2="7"/><line x1="13" y1="11" x2="13" y2="13"/><line x1="13" y1="17" x2="13" y2="19"/></I>; }
