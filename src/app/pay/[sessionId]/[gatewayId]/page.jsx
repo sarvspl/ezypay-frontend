@@ -206,7 +206,7 @@ export default function PayWithGatewayPage() {
           (() => {
             // Once they've submitted, the gateway-picker isn't useful — they
             // can't change methods now. Send them back to the merchant site
-            // WITH the same ?session_id=&status=pending query string PayVerify
+            // WITH the same ?session_id=&status=pending query string EzyPay
             // would have used on its automatic redirect — so the merchant's
             // result page can still look up the order.
             let host = '';

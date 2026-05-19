@@ -283,12 +283,12 @@ function EmptyState({ merchant }) {
         </div>
         <h3 className="mt-4 text-lg font-semibold text-slate-900">No devices bound yet</h3>
         <p className="text-sm text-slate-600 mt-2">
-          Install the PayVerify APK on the Android phone receiving your wallet SMS, then open the
+          Install the EzyPay APK on the Android phone receiving your wallet SMS, then open the
           app and paste your <strong>Device Auth Key</strong>.
         </p>
 
         <a
-          href="/payverify.apk"
+          href="/ezypay.apk"
           download
           className="inline-flex items-center gap-2 mt-5 bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold rounded-lg px-4 py-2.5 shadow-sm shadow-brand-500/20"
         >

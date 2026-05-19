@@ -184,7 +184,7 @@ function ContentArea({ t }) {
         title={t('Overview', 'ওভারভিউ')}
       >
         <p>
-          <strong>PayVerify</strong>{' '}
+          <strong>EzyPay</strong>{' '}
           {t(
             "verifies wallet, bank, and UPI payments by matching the customer's transaction ID against the actual SMS your bound Android device receives. We don't process payments — we only confirm them.",
             'গ্রাহকের ট্রানজেকশন আইডি আপনার বাঁধা অ্যান্ড্রয়েড ডিভাইসে আসা আসল SMS-এর সাথে মিলিয়ে ওয়ালেট, ব্যাংক এবং UPI পেমেন্ট ভেরিফাই করে। আমরা পেমেন্ট প্রসেস করি না — শুধু নিশ্চিত করি।'
@@ -270,8 +270,8 @@ function ContentArea({ t }) {
       >
         <p>
           {t(
-            "PayVerify sits between the merchant's e-commerce backend, the customer's browser, and the bound Android phone receiving wallet SMS.",
-            'PayVerify মার্চেন্টের ই-কমার্স ব্যাকএন্ড, গ্রাহকের ব্রাউজার এবং ওয়ালেট SMS গ্রহণকারী বাঁধা অ্যান্ড্রয়েড ফোনের মাঝে কাজ করে।'
+            "EzyPay sits between the merchant's e-commerce backend, the customer's browser, and the bound Android phone receiving wallet SMS.",
+            'EzyPay মার্চেন্টের ই-কমার্স ব্যাকএন্ড, গ্রাহকের ব্রাউজার এবং ওয়ালেট SMS গ্রহণকারী বাঁধা অ্যান্ড্রয়েড ফোনের মাঝে কাজ করে।'
           )}
         </p>
 
@@ -307,8 +307,8 @@ function ContentArea({ t }) {
         title={t('Authentication', 'অথেনটিকেশন')}
       >
         <p>
-          {t('PayVerify uses three credentials, each for a different actor:',
-             'PayVerify তিনটি ক্রেডেনশিয়াল ব্যবহার করে, প্রতিটি ভিন্ন অভিনেতার জন্য:')}
+          {t('EzyPay uses three credentials, each for a different actor:',
+             'EzyPay তিনটি ক্রেডেনশিয়াল ব্যবহার করে, প্রতিটি ভিন্ন অভিনেতার জন্য:')}
         </p>
         <CredentialTable t={t} />
         <Callout tone="amber" title={t('Keep keys server-side', 'কী সার্ভার-সাইডে রাখুন')}>
@@ -345,8 +345,8 @@ function ContentArea({ t }) {
       >
         <p>
           {t(
-            <>The PayVerify Android app runs on the phone you use to receive wallet SMS. It does one job: <strong>read incoming wallet SMS and forward them to our backend</strong> as data staging. The SMS only becomes a verification when a customer submits a matching TxnID through your checkout — random unrelated SMS sit unused and never become orphan transactions.</>,
-            <>PayVerify অ্যান্ড্রয়েড অ্যাপটি সেই ফোনে চলে যেটিতে আপনি ওয়ালেট SMS পান। এটি একটিই কাজ করে: <strong>আসা ওয়ালেট SMS পড়া এবং আমাদের ব্যাকএন্ডে স্টেজিং ডেটা হিসেবে পাঠানো</strong>। গ্রাহক যখন চেকআউটে মিলে যাওয়া TxnID জমা দেয় তখনই SMS একটি ভেরিফিকেশনে পরিণত হয় — এলোমেলো অপ্রাসঙ্গিক SMS অব্যবহৃত থাকে এবং কখনো orphan লেনদেনে পরিণত হয় না।</>
+            <>The EzyPay Android app runs on the phone you use to receive wallet SMS. It does one job: <strong>read incoming wallet SMS and forward them to our backend</strong> as data staging. The SMS only becomes a verification when a customer submits a matching TxnID through your checkout — random unrelated SMS sit unused and never become orphan transactions.</>,
+            <>EzyPay অ্যান্ড্রয়েড অ্যাপটি সেই ফোনে চলে যেটিতে আপনি ওয়ালেট SMS পান। এটি একটিই কাজ করে: <strong>আসা ওয়ালেট SMS পড়া এবং আমাদের ব্যাকএন্ডে স্টেজিং ডেটা হিসেবে পাঠানো</strong>। গ্রাহক যখন চেকআউটে মিলে যাওয়া TxnID জমা দেয় তখনই SMS একটি ভেরিফিকেশনে পরিণত হয় — এলোমেলো অপ্রাসঙ্গিক SMS অব্যবহৃত থাকে এবং কখনো orphan লেনদেনে পরিণত হয় না।</>
           )}
         </p>
         <p className="mt-3">
@@ -422,14 +422,14 @@ function ContentArea({ t }) {
       >
         <p>
           {t(
-            <>Install PayVerify on the Android phone that receives your wallet SMS. On first launch, paste your <code className="text-xs">device_auth_key</code> (PV-XXXXXX). The phone shows up in <code className="text-xs">/dashboard/devices</code> as Online.</>,
-            <>যে অ্যান্ড্রয়েড ফোন আপনার ওয়ালেট SMS পায় সেটিতে PayVerify ইনস্টল করুন। প্রথম লঞ্চে আপনার <code className="text-xs">device_auth_key</code> (PV-XXXXXX) পেস্ট করুন। ফোনটি <code className="text-xs">/dashboard/devices</code>-এ Online হিসেবে দেখা যাবে।</>
+            <>Install EzyPay on the Android phone that receives your wallet SMS. On first launch, paste your <code className="text-xs">device_auth_key</code> (PV-XXXXXX). The phone shows up in <code className="text-xs">/dashboard/devices</code> as Online.</>,
+            <>যে অ্যান্ড্রয়েড ফোন আপনার ওয়ালেট SMS পায় সেটিতে EzyPay ইনস্টল করুন। প্রথম লঞ্চে আপনার <code className="text-xs">device_auth_key</code> (PV-XXXXXX) পেস্ট করুন। ফোনটি <code className="text-xs">/dashboard/devices</code>-এ Online হিসেবে দেখা যাবে।</>
           )}
         </p>
         <p className="mt-3 text-sm text-slate-700">
           {t(
-            'From this moment, every wallet SMS that arrives on the phone gets forwarded to PayVerify automatically.',
-            'এই মুহূর্ত থেকে, ফোনে আসা প্রতিটি ওয়ালেট SMS স্বয়ংক্রিয়ভাবে PayVerify-তে ফরোয়ার্ড হবে।'
+            'From this moment, every wallet SMS that arrives on the phone gets forwarded to EzyPay automatically.',
+            'এই মুহূর্ত থেকে, ফোনে আসা প্রতিটি ওয়ালেট SMS স্বয়ংক্রিয়ভাবে EzyPay-তে ফরোয়ার্ড হবে।'
           )}
         </p>
       </Section>
@@ -441,8 +441,8 @@ function ContentArea({ t }) {
       >
         <p>
           {t(
-            'When a customer reaches your checkout, your backend creates a payment session and redirects them to the PayVerify checkout URL.',
-            'যখন একজন গ্রাহক আপনার চেকআউটে আসে, আপনার ব্যাকএন্ড একটি পেমেন্ট সেশন তৈরি করে এবং তাদের PayVerify চেকআউট URL-এ রিডাইরেক্ট করে।'
+            'When a customer reaches your checkout, your backend creates a payment session and redirects them to the EzyPay checkout URL.',
+            'যখন একজন গ্রাহক আপনার চেকআউটে আসে, আপনার ব্যাকএন্ড একটি পেমেন্ট সেশন তৈরি করে এবং তাদের EzyPay চেকআউট URL-এ রিডাইরেক্ট করে।'
           )}
         </p>
 
@@ -950,8 +950,8 @@ if ($body['session']['status'] === 'success') {
   "code":             "merchant_wallet_empty"
 }`}</CodeBlock>
         <ul className="mt-2 text-sm text-slate-700 list-disc pl-5 space-y-1">
-          <li>{t(<><code className="text-xs">error</code> — <strong>safe to display to your customer</strong>. Neutral, no PayVerify-specific language, no numeric leaks.</>,
-                 <><code className="text-xs">error</code> — <strong>আপনার গ্রাহককে দেখানো নিরাপদ</strong>। নিরপেক্ষ, PayVerify-নির্দিষ্ট ভাষা নয়, কোনো সংখ্যাগত লিক নেই।</>)}</li>
+          <li>{t(<><code className="text-xs">error</code> — <strong>safe to display to your customer</strong>. Neutral, no EzyPay-specific language, no numeric leaks.</>,
+                 <><code className="text-xs">error</code> — <strong>আপনার গ্রাহককে দেখানো নিরাপদ</strong>। নিরপেক্ষ, EzyPay-নির্দিষ্ট ভাষা নয়, কোনো সংখ্যাগত লিক নেই।</>)}</li>
           <li>{t(<><code className="text-xs">merchant_message</code> — <strong>for your server logs / admin alerts only</strong>. Tells you exactly what to fix. Never render this to the end customer.</>,
                  <><code className="text-xs">merchant_message</code> — <strong>শুধু আপনার সার্ভার লগ / অ্যাডমিন অ্যালার্টের জন্য</strong>। ঠিক কী ঠিক করতে হবে বলে। শেষ গ্রাহকের কাছে কখনো রেন্ডার করবেন না।</>)}</li>
           <li>{t(<><code className="text-xs">code</code> — stable machine-readable identifier (e.g. <code className="text-xs">merchant_wallet_empty</code>, <code className="text-xs">order_already_paid</code>). Use this for programmatic branching.</>,
@@ -974,7 +974,7 @@ if ($body['session']['status'] === 'success') {
 const body = await r.json();
 if (!r.ok) {
   // Log the technical detail for ops
-  console.warn('[payverify]', body.merchant_message || body.error, '— code:', body.code);
+  console.warn('[ezypay]', body.merchant_message || body.error, '— code:', body.code);
   // Show ONLY the safe text to the customer
   return res.status(503).json({ error: body.error });
 }`}</CodeBlock>
@@ -1043,7 +1043,7 @@ curl_setopt_array($ch, [
 ]);
 $response = curl_exec($ch);
 if (curl_errno($ch)) {
-    error_log('PayVerify cURL error: ' . curl_error($ch));
+    error_log('EzyPay cURL error: ' . curl_error($ch));
 }
 curl_close($ch);
 $body = json_decode($response, true);
@@ -1067,8 +1067,8 @@ header('Location: ' . $body['checkout_url']);`}</CodeBlock>
         </h3>
         <p className="mt-2 text-sm text-slate-700">
           {t(
-            <>You&apos;re hitting the wrong host. PayVerify has two services — the dashboard UI and the API — on different domains. The API base URL is <code className="text-xs">https://checkout.ezypay.it.com</code>. Pointing your backend at the dashboard URL returns 404 because the dashboard doesn&apos;t serve the API.</>,
-            <>আপনি ভুল হোস্টে যাচ্ছেন। PayVerify-এর দুটি সার্ভিস রয়েছে — ড্যাশবোর্ড UI এবং API — ভিন্ন ডোমেইনে। API বেস URL হলো <code className="text-xs">https://checkout.ezypay.it.com</code>। ড্যাশবোর্ড URL-এ আপনার ব্যাকএন্ড পয়েন্ট করলে 404 আসে কারণ ড্যাশবোর্ড API সার্ভ করে না।</>
+            <>You&apos;re hitting the wrong host. EzyPay has two services — the dashboard UI and the API — on different domains. The API base URL is <code className="text-xs">https://checkout.ezypay.it.com</code>. Pointing your backend at the dashboard URL returns 404 because the dashboard doesn&apos;t serve the API.</>,
+            <>আপনি ভুল হোস্টে যাচ্ছেন। EzyPay-এর দুটি সার্ভিস রয়েছে — ড্যাশবোর্ড UI এবং API — ভিন্ন ডোমেইনে। API বেস URL হলো <code className="text-xs">https://checkout.ezypay.it.com</code>। ড্যাশবোর্ড URL-এ আপনার ব্যাকএন্ড পয়েন্ট করলে 404 আসে কারণ ড্যাশবোর্ড API সার্ভ করে না।</>
           )}
         </p>
         <p className="mt-2 text-sm text-slate-700">
@@ -1085,8 +1085,8 @@ header('Location: ' . $body['checkout_url']);`}</CodeBlock>
           {t('You sent the wrong header for the wrong endpoint:', 'আপনি ভুল এন্ডপয়েন্টের জন্য ভুল হেডার পাঠিয়েছেন:')}
         </p>
         <ul className="mt-2 text-sm text-slate-700 list-disc pl-5 space-y-1">
-          <li>{t(<>Backend-to-PayVerify (<code className="text-xs">/api/payment/...</code>): use <code className="text-xs">X-API-Key: pk_live_...</code></>,
-                 <>ব্যাকএন্ড-থেকে-PayVerify (<code className="text-xs">/api/payment/...</code>): <code className="text-xs">X-API-Key: pk_live_...</code> ব্যবহার করুন</>)}</li>
+          <li>{t(<>Backend-to-EzyPay (<code className="text-xs">/api/payment/...</code>): use <code className="text-xs">X-API-Key: pk_live_...</code></>,
+                 <>ব্যাকএন্ড-থেকে-EzyPay (<code className="text-xs">/api/payment/...</code>): <code className="text-xs">X-API-Key: pk_live_...</code> ব্যবহার করুন</>)}</li>
           <li>{t(<>Merchant dashboard / your own JWT calls (<code className="text-xs">/api/merchant/...</code>): use <code className="text-xs">Authorization: Bearer &lt;jwt&gt;</code></>,
                  <>মার্চেন্ট ড্যাশবোর্ড / আপনার নিজস্ব JWT কল (<code className="text-xs">/api/merchant/...</code>): <code className="text-xs">Authorization: Bearer &lt;jwt&gt;</code> ব্যবহার করুন</>)}</li>
           <li>{t(<>APK calls (<code className="text-xs">/api/device/...</code>): use the <code className="text-xs">auth_key</code> field in the JSON body.</>,
@@ -1108,8 +1108,8 @@ header('Location: ' . $body['checkout_url']);`}</CodeBlock>
         </h3>
         <p className="mt-2 text-sm text-slate-700">
           {t(
-            "PayVerify charges merchants a small per-verification fee, debited from the merchant's wallet on every successful verification. When the wallet drops below that fee, the merchant's operations are paused:",
-            'PayVerify মার্চেন্টদের ছোট প্রতি-ভেরিফিকেশন ফি চার্জ করে, প্রতিটি সফল ভেরিফিকেশনে মার্চেন্টের ওয়ালেট থেকে কাটা হয়। যখন ওয়ালেট সেই ফি-র নিচে নামে, মার্চেন্টের কার্যক্রম থামিয়ে দেওয়া হয়:'
+            "EzyPay charges merchants a small per-verification fee, debited from the merchant's wallet on every successful verification. When the wallet drops below that fee, the merchant's operations are paused:",
+            'EzyPay মার্চেন্টদের ছোট প্রতি-ভেরিফিকেশন ফি চার্জ করে, প্রতিটি সফল ভেরিফিকেশনে মার্চেন্টের ওয়ালেট থেকে কাটা হয়। যখন ওয়ালেট সেই ফি-র নিচে নামে, মার্চেন্টের কার্যক্রম থামিয়ে দেওয়া হয়:'
           )}
         </p>
         <ul className="mt-2 text-sm text-slate-700 list-disc pl-5 space-y-1">
@@ -1212,12 +1212,12 @@ header('Location: ' . $body['checkout_url']);`}</CodeBlock>
         </p>
         <p className="mt-3">
           {t(
-            <>Webhooks are on the roadmap. When live, PayVerify will <code className="text-xs">POST</code> to a URL on your domain whenever a session resolves, signed with HMAC-SHA256 of the body using your brand&apos;s <code className="text-xs">secret_key</code>:</>,
-            <>ওয়েবহুক রোডম্যাপে রয়েছে। লাইভ হলে, যখনই একটি সেশন রেজলভ হবে, PayVerify আপনার ডোমেইনের একটি URL-এ <code className="text-xs">POST</code> করবে, আপনার ব্র্যান্ডের <code className="text-xs">secret_key</code> ব্যবহার করে বডির HMAC-SHA256-এ স্বাক্ষরিত:</>
+            <>Webhooks are on the roadmap. When live, EzyPay will <code className="text-xs">POST</code> to a URL on your domain whenever a session resolves, signed with HMAC-SHA256 of the body using your brand&apos;s <code className="text-xs">secret_key</code>:</>,
+            <>ওয়েবহুক রোডম্যাপে রয়েছে। লাইভ হলে, যখনই একটি সেশন রেজলভ হবে, EzyPay আপনার ডোমেইনের একটি URL-এ <code className="text-xs">POST</code> করবে, আপনার ব্র্যান্ডের <code className="text-xs">secret_key</code> ব্যবহার করে বডির HMAC-SHA256-এ স্বাক্ষরিত:</>
           )}
         </p>
-        <CodeBlock language="http" copyLabel={t('Copy', 'কপি')} copiedLabel={t('✓ Copied', '✓ কপি হয়েছে')}>{`POST https://yourstore.com/payverify/webhook
-X-PayVerify-Signature: t=1683900000,v1=<hmac-sha256-hex>
+        <CodeBlock language="http" copyLabel={t('Copy', 'কপি')} copiedLabel={t('✓ Copied', '✓ কপি হয়েছে')}>{`POST https://yourstore.com/ezypay/webhook
+X-EzyPay-Signature: t=1683900000,v1=<hmac-sha256-hex>
 
 { "event": "session.success", "session": { ... } }`}</CodeBlock>
         <p className="mt-3 text-sm text-slate-600">
@@ -1236,8 +1236,8 @@ X-PayVerify-Signature: t=1683900000,v1=<hmac-sha256-hex>
              'প্রশ্ন? এমন কিছুতে আটকে গেছেন যা ডকুমেন্টেশন কভার করে না?')}
         </p>
         <ul className="mt-3 space-y-1 text-slate-700">
-          <li>{t(<>📧 Email: <a href="mailto:support@payverify.com" className="text-brand-600 hover:underline">support@payverify.com</a></>,
-                 <>📧 ইমেইল: <a href="mailto:support@payverify.com" className="text-brand-600 hover:underline">support@payverify.com</a></>)}</li>
+          <li>{t(<>📧 Email: <a href="mailto:support@ezypay.it.com" className="text-brand-600 hover:underline">support@ezypay.it.com</a></>,
+                 <>📧 ইমেইল: <a href="mailto:support@ezypay.it.com" className="text-brand-600 hover:underline">support@ezypay.it.com</a></>)}</li>
           <li>{t('🐛 Bugs / API issues: open a ticket from your dashboard',
                  '🐛 বাগ / API সমস্যা: আপনার ড্যাশবোর্ড থেকে টিকিট খুলুন')}</li>
           <li>{t(<>📖 APK developer reference: <code className="text-xs">docs/APK_API.md</code></>,
@@ -1265,7 +1265,7 @@ function Hero({ t }) {
         {t('Developer Documentation', 'ডেভেলপার ডকুমেন্টেশন')}
       </div>
       <h1 className="mt-2 text-3xl sm:text-4xl font-bold tracking-tight text-slate-900">
-        PayVerify <span className="text-slate-500 font-normal">{t('Integration Guide', 'ইন্টিগ্রেশন গাইড')}</span>
+        EzyPay <span className="text-slate-500 font-normal">{t('Integration Guide', 'ইন্টিগ্রেশন গাইড')}</span>
       </h1>
       <p className="mt-3 text-slate-600 max-w-2xl">
         {t(
@@ -1433,13 +1433,13 @@ function Diagram() {
     <div className="my-6 rounded-lg border border-slate-200 bg-slate-50/50 p-5 overflow-x-auto">
       <pre className="text-xs sm:text-sm font-mono leading-relaxed text-slate-700 whitespace-pre">{`┌─────────────────────┐                                  ┌─────────────────────┐
 │  Customer's browser │                                  │   Your bound phone  │
-│  on yourstore.com   │                                  │   (PayVerify APK)   │
+│  on yourstore.com   │                                  │   (EzyPay APK)      │
 └──────────┬──────────┘                                  └─────────────────────┘
            │   1) POST /api/payment/sessions                       │
            │   ◄──────── checkout_url ────────                      │
            ▼                                                       │
 ┌─────────────────────┐  2) redirect to checkout_url               │
-│  PayVerify hosted   │ ◄─────────────────────────────────         │
+│  EzyPay hosted      │ ◄─────────────────────────────────         │
 │  /pay/<sessionId>   │                                            │
 └──────────┬──────────┘                                            │
            │   3) customer pays, pastes TxnID                      │

@@ -19,7 +19,7 @@ const T = {
     hero_title_pre: 'Stop losing money to',
     hero_title_emph: 'fake TxnIDs.',
     hero_subtitle:
-      "PayVerify confirms any wallet, bank or UPI payment by matching the customer's transaction ID against the actual SMS on your bound Android phone. No payment gateway. No KYC. No per-transaction fees. Just verification that works — anywhere in the world.",
+      "EzyPay confirms any wallet, bank or UPI payment by matching the customer's transaction ID against the actual SMS on your bound Android phone. No payment gateway. No KYC. No per-transaction fees. Just verification that works — anywhere in the world.",
     hero_cta_primary: 'Start free — get your API Key',
     hero_cta_secondary: 'See how it works',
     hero_pill_1: 'No credit card',
@@ -51,7 +51,7 @@ const T = {
     problem_li_3: 'Customer waits → cart abandoned → revenue lost',
     problem_li_4: 'Payment gateways charge 2–3% per transaction',
     fix_eyebrow: 'The fix',
-    fix_title: 'PayVerify, in one sentence:',
+    fix_title: 'EzyPay, in one sentence:',
     fix_body_a: 'Your customer submits a TxnID. We check the actual SMS on the phone',
     fix_body_em: 'you',
     fix_body_b: " own. The order confirms — or doesn't — in under 2 seconds.",
@@ -66,13 +66,13 @@ const T = {
     how_step1_title: 'Register & get keys',
     how_step1_body: 'Create your merchant account. We instantly generate your API Key and Device Auth Key.',
     how_step2_title: 'Install the APK',
-    how_step2_body: "Download the PayVerify APK to your shop's phone. Paste the Device Auth Key — done.",
+    how_step2_body: "Download the EzyPay APK to your shop's phone. Paste the Device Auth Key — done.",
     how_step3_title: 'Integrate the API',
     how_step3_body: 'Add a single API call to your checkout. We support PHP, Node, Python, anything that can POST.',
     how_step4_title: 'Verify automatically',
     how_step4_body: 'Customer submits TxnID. APK reads the SMS. Order confirms in seconds. You ship.',
 
-    feat_eyebrow: 'Why PayVerify',
+    feat_eyebrow: 'Why EzyPay',
     feat_title: "Built for merchants who can't wait",
     feat_subtitle: "Everything you need to stop manual verification — and nothing you don't.",
     feat_1_title: 'Sub-2-second verification',
@@ -90,9 +90,9 @@ const T = {
     feat_6_body: "SMS never leaves your device unless it matches. We don't store your inbox.",
 
     cmp_eyebrow: 'Side-by-side',
-    cmp_title: 'PayVerify vs. traditional payment gateways',
+    cmp_title: 'EzyPay vs. traditional payment gateways',
     cmp_subtitle: "You don't need a payment processor. You need verification.",
-    cmp_col_pv: 'PayVerify',
+    cmp_col_pv: 'EzyPay',
     cmp_col_gw: 'Payment gateway',
     cmp_row1: 'Setup time',
     cmp_row1_pv: '2 minutes',
@@ -126,7 +126,7 @@ const T = {
     faq_eyebrow: 'Frequently asked',
     faq_title: 'Answers, fast',
     faq_subtitle: "Still curious? Reach out — we'll respond within a few hours.",
-    faq_q1: "Does PayVerify hold or process my customers' money?",
+    faq_q1: "Does EzyPay hold or process my customers' money?",
     faq_a1:
       'No. We are pure verification. The customer pays you directly via their wallet. We only confirm the payment happened by reading the SMS on your phone.',
     faq_q2: 'What phone do I need?',
@@ -173,7 +173,7 @@ const T = {
     hero_title_pre: 'আর টাকা হারাবেন না',
     hero_title_emph: 'জাল TxnID-র কারণে।',
     hero_subtitle:
-      'PayVerify গ্রাহকের ট্রানজেকশন আইডি আপনার বাঁধা অ্যান্ড্রয়েড ফোনের আসল SMS-এর সাথে মিলিয়ে যেকোনো ওয়ালেট, ব্যাংক বা UPI পেমেন্ট নিশ্চিত করে। কোনো পেমেন্ট গেটওয়ে নেই। কোনো KYC নেই। কোনো প্রতি-লেনদেন ফি নেই। শুধু ভেরিফিকেশন যা কাজ করে — পৃথিবীর যেকোনো জায়গায়।',
+      'EzyPay গ্রাহকের ট্রানজেকশন আইডি আপনার বাঁধা অ্যান্ড্রয়েড ফোনের আসল SMS-এর সাথে মিলিয়ে যেকোনো ওয়ালেট, ব্যাংক বা UPI পেমেন্ট নিশ্চিত করে। কোনো পেমেন্ট গেটওয়ে নেই। কোনো KYC নেই। কোনো প্রতি-লেনদেন ফি নেই। শুধু ভেরিফিকেশন যা কাজ করে — পৃথিবীর যেকোনো জায়গায়।',
     hero_cta_primary: 'বিনামূল্যে শুরু করুন — API কী নিন',
     hero_cta_secondary: 'কীভাবে কাজ করে দেখুন',
     hero_pill_1: 'ক্রেডিট কার্ড লাগবে না',
@@ -205,7 +205,7 @@ const T = {
     problem_li_3: 'গ্রাহক অপেক্ষা করে → কার্ট ছেড়ে দেয় → আয় হারায়',
     problem_li_4: 'পেমেন্ট গেটওয়ে প্রতি লেনদেনে ২–৩% নেয়',
     fix_eyebrow: 'সমাধান',
-    fix_title: 'PayVerify, এক বাক্যে:',
+    fix_title: 'EzyPay, এক বাক্যে:',
     fix_body_a: 'আপনার গ্রাহক একটি TxnID জমা দেয়। আমরা',
     fix_body_em: 'আপনার নিজের',
     fix_body_b: ' ফোনের আসল SMS চেক করি। ২ সেকেন্ডের মধ্যে অর্ডার নিশ্চিত হয় — অথবা হয় না।',
@@ -220,13 +220,13 @@ const T = {
     how_step1_title: 'রেজিস্টার ও কী নিন',
     how_step1_body: 'আপনার মার্চেন্ট অ্যাকাউন্ট তৈরি করুন। আমরা তাৎক্ষণিক API কী ও ডিভাইস অথ কী তৈরি করে দিই।',
     how_step2_title: 'APK ইনস্টল করুন',
-    how_step2_body: 'আপনার দোকানের ফোনে PayVerify APK ডাউনলোড করুন। ডিভাইস অথ কী পেস্ট করুন — হয়ে গেল।',
+    how_step2_body: 'আপনার দোকানের ফোনে EzyPay APK ডাউনলোড করুন। ডিভাইস অথ কী পেস্ট করুন — হয়ে গেল।',
     how_step3_title: 'API ইন্টিগ্রেট করুন',
     how_step3_body: 'আপনার চেকআউটে একটি মাত্র API কল যোগ করুন। PHP, Node, Python — POST করতে পারে এমন যেকোনো কিছুই সাপোর্ট করি।',
     how_step4_title: 'স্বয়ংক্রিয়ভাবে ভেরিফাই করুন',
     how_step4_body: 'গ্রাহক TxnID জমা দেয়। APK SMS পড়ে। অর্ডার সেকেন্ডে নিশ্চিত হয়। আপনি শিপ করেন।',
 
-    feat_eyebrow: 'কেন PayVerify',
+    feat_eyebrow: 'কেন EzyPay',
     feat_title: 'যেসব মার্চেন্ট অপেক্ষা করতে পারেন না, তাদের জন্য তৈরি',
     feat_subtitle: 'ম্যানুয়াল ভেরিফিকেশন বন্ধ করতে যা প্রয়োজন সব আছে — অপ্রয়োজনীয় কিছুই নেই।',
     feat_1_title: '২ সেকেন্ডের কম ভেরিফিকেশন',
@@ -244,9 +244,9 @@ const T = {
     feat_6_body: 'মিল না হলে SMS কখনোই আপনার ডিভাইস ছাড়ে না। আমরা আপনার ইনবক্স স্টোর করি না।',
 
     cmp_eyebrow: 'পাশাপাশি',
-    cmp_title: 'PayVerify বনাম প্রচলিত পেমেন্ট গেটওয়ে',
+    cmp_title: 'EzyPay বনাম প্রচলিত পেমেন্ট গেটওয়ে',
     cmp_subtitle: 'আপনার পেমেন্ট প্রসেসর দরকার নেই। আপনার ভেরিফিকেশন দরকার।',
-    cmp_col_pv: 'PayVerify',
+    cmp_col_pv: 'EzyPay',
     cmp_col_gw: 'পেমেন্ট গেটওয়ে',
     cmp_row1: 'সেটআপ সময়',
     cmp_row1_pv: '২ মিনিট',
@@ -280,7 +280,7 @@ const T = {
     faq_eyebrow: 'সাধারণ প্রশ্ন',
     faq_title: 'দ্রুত উত্তর',
     faq_subtitle: 'এখনো কৌতূহল? যোগাযোগ করুন — কয়েক ঘণ্টার মধ্যেই উত্তর দিচ্ছি।',
-    faq_q1: 'PayVerify কি আমার গ্রাহকদের টাকা ধারণ বা প্রসেস করে?',
+    faq_q1: 'EzyPay কি আমার গ্রাহকদের টাকা ধারণ বা প্রসেস করে?',
     faq_a1:
       'না। আমরা শুধু ভেরিফিকেশন করি। গ্রাহক সরাসরি আপনাকে তার ওয়ালেট দিয়ে টাকা পাঠায়। আমরা শুধু আপনার ফোনের SMS পড়ে পেমেন্ট নিশ্চিত করি।',
     faq_q2: 'আমার কোন ফোন দরকার?',
@@ -812,7 +812,7 @@ function Footer({ t }) {
           <div className="flex items-center gap-2">
             <span className="text-brand-600"><LogoMark className="w-7 h-7" /></span>
             <span className="text-lg font-bold tracking-tight">
-              Pay<span className="text-brand-600">Verify</span>
+              Ezy<span className="text-brand-600">Pay</span>
             </span>
           </div>
           <p className="mt-3 text-slate-600 max-w-sm">{t('foot_blurb')}</p>
@@ -838,7 +838,7 @@ function Footer({ t }) {
       </div>
       <div className="border-t border-slate-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 text-xs text-slate-500 flex flex-wrap items-center justify-between gap-2">
-          <span>© {new Date().getFullYear()} PayVerify. {t('foot_rights')}</span>
+          <span>© {new Date().getFullYear()} EzyPay. {t('foot_rights')}</span>
           <span>{t('foot_tag')}</span>
         </div>
       </div>

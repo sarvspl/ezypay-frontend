@@ -20,17 +20,17 @@ export function LogoMark({ className = 'w-8 h-8' }) {
   );
 }
 
-/* Just the wordmark — "Pay" in slate-900, "Verify" in brand color. */
+/* Just the wordmark — "Ezy" in slate-900, "Pay" in brand color. */
 export function Wordmark({ className = 'text-lg' }) {
   return (
     <span className={`font-bold tracking-tight text-slate-900 ${className}`}>
-      Pay<span className="text-brand-600">Verify</span>
+      Ezy<span className="text-brand-600">Pay</span>
     </span>
   );
 }
 
 /* Icon + wordmark together. Used in nav bars, headers, sidebars.
- * Uses the brand logo PNG from /public/logo-payverify.png. */
+ * Uses the brand logo PNG from /public/logo-ezypay.png. */
 export default function Logo({ size = 'md', href = '/', className = '' }) {
   const sizes = {
     sm: 'h-7',   // ~28px tall
@@ -42,14 +42,14 @@ export default function Logo({ size = 'md', href = '/', className = '' }) {
   const img = (
     /* eslint-disable-next-line @next/next/no-img-element */
     <img
-      src="/logo-payverify.png"
-      alt="PayVerify"
+      src="/logo-ezypay.png"
+      alt="EzyPay"
       className={`${heightClass} w-auto ${className}`}
     />
   );
 
   if (href) {
-    return <Link href={href} className="inline-flex items-center" aria-label="PayVerify home">{img}</Link>;
+    return <Link href={href} className="inline-flex items-center" aria-label="EzyPay home">{img}</Link>;
   }
   return img;
 }

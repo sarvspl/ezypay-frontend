@@ -248,7 +248,7 @@ function CredentialsAndApk({ merchant }) {
 
       <div className="card p-5 sm:p-6 flex flex-col">
         <div className="flex items-center justify-between">
-          <h3 className="font-semibold text-slate-900">PayVerify APK</h3>
+          <h3 className="font-semibold text-slate-900">EzyPay APK</h3>
           <PhoneIcon className="text-slate-300" />
         </div>
         <p className="text-sm text-slate-600 mt-2">
@@ -256,8 +256,8 @@ function CredentialsAndApk({ merchant }) {
         </p>
         <div className="mt-auto pt-4 space-y-2">
           <a
-            href="/payverify.apk"
-            download="payverify.apk"
+            href="/ezypay.apk"
+            download="ezypay.apk"
             className="btn-primary w-full inline-flex items-center justify-center"
           >
             <DownloadIcon className="w-4 h-4 mr-2" />

@@ -205,10 +205,10 @@ export default function ConsolePlatformAccountPage() {
             {!devices || devices.length === 0 ? (
               <div className="p-8 text-center">
                 <p className="text-slate-500 text-sm">
-                  No phones bound yet. Install the PayVerify APK on your phone and paste the device auth key above.
+                  No phones bound yet. Install the EzyPay APK on your phone and paste the device auth key above.
                 </p>
                 <a
-                  href="/payverify.apk"
+                  href="/ezypay.apk"
                   download
                   className="inline-flex items-center gap-2 mt-4 bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold rounded-lg px-4 py-2"
                 >

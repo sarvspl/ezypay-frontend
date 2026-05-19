@@ -1,7 +1,7 @@
 import Logo from '@/components/Logo';
 
 export const metadata = {
-  title: 'Secure Checkout · PayVerify',
+  title: 'Secure Checkout · EzyPay',
 };
 
 export default function PayLayout({ children }) {
@@ -11,14 +11,14 @@ export default function PayLayout({ children }) {
         <div className="max-w-3xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
           <Logo size="sm" href="/" />
           <span className="text-xs text-slate-500 flex items-center gap-1.5">
-            <LockIcon /> Secured by PayVerify
+            <LockIcon /> Secured by EzyPay
           </span>
         </div>
       </header>
       <main className="flex-1">{children}</main>
       <footer className="border-t border-slate-200 bg-white">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 py-3 text-xs text-slate-500 flex items-center justify-between">
-          <span>© {new Date().getFullYear()} PayVerify</span>
+          <span>© {new Date().getFullYear()} EzyPay</span>
           <span className="flex items-center gap-1.5"><LockIcon /> Encrypted &amp; verified</span>
         </div>
       </footer>

@@ -30,7 +30,7 @@ export default function ConsoleShell({ children, action }) {
           <Link href="/console/merchants" className="flex items-center gap-2 shrink-0">
             <span className="text-brand-600"><LogoMark className="w-7 h-7" /></span>
             <span className="text-lg font-bold tracking-tight text-slate-900 hidden sm:inline">
-              Pay<span className="text-brand-600">Verify</span>
+              Ezy<span className="text-brand-600">Pay</span>
             </span>
             <span className="ml-1 text-[10px] font-bold uppercase tracking-wider text-slate-400 border border-slate-300 rounded px-1.5 py-0.5">
               Console
