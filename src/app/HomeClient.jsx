@@ -550,7 +550,7 @@ function LangToggle({ lang, onChange }) {
           ].join(' ')}
           aria-pressed={lang === 'bn'}
         >
-          BEN
+          বাংলা
         </button>
       </div>
     </div>

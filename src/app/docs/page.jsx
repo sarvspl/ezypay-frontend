@@ -13,12 +13,12 @@ export default function DocsPage() {
     try {
       const saved = localStorage.getItem(LS_KEY);
       if (saved === 'en' || saved === 'bn') setLang(saved);
-    } catch {}
+    } catch { }
   }, []);
 
   const changeLang = (next) => {
     setLang(next);
-    try { localStorage.setItem(LS_KEY, next); } catch {}
+    try { localStorage.setItem(LS_KEY, next); } catch { }
   };
 
   const t = (en, bn) => (lang === 'bn' ? bn : en);
@@ -42,51 +42,51 @@ function Header({ lang, onLangChange, t }) {
   return (
     <header className="sticky top-0 z-40">
       <div className="bg-white/80 backdrop-blur border-b border-slate-200/70">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-2 sm:gap-4">
-        <Logo size="xl" />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-2 sm:gap-4">
+          <Logo size="xl" />
 
-        <nav className="hidden md:flex items-center h-11 gap-1 text-sm rounded-full bg-gradient-to-r from-grad-start to-grad-end px-1.5 shadow-md shadow-grad-start/25">
-          <Link
-            href="/"
-            className="flex items-center px-4 py-1.5 rounded-full font-medium text-white/85 hover:text-white hover:bg-white/10 transition-colors"
-          >
-            {t('Home', 'হোম')}
-          </Link>
-          <Link
-            href="/docs"
-            className="flex items-center px-4 py-1.5 rounded-full font-semibold bg-white/20 text-white"
-          >
-            {t('Docs', 'ডকুমেন্টেশন')}
-          </Link>
-        </nav>
-
-        <div className="flex items-center gap-2 sm:gap-3">
-          <LangToggle lang={lang} onChange={onLangChange} />
-          <div className="hidden sm:block h-11 rounded-full bg-gradient-to-r from-grad-start to-grad-end p-[2px]">
+          <nav className="hidden md:flex items-center h-11 gap-1 text-sm rounded-full bg-gradient-to-r from-grad-start to-grad-end px-1.5 shadow-md shadow-grad-start/25">
             <Link
-              href="/login"
-              className="flex items-center h-full rounded-full bg-white text-grad-start hover:text-grad-end transition-colors px-5 text-sm font-semibold"
+              href="/"
+              className="flex items-center px-4 py-1.5 rounded-full font-medium text-white/85 hover:text-white hover:bg-white/10 transition-colors"
             >
-              {t('Merchant Login', 'মার্চেন্ট লগইন')}
+              {t('Home', 'হোম')}
             </Link>
+            <Link
+              href="/docs"
+              className="flex items-center px-4 py-1.5 rounded-full font-semibold bg-white/20 text-white"
+            >
+              {t('Docs', 'ডকুমেন্টেশন')}
+            </Link>
+          </nav>
+
+          <div className="flex items-center gap-2 sm:gap-3">
+            <LangToggle lang={lang} onChange={onLangChange} />
+            <div className="hidden sm:block h-11 rounded-full bg-gradient-to-r from-grad-start to-grad-end p-[2px]">
+              <Link
+                href="/login"
+                className="flex items-center h-full rounded-full bg-white text-grad-start hover:text-grad-end transition-colors px-5 text-sm font-semibold"
+              >
+                {t('Merchant Login', 'মার্চেন্ট লগইন')}
+              </Link>
+            </div>
+            <Link
+              href="/register"
+              className="hidden sm:flex items-center h-11 rounded-full bg-gradient-to-r from-grad-start to-grad-end text-white px-5 text-sm font-semibold whitespace-nowrap shadow-md shadow-grad-start/25 hover:shadow-lg transition-shadow"
+            >
+              {t('Get Started', 'শুরু করুন')}
+            </Link>
+            <button
+              type="button"
+              onClick={() => setMobileOpen((v) => !v)}
+              className="md:hidden flex items-center justify-center w-11 h-11 rounded-full text-grad-start hover:bg-slate-100"
+              aria-label="Toggle menu"
+              aria-expanded={mobileOpen}
+            >
+              {mobileOpen ? <DocsCloseIcon /> : <DocsMenuIcon />}
+            </button>
           </div>
-          <Link
-            href="/register"
-            className="hidden sm:flex items-center h-11 rounded-full bg-gradient-to-r from-grad-start to-grad-end text-white px-5 text-sm font-semibold whitespace-nowrap shadow-md shadow-grad-start/25 hover:shadow-lg transition-shadow"
-          >
-            {t('Get Started', 'শুরু করুন')}
-          </Link>
-          <button
-            type="button"
-            onClick={() => setMobileOpen((v) => !v)}
-            className="md:hidden flex items-center justify-center w-11 h-11 rounded-full text-grad-start hover:bg-slate-100"
-            aria-label="Toggle menu"
-            aria-expanded={mobileOpen}
-          >
-            {mobileOpen ? <DocsCloseIcon /> : <DocsMenuIcon />}
-          </button>
         </div>
-      </div>
       </div>
 
       {/* Backdrop */}
@@ -138,10 +138,10 @@ function Header({ lang, onLangChange, t }) {
 }
 
 function DocsMenuIcon() {
-  return <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>;
+  return <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="18" x2="21" y2="18" /></svg>;
 }
 function DocsCloseIcon() {
-  return <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>;
+  return <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>;
 }
 
 function LangToggle({ lang, onChange }) {
@@ -172,7 +172,7 @@ function LangToggle({ lang, onChange }) {
           ].join(' ')}
           aria-pressed={lang === 'bn'}
         >
-          BEN
+          বাংলা
         </button>
       </div>
     </div>
@@ -182,25 +182,25 @@ function LangToggle({ lang, onChange }) {
 /* ────────────────────────────────────────── Sidebar TOC (left) */
 function buildSections(t) {
   return [
-    { id: 'overview',     label: t('Overview', 'ওভারভিউ'),                  group: t('Get Started', 'শুরু করুন') },
-    { id: 'quickstart',   label: t('Quick Start', 'কুইক স্টার্ট'),            group: t('Get Started', 'শুরু করুন') },
-    { id: 'how',          label: t('How It Works', 'কীভাবে কাজ করে'),       group: t('Get Started', 'শুরু করুন') },
-    { id: 'auth',         label: t('Authentication', 'অথেনটিকেশন'),         group: t('Concepts', 'ধারণা') },
-    { id: 'gateways',     label: t('Gateways', 'গেটওয়ে'),                   group: t('Concepts', 'ধারণা') },
-    { id: 'apk',          label: t('The APK', 'APK সম্পর্কে'),                group: t('Concepts', 'ধারণা') },
-    { id: 'step-register',  label: t('1. Register', '১. রেজিস্টার'),                     group: t('Integration', 'ইন্টিগ্রেশন') },
-    { id: 'step-configure', label: t('2. Configure Gateway', '২. গেটওয়ে কনফিগার করুন'),  group: t('Integration', 'ইন্টিগ্রেশন') },
-    { id: 'step-bind',      label: t('3. Bind the APK', '৩. APK বাঁধাই করুন'),           group: t('Integration', 'ইন্টিগ্রেশন') },
-    { id: 'step-checkout',  label: t('4. Hosted Checkout', '৪. হোস্টেড চেকআউট'),         group: t('Integration', 'ইন্টিগ্রেশন') },
-    { id: 'step-verify',    label: t('5. Verify on Return', '৫. রিটার্নে ভেরিফাই করুন'),  group: t('Integration', 'ইন্টিগ্রেশন') },
-    { id: 'api-sessions',   label: t('Payment Sessions', 'পেমেন্ট সেশন'),                  group: t('API Reference', 'API রেফারেন্স') },
-    { id: 'api-verify',     label: t('Manual Verify', 'ম্যানুয়াল ভেরিফাই'),                 group: t('API Reference', 'API রেফারেন্স') },
-    { id: 'api-devices',    label: t('Devices (APK)', 'ডিভাইস (APK)'),                     group: t('API Reference', 'API রেফারেন্স') },
-    { id: 'errors',         label: t('Errors & Status Codes', 'এরর ও স্ট্যাটাস কোড'),     group: t('API Reference', 'API রেফারেন্স') },
-    { id: 'troubleshoot',   label: t('Troubleshooting', 'ট্রাবলশুটিং'),                     group: t('API Reference', 'API রেফারেন্স') },
-    { id: 'best',           label: t('Best Practices', 'সেরা পদ্ধতি'),                     group: t('Production', 'প্রোডাকশন') },
-    { id: 'webhooks',       label: t('Webhooks', 'ওয়েবহুক'),                              group: t('Production', 'প্রোডাকশন') },
-    { id: 'support',        label: t('Support', 'সাপোর্ট'),                                group: t('Production', 'প্রোডাকশন') },
+    { id: 'overview', label: t('Overview', 'ওভারভিউ'), group: t('Get Started', 'শুরু করুন') },
+    { id: 'quickstart', label: t('Quick Start', 'কুইক স্টার্ট'), group: t('Get Started', 'শুরু করুন') },
+    { id: 'how', label: t('How It Works', 'কীভাবে কাজ করে'), group: t('Get Started', 'শুরু করুন') },
+    { id: 'auth', label: t('Authentication', 'অথেনটিকেশন'), group: t('Concepts', 'ধারণা') },
+    { id: 'gateways', label: t('Gateways', 'গেটওয়ে'), group: t('Concepts', 'ধারণা') },
+    { id: 'apk', label: t('The APK', 'APK সম্পর্কে'), group: t('Concepts', 'ধারণা') },
+    { id: 'step-register', label: t('1. Register', '১. রেজিস্টার'), group: t('Integration', 'ইন্টিগ্রেশন') },
+    { id: 'step-configure', label: t('2. Configure Gateway', '২. গেটওয়ে কনফিগার করুন'), group: t('Integration', 'ইন্টিগ্রেশন') },
+    { id: 'step-bind', label: t('3. Bind the APK', '৩. APK বাঁধাই করুন'), group: t('Integration', 'ইন্টিগ্রেশন') },
+    { id: 'step-checkout', label: t('4. Hosted Checkout', '৪. হোস্টেড চেকআউট'), group: t('Integration', 'ইন্টিগ্রেশন') },
+    { id: 'step-verify', label: t('5. Verify on Return', '৫. রিটার্নে ভেরিফাই করুন'), group: t('Integration', 'ইন্টিগ্রেশন') },
+    { id: 'api-sessions', label: t('Payment Sessions', 'পেমেন্ট সেশন'), group: t('API Reference', 'API রেফারেন্স') },
+    { id: 'api-verify', label: t('Manual Verify', 'ম্যানুয়াল ভেরিফাই'), group: t('API Reference', 'API রেফারেন্স') },
+    { id: 'api-devices', label: t('Devices (APK)', 'ডিভাইস (APK)'), group: t('API Reference', 'API রেফারেন্স') },
+    { id: 'errors', label: t('Errors & Status Codes', 'এরর ও স্ট্যাটাস কোড'), group: t('API Reference', 'API রেফারেন্স') },
+    { id: 'troubleshoot', label: t('Troubleshooting', 'ট্রাবলশুটিং'), group: t('API Reference', 'API রেফারেন্স') },
+    { id: 'best', label: t('Best Practices', 'সেরা পদ্ধতি'), group: t('Production', 'প্রোডাকশন') },
+    { id: 'webhooks', label: t('Webhooks', 'ওয়েবহুক'), group: t('Production', 'প্রোডাকশন') },
+    { id: 'support', label: t('Support', 'সাপোর্ট'), group: t('Production', 'প্রোডাকশন') },
   ];
 }
 
@@ -239,9 +239,8 @@ function SidebarNav({ t }) {
                 <li key={s.id}>
                   <a
                     href={`#${s.id}`}
-                    className={`block py-1.5 px-2 rounded-md text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors ${
-                      active === s.id ? 'bg-brand-50 text-brand-700 font-semibold' : ''
-                    }`}
+                    className={`block py-1.5 px-2 rounded-md text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors ${active === s.id ? 'bg-brand-50 text-brand-700 font-semibold' : ''
+                      }`}
                   >
                     {s.label}
                   </a>
@@ -315,19 +314,19 @@ function ContentArea({ t }) {
         <ol className="space-y-3 text-slate-700">
           <li><span className="font-semibold text-slate-900">1.</span>{' '}
             {t(<>Sign up at <Link href="/register" className="text-brand-600 hover:underline">/register</Link> — pick your country (currency auto-set)</>,
-               <><Link href="/register" className="text-brand-600 hover:underline">/register</Link>-এ সাইন আপ করুন — আপনার দেশ বাছাই করুন (মুদ্রা স্বয়ংক্রিয়ভাবে সেট হবে)</>)}
+              <><Link href="/register" className="text-brand-600 hover:underline">/register</Link>-এ সাইন আপ করুন — আপনার দেশ বাছাই করুন (মুদ্রা স্বয়ংক্রিয়ভাবে সেট হবে)</>)}
           </li>
           <li><span className="font-semibold text-slate-900">2.</span>{' '}
             {t(<>Note your <code className="text-xs">API Key</code> (Brands page) and <code className="text-xs">Device Auth Key</code> (Devices page)</>,
-               <>আপনার <code className="text-xs">API Key</code> (Brands পেজ) এবং <code className="text-xs">Device Auth Key</code> (Devices পেজ) নোট করুন</>)}
+              <>আপনার <code className="text-xs">API Key</code> (Brands পেজ) এবং <code className="text-xs">Device Auth Key</code> (Devices পেজ) নোট করুন</>)}
           </li>
           <li><span className="font-semibold text-slate-900">3.</span>{' '}
             {t('Add a Gateway — your wallet/bank account number (or last 4 of bank acct)',
-               'একটি গেটওয়ে যোগ করুন — আপনার ওয়ালেট/ব্যাংক অ্যাকাউন্ট নম্বর (অথবা ব্যাংক অ্যাকাউন্টের শেষ ৪ ডিজিট)')}
+              'একটি গেটওয়ে যোগ করুন — আপনার ওয়ালেট/ব্যাংক অ্যাকাউন্ট নম্বর (অথবা ব্যাংক অ্যাকাউন্টের শেষ ৪ ডিজিট)')}
           </li>
           <li><span className="font-semibold text-slate-900">4.</span>{' '}
             {t("Install the APK on your shop's phone, paste the Device Auth Key",
-               'আপনার দোকানের ফোনে APK ইনস্টল করুন, Device Auth Key পেস্ট করুন')}
+              'আপনার দোকানের ফোনে APK ইনস্টল করুন, Device Auth Key পেস্ট করুন')}
           </li>
           <li><span className="font-semibold text-slate-900">5.</span>{' '}
             {t('Test with a checkout session (see below)', 'একটি চেকআউট সেশন দিয়ে পরীক্ষা করুন (নিচে দেখুন)')}
@@ -367,23 +366,23 @@ function ContentArea({ t }) {
         <ul className="mt-4 space-y-2 text-sm text-slate-700">
           <li><span className="text-brand-600 font-semibold">1.</span>{' '}
             {t(<>Customer hits your checkout — your backend calls <code className="text-xs">POST /api/payment/sessions</code></>,
-               <>গ্রাহক আপনার চেকআউটে আসে — আপনার ব্যাকএন্ড <code className="text-xs">POST /api/payment/sessions</code> কল করে</>)}
+              <>গ্রাহক আপনার চেকআউটে আসে — আপনার ব্যাকএন্ড <code className="text-xs">POST /api/payment/sessions</code> কল করে</>)}
           </li>
           <li><span className="text-brand-600 font-semibold">2.</span>{' '}
             {t(<>We return a hosted <code className="text-xs">checkout_url</code> — you redirect the customer</>,
-               <>আমরা একটি হোস্টেড <code className="text-xs">checkout_url</code> ফেরত দিই — আপনি গ্রাহককে রিডাইরেক্ট করেন</>)}
+              <>আমরা একটি হোস্টেড <code className="text-xs">checkout_url</code> ফেরত দিই — আপনি গ্রাহককে রিডাইরেক্ট করেন</>)}
           </li>
           <li><span className="text-brand-600 font-semibold">3.</span>{' '}
             {t('Customer pays from their wallet app, then pastes the TxnID on the checkout and clicks Verify',
-               'গ্রাহক তার ওয়ালেট অ্যাপ থেকে পেমেন্ট করে, তারপর চেকআউটে TxnID পেস্ট করে Verify ক্লিক করে')}
+              'গ্রাহক তার ওয়ালেট অ্যাপ থেকে পেমেন্ট করে, তারপর চেকআউটে TxnID পেস্ট করে Verify ক্লিক করে')}
           </li>
           <li><span className="text-brand-600 font-semibold">4.</span>{' '}
             {t('Your bound APK forwards the incoming wallet SMS to our backend (pure staging — nothing is auto-created from random SMS)',
-               'আপনার বাঁধা APK আসা ওয়ালেট SMS আমাদের ব্যাকএন্ডে ফরোয়ার্ড করে (শুধু স্টেজিং — এলোমেলো SMS থেকে কিছু স্বয়ংক্রিয়ভাবে তৈরি হয় না)')}
+              'আপনার বাঁধা APK আসা ওয়ালেট SMS আমাদের ব্যাকএন্ডে ফরোয়ার্ড করে (শুধু স্টেজিং — এলোমেলো SMS থেকে কিছু স্বয়ংক্রিয়ভাবে তৈরি হয় না)')}
           </li>
           <li><span className="text-brand-600 font-semibold">5.</span>{' '}
             {t(<>The customer&apos;s TxnID is matched against the staged SMS — match found, transaction marked <strong>Done</strong>, customer redirected back to you</>,
-               <>গ্রাহকের TxnID স্টেজড SMS-এর সাথে মিলানো হয় — মিল পাওয়া গেলে লেনদেন <strong>Done</strong> হিসেবে চিহ্নিত হয়, গ্রাহক আপনার কাছে ফিরে যান</>)}
+              <>গ্রাহকের TxnID স্টেজড SMS-এর সাথে মিলানো হয় — মিল পাওয়া গেলে লেনদেন <strong>Done</strong> হিসেবে চিহ্নিত হয়, গ্রাহক আপনার কাছে ফিরে যান</>)}
           </li>
         </ul>
       </Section>
@@ -395,7 +394,7 @@ function ContentArea({ t }) {
       >
         <p>
           {t('EzyPay uses three credentials, each for a different actor:',
-             'EzyPay তিনটি ক্রেডেনশিয়াল ব্যবহার করে, প্রতিটি ভিন্ন অভিনেতার জন্য:')}
+            'EzyPay তিনটি ক্রেডেনশিয়াল ব্যবহার করে, প্রতিটি ভিন্ন অভিনেতার জন্য:')}
         </p>
         <CredentialTable t={t} />
         <Callout tone="amber" title={t('Keep keys server-side', 'কী সার্ভার-সাইডে রাখুন')}>
@@ -469,17 +468,17 @@ function ContentArea({ t }) {
         </p>
         <p className="mt-3">
           {t('On successful registration, four things are generated for you:',
-             'সফল রেজিস্ট্রেশনে আপনার জন্য চারটি জিনিস তৈরি হয়:')}
+            'সফল রেজিস্ট্রেশনে আপনার জন্য চারটি জিনিস তৈরি হয়:')}
         </p>
         <ul className="mt-2 text-sm text-slate-700 list-disc pl-5 space-y-1">
           <li>{t(<><code className="text-xs">api_key</code> (pk_live_...) — for your backend</>,
-                 <><code className="text-xs">api_key</code> (pk_live_...) — আপনার ব্যাকএন্ডের জন্য</>)}</li>
+            <><code className="text-xs">api_key</code> (pk_live_...) — আপনার ব্যাকএন্ডের জন্য</>)}</li>
           <li>{t(<><code className="text-xs">secret_key</code> (sk_live_...) — for webhook signatures (future)</>,
-                 <><code className="text-xs">secret_key</code> (sk_live_...) — ওয়েবহুক সিগনেচারের জন্য (ভবিষ্যতে)</>)}</li>
+            <><code className="text-xs">secret_key</code> (sk_live_...) — ওয়েবহুক সিগনেচারের জন্য (ভবিষ্যতে)</>)}</li>
           <li>{t(<><code className="text-xs">device_auth_key</code> (PV-XXXXXX) — for binding your phone</>,
-                 <><code className="text-xs">device_auth_key</code> (PV-XXXXXX) — আপনার ফোন বাঁধার জন্য</>)}</li>
+            <><code className="text-xs">device_auth_key</code> (PV-XXXXXX) — আপনার ফোন বাঁধার জন্য</>)}</li>
           <li>{t(<>A default <strong>brand</strong> matching your domain</>,
-                 <>আপনার ডোমেইনের সাথে মিলে যাওয়া একটি ডিফল্ট <strong>ব্র্যান্ড</strong></>)}</li>
+            <>আপনার ডোমেইনের সাথে মিলে যাওয়া একটি ডিফল্ট <strong>ব্র্যান্ড</strong></>)}</li>
         </ul>
       </Section>
 
@@ -961,19 +960,19 @@ if ($body['session']['status'] === 'success') {
 
         <Callout tone="slate" title={t('Manual verification flow inside the APK', 'APK-এর ভিতরে ম্যানুয়াল ভেরিফিকেশন ফ্লো')}>
           {t('The APK has the same verification powers as the web dashboard:',
-             'APK-এ ওয়েব ড্যাশবোর্ডের মতোই ভেরিফিকেশন ক্ষমতা আছে:')}
+            'APK-এ ওয়েব ড্যাশবোর্ডের মতোই ভেরিফিকেশন ক্ষমতা আছে:')}
           <ul className="mt-2 list-disc pl-5 space-y-1">
             <li>
               {t(<><strong>List view:</strong> call <code className="text-xs">/api/device/transactions</code> for full history, or <code className="text-xs">/api/device/poll</code> for pending-only.</>,
-                 <><strong>লিস্ট ভিউ:</strong> সম্পূর্ণ ইতিহাসের জন্য <code className="text-xs">/api/device/transactions</code> কল করুন, বা শুধু পেন্ডিং-এর জন্য <code className="text-xs">/api/device/poll</code>।</>)}
+                <><strong>লিস্ট ভিউ:</strong> সম্পূর্ণ ইতিহাসের জন্য <code className="text-xs">/api/device/transactions</code> কল করুন, বা শুধু পেন্ডিং-এর জন্য <code className="text-xs">/api/device/poll</code>।</>)}
             </li>
             <li>
               {t(<><strong>Approve / Reject:</strong> call <code className="text-xs">/api/device/report</code> with <code className="text-xs">result: &quot;success&quot;</code> or <code className="text-xs">&quot;failed&quot;</code>.</>,
-                 <><strong>Approve / Reject:</strong> <code className="text-xs">result: &quot;success&quot;</code> বা <code className="text-xs">&quot;failed&quot;</code> দিয়ে <code className="text-xs">/api/device/report</code> কল করুন।</>)}
+                <><strong>Approve / Reject:</strong> <code className="text-xs">result: &quot;success&quot;</code> বা <code className="text-xs">&quot;failed&quot;</code> দিয়ে <code className="text-xs">/api/device/report</code> কল করুন।</>)}
             </li>
             <li>
               {t(<><strong>Type-a-TxnID verify:</strong> call <code className="text-xs">/api/device/verify</code> — searches SMS, auto-resolves.</>,
-                 <><strong>TxnID টাইপ-করে ভেরিফাই:</strong> <code className="text-xs">/api/device/verify</code> কল করুন — SMS খোঁজে, স্বয়ংক্রিয়ভাবে রেজলভ করে।</>)}
+                <><strong>TxnID টাইপ-করে ভেরিফাই:</strong> <code className="text-xs">/api/device/verify</code> কল করুন — SMS খোঁজে, স্বয়ংক্রিয়ভাবে রেজলভ করে।</>)}
             </li>
           </ul>
           {t(
@@ -1038,13 +1037,13 @@ if ($body['session']['status'] === 'success') {
 }`}</CodeBlock>
         <ul className="mt-2 text-sm text-slate-700 list-disc pl-5 space-y-1">
           <li>{t(<><code className="text-xs">error</code> — <strong>safe to display to your customer</strong>. Neutral, no EzyPay-specific language, no numeric leaks.</>,
-                 <><code className="text-xs">error</code> — <strong>আপনার গ্রাহককে দেখানো নিরাপদ</strong>। নিরপেক্ষ, EzyPay-নির্দিষ্ট ভাষা নয়, কোনো সংখ্যাগত লিক নেই।</>)}</li>
+            <><code className="text-xs">error</code> — <strong>আপনার গ্রাহককে দেখানো নিরাপদ</strong>। নিরপেক্ষ, EzyPay-নির্দিষ্ট ভাষা নয়, কোনো সংখ্যাগত লিক নেই।</>)}</li>
           <li>{t(<><code className="text-xs">merchant_message</code> — <strong>for your server logs / admin alerts only</strong>. Tells you exactly what to fix. Never render this to the end customer.</>,
-                 <><code className="text-xs">merchant_message</code> — <strong>শুধু আপনার সার্ভার লগ / অ্যাডমিন অ্যালার্টের জন্য</strong>। ঠিক কী ঠিক করতে হবে বলে। শেষ গ্রাহকের কাছে কখনো রেন্ডার করবেন না।</>)}</li>
+            <><code className="text-xs">merchant_message</code> — <strong>শুধু আপনার সার্ভার লগ / অ্যাডমিন অ্যালার্টের জন্য</strong>। ঠিক কী ঠিক করতে হবে বলে। শেষ গ্রাহকের কাছে কখনো রেন্ডার করবেন না।</>)}</li>
           <li>{t(<><code className="text-xs">code</code> — stable machine-readable identifier (e.g. <code className="text-xs">merchant_wallet_empty</code>, <code className="text-xs">order_already_paid</code>). Use this for programmatic branching.</>,
-                 <><code className="text-xs">code</code> — স্থিতিশীল মেশিন-পাঠযোগ্য আইডেন্টিফায়ার (যেমন <code className="text-xs">merchant_wallet_empty</code>, <code className="text-xs">order_already_paid</code>)। প্রোগ্রাম্যাটিক ব্রাঞ্চিং-এর জন্য এটি ব্যবহার করুন।</>)}</li>
+            <><code className="text-xs">code</code> — স্থিতিশীল মেশিন-পাঠযোগ্য আইডেন্টিফায়ার (যেমন <code className="text-xs">merchant_wallet_empty</code>, <code className="text-xs">order_already_paid</code>)। প্রোগ্রাম্যাটিক ব্রাঞ্চিং-এর জন্য এটি ব্যবহার করুন।</>)}</li>
           <li>{t(<>Other fields like <code className="text-xs">insufficient_balance</code> or <code className="text-xs">existing_session_id</code> are programmatic hints — safe but uninformative if shown.</>,
-                 <><code className="text-xs">insufficient_balance</code> বা <code className="text-xs">existing_session_id</code>-এর মতো অন্যান্য ফিল্ড প্রোগ্রাম্যাটিক ইঙ্গিত — নিরাপদ কিন্তু দেখালে তথ্যবহুল নয়।</>)}</li>
+            <><code className="text-xs">insufficient_balance</code> বা <code className="text-xs">existing_session_id</code>-এর মতো অন্যান্য ফিল্ড প্রোগ্রাম্যাটিক ইঙ্গিত — নিরাপদ কিন্তু দেখালে তথ্যবহুল নয়।</>)}</li>
         </ul>
 
         <Callout tone="rose" title={t("Don't dump the whole response to the customer", 'গ্রাহকের কাছে পুরো রেসপন্স ডাম্প করবেন না')}>
@@ -1074,7 +1073,7 @@ if (!r.ok) {
       >
         <p className="text-slate-600">
           {t('Issues integrators hit most often, with the fix.',
-             'ইন্টিগ্রেটররা সবচেয়ে বেশি সম্মুখীন হয় এমন সমস্যা, সমাধানসহ।')}
+            'ইন্টিগ্রেটররা সবচেয়ে বেশি সম্মুখীন হয় এমন সমস্যা, সমাধানসহ।')}
         </p>
 
         <h3 className="mt-6 font-semibold text-slate-900">
@@ -1142,11 +1141,11 @@ header('Location: ' . $body['checkout_url']);`}</CodeBlock>
         <CodeBlock language="bash" copyLabel={t('Copy', 'কপি')} copiedLabel={t('✓ Copied', '✓ কপি হয়েছে')}>{`curl -v https://checkout.ezypay.it.com/api/providers`}</CodeBlock>
         <ul className="mt-2 text-sm text-slate-700 list-disc pl-5 space-y-1">
           <li>{t(<><code className="text-xs">curl</code> works, PHP fails → upgrade PHP/OpenSSL (PHP ≥ 7.4 with OpenSSL ≥ 1.1.1 fixes it permanently).</>,
-                 <><code className="text-xs">curl</code> কাজ করে, PHP ব্যর্থ হয় → PHP/OpenSSL আপগ্রেড করুন (PHP ≥ 7.4 OpenSSL ≥ 1.1.1 সহ এটি স্থায়ীভাবে ঠিক করে)।</>)}</li>
+            <><code className="text-xs">curl</code> কাজ করে, PHP ব্যর্থ হয় → PHP/OpenSSL আপগ্রেড করুন (PHP ≥ 7.4 OpenSSL ≥ 1.1.1 সহ এটি স্থায়ীভাবে ঠিক করে)।</>)}</li>
           <li>{t("Both fail with the same SNI error → you're on the wrong hostname, or behind a corporate proxy mangling SNI.",
-                 'উভয়ই একই SNI এরর দিয়ে ব্যর্থ হয় → আপনি ভুল হোস্টনেমে আছেন, বা SNI বিকৃত করছে এমন কর্পোরেট প্রক্সির পিছনে।')}</li>
+            'উভয়ই একই SNI এরর দিয়ে ব্যর্থ হয় → আপনি ভুল হোস্টনেমে আছেন, বা SNI বিকৃত করছে এমন কর্পোরেট প্রক্সির পিছনে।')}</li>
           <li>{t("Both succeed but your code still errors → it's your request body, not TLS. Check the response status & body.",
-                 'উভয়ই সফল হয় কিন্তু আপনার কোড এখনো এরর দেয় → এটি আপনার রিকোয়েস্ট বডি, TLS নয়। রেসপন্স স্ট্যাটাস ও বডি চেক করুন।')}</li>
+            'উভয়ই সফল হয় কিন্তু আপনার কোড এখনো এরর দেয় → এটি আপনার রিকোয়েস্ট বডি, TLS নয়। রেসপন্স স্ট্যাটাস ও বডি চেক করুন।')}</li>
         </ul>
 
         <h3 className="mt-8 font-semibold text-slate-900">
@@ -1173,11 +1172,11 @@ header('Location: ' . $body['checkout_url']);`}</CodeBlock>
         </p>
         <ul className="mt-2 text-sm text-slate-700 list-disc pl-5 space-y-1">
           <li>{t(<>Backend-to-EzyPay (<code className="text-xs">/api/payment/...</code>): use <code className="text-xs">X-API-Key: pk_live_...</code></>,
-                 <>ব্যাকএন্ড-থেকে-EzyPay (<code className="text-xs">/api/payment/...</code>): <code className="text-xs">X-API-Key: pk_live_...</code> ব্যবহার করুন</>)}</li>
+            <>ব্যাকএন্ড-থেকে-EzyPay (<code className="text-xs">/api/payment/...</code>): <code className="text-xs">X-API-Key: pk_live_...</code> ব্যবহার করুন</>)}</li>
           <li>{t(<>Merchant dashboard / your own JWT calls (<code className="text-xs">/api/merchant/...</code>): use <code className="text-xs">Authorization: Bearer &lt;jwt&gt;</code></>,
-                 <>মার্চেন্ট ড্যাশবোর্ড / আপনার নিজস্ব JWT কল (<code className="text-xs">/api/merchant/...</code>): <code className="text-xs">Authorization: Bearer &lt;jwt&gt;</code> ব্যবহার করুন</>)}</li>
+            <>মার্চেন্ট ড্যাশবোর্ড / আপনার নিজস্ব JWT কল (<code className="text-xs">/api/merchant/...</code>): <code className="text-xs">Authorization: Bearer &lt;jwt&gt;</code> ব্যবহার করুন</>)}</li>
           <li>{t(<>APK calls (<code className="text-xs">/api/device/...</code>): use the <code className="text-xs">auth_key</code> field in the JSON body.</>,
-                 <>APK কল (<code className="text-xs">/api/device/...</code>): JSON বডিতে <code className="text-xs">auth_key</code> ফিল্ড ব্যবহার করুন।</>)}</li>
+            <>APK কল (<code className="text-xs">/api/device/...</code>): JSON বডিতে <code className="text-xs">auth_key</code> ফিল্ড ব্যবহার করুন।</>)}</li>
         </ul>
 
         <h3 className="mt-8 font-semibold text-slate-900">
@@ -1201,11 +1200,11 @@ header('Location: ' . $body['checkout_url']);`}</CodeBlock>
         </p>
         <ul className="mt-2 text-sm text-slate-700 list-disc pl-5 space-y-1">
           <li>{t(<>New <code className="text-xs">POST /api/payment/sessions</code> calls return 402 — xyz.com can&apos;t create new checkouts.</>,
-                 <>নতুন <code className="text-xs">POST /api/payment/sessions</code> কল 402 ফেরত দেয় — xyz.com নতুন চেকআউট তৈরি করতে পারে না।</>)}</li>
+            <>নতুন <code className="text-xs">POST /api/payment/sessions</code> কল 402 ফেরত দেয় — xyz.com নতুন চেকআউট তৈরি করতে পারে না।</>)}</li>
           <li>{t('APK endpoints (poll/sms/report/verify/heartbeat) return 402 — the phone shows a "Wallet empty" screen.',
-                 'APK এন্ডপয়েন্ট (poll/sms/report/verify/heartbeat) 402 ফেরত দেয় — ফোন একটি "Wallet empty" স্ক্রিন দেখায়।')}</li>
+            'APK এন্ডপয়েন্ট (poll/sms/report/verify/heartbeat) 402 ফেরত দেয় — ফোন একটি "Wallet empty" স্ক্রিন দেখায়।')}</li>
           <li>{t(<><code className="text-xs">/bind</code> and <code className="text-xs">/unbind</code> stay available so the phone can disconnect/reconnect.</>,
-                 <><code className="text-xs">/bind</code> এবং <code className="text-xs">/unbind</code> উপলব্ধ থাকে যাতে ফোন ডিসকানেক্ট/রিকানেক্ট করতে পারে।</>)}</li>
+            <><code className="text-xs">/bind</code> এবং <code className="text-xs">/unbind</code> উপলব্ধ থাকে যাতে ফোন ডিসকানেক্ট/রিকানেক্ট করতে পারে।</>)}</li>
         </ul>
         <p className="mt-2 text-sm text-slate-700">
           {t(
@@ -1233,9 +1232,9 @@ header('Location: ' . $body['checkout_url']);`}</CodeBlock>
         </p>
         <ul className="mt-2 text-sm text-slate-700 list-disc pl-5 space-y-1">
           <li>{t(<><strong>No bound device.</strong> Check Dashboard → Devices. An &quot;Online&quot; row means the APK is heartbeating; it does NOT guarantee SMS is being forwarded. If the SMS log (Dashboard → SMS) is empty, the APK isn&apos;t uploading.</>,
-                 <><strong>কোনো বাঁধা ডিভাইস নেই।</strong> Dashboard → Devices চেক করুন। একটি &quot;Online&quot; রো মানে APK হার্টবিট করছে; এটি SMS ফরোয়ার্ড হওয়ার গ্যারান্টি দেয় না। যদি SMS লগ (Dashboard → SMS) খালি থাকে, APK আপলোড করছে না।</>)}</li>
+            <><strong>কোনো বাঁধা ডিভাইস নেই।</strong> Dashboard → Devices চেক করুন। একটি &quot;Online&quot; রো মানে APK হার্টবিট করছে; এটি SMS ফরোয়ার্ড হওয়ার গ্যারান্টি দেয় না। যদি SMS লগ (Dashboard → SMS) খালি থাকে, APK আপলোড করছে না।</>)}</li>
           <li>{t(<><strong>Gateway identifier mismatch.</strong> The number you set on the gateway must appear in the SMS body. For SMS that show only a masked bank suffix (e.g. <code className="text-xs">XX6788</code>), store multiple identifiers comma-separated.</>,
-                 <><strong>গেটওয়ে আইডেন্টিফায়ার মিসম্যাচ।</strong> গেটওয়েতে আপনি যে নম্বর সেট করেছেন তা অবশ্যই SMS বডিতে থাকতে হবে। যেসব SMS শুধু একটি মাস্কড ব্যাংক সাফিক্স দেখায় (যেমন <code className="text-xs">XX6788</code>), কমা-আলাদা একাধিক আইডেন্টিফায়ার রাখুন।</>)}</li>
+            <><strong>গেটওয়ে আইডেন্টিফায়ার মিসম্যাচ।</strong> গেটওয়েতে আপনি যে নম্বর সেট করেছেন তা অবশ্যই SMS বডিতে থাকতে হবে। যেসব SMS শুধু একটি মাস্কড ব্যাংক সাফিক্স দেখায় (যেমন <code className="text-xs">XX6788</code>), কমা-আলাদা একাধিক আইডেন্টিফায়ার রাখুন।</>)}</li>
         </ul>
         <p className="mt-2 text-sm text-slate-700">
           {t(
@@ -1309,7 +1308,7 @@ X-EzyPay-Signature: t=1683900000,v1=<hmac-sha256-hex>
 { "event": "session.success", "session": { ... } }`}</CodeBlock>
         <p className="mt-3 text-sm text-slate-600">
           {t('Until then, polling on customer return is the recommended pattern.',
-             'ততক্ষণ পর্যন্ত, গ্রাহক ফেরত আসায় পোল করা সুপারিশকৃত প্যাটার্ন।')}
+            'ততক্ষণ পর্যন্ত, গ্রাহক ফেরত আসায় পোল করা সুপারিশকৃত প্যাটার্ন।')}
         </p>
       </Section>
 
@@ -1320,17 +1319,17 @@ X-EzyPay-Signature: t=1683900000,v1=<hmac-sha256-hex>
       >
         <p>
           {t("Questions? Run into something the docs don't cover?",
-             'প্রশ্ন? এমন কিছুতে আটকে গেছেন যা ডকুমেন্টেশন কভার করে না?')}
+            'প্রশ্ন? এমন কিছুতে আটকে গেছেন যা ডকুমেন্টেশন কভার করে না?')}
         </p>
         <ul className="mt-3 space-y-1 text-slate-700">
           <li>{t(<>📧 Email: <a href="mailto:support@ezypay.it.com" className="text-brand-600 hover:underline">support@ezypay.it.com</a></>,
-                 <>📧 ইমেইল: <a href="mailto:support@ezypay.it.com" className="text-brand-600 hover:underline">support@ezypay.it.com</a></>)}</li>
+            <>📧 ইমেইল: <a href="mailto:support@ezypay.it.com" className="text-brand-600 hover:underline">support@ezypay.it.com</a></>)}</li>
           <li>{t('🐛 Bugs / API issues: open a ticket from your dashboard',
-                 '🐛 বাগ / API সমস্যা: আপনার ড্যাশবোর্ড থেকে টিকিট খুলুন')}</li>
+            '🐛 বাগ / API সমস্যা: আপনার ড্যাশবোর্ড থেকে টিকিট খুলুন')}</li>
           <li>{t(<>📖 APK developer reference: <code className="text-xs">docs/APK_API.md</code></>,
-                 <>📖 APK ডেভেলপার রেফারেন্স: <code className="text-xs">docs/APK_API.md</code></>)}</li>
+            <>📖 APK ডেভেলপার রেফারেন্স: <code className="text-xs">docs/APK_API.md</code></>)}</li>
           <li>{t(<>📖 Integration deep-dive: <code className="text-xs">docs/INTEGRATION.md</code></>,
-                 <>📖 ইন্টিগ্রেশন ডিপ-ডাইভ: <code className="text-xs">docs/INTEGRATION.md</code></>)}</li>
+            <>📖 ইন্টিগ্রেশন ডিপ-ডাইভ: <code className="text-xs">docs/INTEGRATION.md</code></>)}</li>
         </ul>
       </Section>
 
@@ -1376,10 +1375,10 @@ function Section({ id, eyebrow, title, children }) {
 
 function Callout({ tone = 'brand', title, children }) {
   const tones = {
-    brand:  'bg-brand-50 border-brand-200 text-brand-900',
-    amber:  'bg-amber-50 border-amber-200 text-amber-900',
-    rose:   'bg-rose-50 border-rose-200 text-rose-900',
-    slate:  'bg-slate-50 border-slate-200 text-slate-900',
+    brand: 'bg-brand-50 border-brand-200 text-brand-900',
+    amber: 'bg-amber-50 border-amber-200 text-amber-900',
+    rose: 'bg-rose-50 border-rose-200 text-rose-900',
+    slate: 'bg-slate-50 border-slate-200 text-slate-900',
   };
   return (
     <div className={`my-5 rounded-lg border px-4 py-3 ${tones[tone]}`}>
@@ -1392,7 +1391,7 @@ function Callout({ tone = 'brand', title, children }) {
 function CodeBlock({ children, language, caption, copyLabel = 'Copy', copiedLabel = '✓ Copied' }) {
   const [copied, setCopied] = useState(false);
   const onCopy = async () => {
-    try { await navigator.clipboard.writeText(children); setCopied(true); setTimeout(() => setCopied(false), 1500); } catch {}
+    try { await navigator.clipboard.writeText(children); setCopied(true); setTimeout(() => setCopied(false), 1500); } catch { }
   };
   return (
     <div className="my-4">
@@ -1423,9 +1422,8 @@ function TabGroup({ tabs, children }) {
           <button
             key={tab}
             onClick={() => setIdx(i)}
-            className={`px-3 py-2 text-sm font-medium rounded-t-md transition-colors ${
-              i === idx ? 'text-brand-700 border-b-2 border-brand-600 -mb-px' : 'text-slate-500 hover:text-slate-900'
-            }`}
+            className={`px-3 py-2 text-sm font-medium rounded-t-md transition-colors ${i === idx ? 'text-brand-700 border-b-2 border-brand-600 -mb-px' : 'text-slate-500 hover:text-slate-900'
+              }`}
           >
             {tab}
           </button>
@@ -1438,9 +1436,9 @@ function TabGroup({ tabs, children }) {
 
 function ApiEndpoint({ t, method, path, auth, description, request, response }) {
   const methodColor = {
-    GET:    'bg-emerald-100 text-emerald-700',
-    POST:   'bg-blue-100   text-blue-700',
-    PATCH:  'bg-amber-100  text-amber-700',
+    GET: 'bg-emerald-100 text-emerald-700',
+    POST: 'bg-blue-100   text-blue-700',
+    PATCH: 'bg-amber-100  text-amber-700',
     DELETE: 'bg-rose-100   text-rose-700',
   }[method] || 'bg-slate-100 text-slate-700';
 
@@ -1453,7 +1451,7 @@ function ApiEndpoint({ t, method, path, auth, description, request, response }) 
       </div>
       <div className="p-4 space-y-3">
         {description && <p className="text-sm text-slate-700">{description}</p>}
-        {request  && (
+        {request && (
           <div>
             <div className="text-xs font-semibold uppercase tracking-widest text-slate-500 mb-1">
               {t ? t('Request body', 'রিকোয়েস্ট বডি') : 'Request body'}
@@ -1484,10 +1482,10 @@ function ApiEndpoint({ t, method, path, auth, description, request, response }) 
 
 function CredentialTable({ t }) {
   const rows = [
-    ['api_key (pk_live_...)',    t('Per brand', 'প্রতি ব্র্যান্ড'),    t("Merchant's server", 'মার্চেন্টের সার্ভার'),     t('Create checkout sessions, query session status', 'চেকআউট সেশন তৈরি, সেশন স্ট্যাটাস কোয়েরি')],
-    ['secret_key (sk_live_...)', t('Per brand', 'প্রতি ব্র্যান্ড'),    t("Merchant's server", 'মার্চেন্টের সার্ভার'),     t('Sign webhook payloads (future)', 'ওয়েবহুক পেলোডে স্বাক্ষর (ভবিষ্যত)')],
-    ['device_auth_key (PV-…)',   t('Per merchant', 'প্রতি মার্চেন্ট'), t('The APK on your phone', 'আপনার ফোনের APK'),       t('Bind device, upload SMS, poll for pending verifications', 'ডিভাইস বাঁধাই, SMS আপলোড, পেন্ডিং ভেরিফিকেশন পোল')],
-    ['JWT (Bearer)',             t('Per session', 'প্রতি সেশন'),       t('Merchant dashboard', 'মার্চেন্ট ড্যাশবোর্ড'),     t('Logged-in merchant access to /api/merchant/*', '/api/merchant/*-এ লগ-ইন মার্চেন্ট অ্যাক্সেস')],
+    ['api_key (pk_live_...)', t('Per brand', 'প্রতি ব্র্যান্ড'), t("Merchant's server", 'মার্চেন্টের সার্ভার'), t('Create checkout sessions, query session status', 'চেকআউট সেশন তৈরি, সেশন স্ট্যাটাস কোয়েরি')],
+    ['secret_key (sk_live_...)', t('Per brand', 'প্রতি ব্র্যান্ড'), t("Merchant's server", 'মার্চেন্টের সার্ভার'), t('Sign webhook payloads (future)', 'ওয়েবহুক পেলোডে স্বাক্ষর (ভবিষ্যত)')],
+    ['device_auth_key (PV-…)', t('Per merchant', 'প্রতি মার্চেন্ট'), t('The APK on your phone', 'আপনার ফোনের APK'), t('Bind device, upload SMS, poll for pending verifications', 'ডিভাইস বাঁধাই, SMS আপলোড, পেন্ডিং ভেরিফিকেশন পোল')],
+    ['JWT (Bearer)', t('Per session', 'প্রতি সেশন'), t('Merchant dashboard', 'মার্চেন্ট ড্যাশবোর্ড'), t('Logged-in merchant access to /api/merchant/*', '/api/merchant/*-এ লগ-ইন মার্চেন্ট অ্যাক্সেস')],
   ];
   return (
     <div className="my-4 overflow-x-auto">
