@@ -94,9 +94,9 @@ function HeroMock() {
         </div>
         <div className="mt-4 text-sm">
           <div className="text-slate-500">Order #ORD1001</div>
-          <div className="mt-1 text-2xl font-semibold">$ 49.00</div>
+          <div className="mt-1 text-2xl font-semibold">৳ 4,900.00</div>
           <div className="mt-3 p-3 rounded-md bg-slate-50 border border-slate-200 text-xs text-slate-600">
-            Send <strong>$49</strong> to wallet <strong>+1 555 ··· 8888</strong>
+            Send <strong>৳4,900</strong> to wallet <strong>+880 1··· 8888</strong>
           </div>
           <label className="mt-4 block label">Transaction ID</label>
           <input readOnly value="TXN92H1" className="input font-mono" />
@@ -116,7 +116,7 @@ function HeroMock() {
           </div>
         </div>
         <div className="mt-3 text-[11px] font-mono bg-slate-50 text-slate-600 rounded p-2 border border-slate-200">
-          &quot;Payment of $49.00 received.<br />TxnID: TXN92H1&quot;
+          &quot;Payment of ৳4,900.00 received.<br />TxnID: TXN92H1&quot;
         </div>
       </div>
 
@@ -277,7 +277,7 @@ function Comparison() {
   const rows = [
     ['Setup time',              '2 minutes',              '2–6 weeks'],
     ['KYC / paperwork',         'None',                   'Extensive'],
-    ['Per-transaction fee',     '$0',                     '2–3%'],
+    ['Per-transaction fee',     '৳0',                     '2–3%'],
     ['Monthly minimum',         'None',                   'Often required'],
     ['Works with any wallet',   true,                     false],
     ['No payout delays',        true,                     false],
