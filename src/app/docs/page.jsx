@@ -2,46 +2,124 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import LandingNav from '@/components/LandingNav';
+import Logo from '@/components/Logo';
+
+const LS_KEY = 'pv_lang';
 
 export default function DocsPage() {
+  const [lang, setLang] = useState('en');
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(LS_KEY);
+      if (saved === 'en' || saved === 'bn') setLang(saved);
+    } catch {}
+  }, []);
+
+  const changeLang = (next) => {
+    setLang(next);
+    try { localStorage.setItem(LS_KEY, next); } catch {}
+  };
+
+  const t = (en, bn) => (lang === 'bn' ? bn : en);
+
   return (
-    <main className="bg-white text-slate-900">
-      <LandingNav />
+    <main className={`bg-white text-slate-900 ${lang === 'bn' ? 'font-bn' : ''}`}>
+      <Header lang={lang} onLangChange={changeLang} t={t} />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 grid lg:grid-cols-[220px_1fr_220px] gap-8">
-        <SidebarNav />
-        <ContentArea />
+        <SidebarNav t={t} />
+        <ContentArea t={t} />
         <OnThisPage />
       </div>
     </main>
   );
 }
 
-/* ────────────────────────────────────────── Sidebar TOC (left) */
-const SECTIONS = [
-  { id: 'overview',     label: 'Overview',         group: 'Get Started' },
-  { id: 'quickstart',   label: 'Quick Start',      group: 'Get Started' },
-  { id: 'how',          label: 'How It Works',     group: 'Get Started' },
-  { id: 'auth',         label: 'Authentication',   group: 'Concepts' },
-  { id: 'gateways',     label: 'Gateways',         group: 'Concepts' },
-  { id: 'apk',          label: 'The APK',          group: 'Concepts' },
-  { id: 'step-register',  label: '1. Register',           group: 'Integration' },
-  { id: 'step-configure', label: '2. Configure Gateway',  group: 'Integration' },
-  { id: 'step-bind',      label: '3. Bind the APK',       group: 'Integration' },
-  { id: 'step-checkout',  label: '4. Hosted Checkout',    group: 'Integration' },
-  { id: 'step-verify',    label: '5. Verify on Return',   group: 'Integration' },
-  { id: 'api-sessions',   label: 'Payment Sessions',      group: 'API Reference' },
-  { id: 'api-verify',     label: 'Manual Verify',         group: 'API Reference' },
-  { id: 'api-devices',    label: 'Devices (APK)',         group: 'API Reference' },
-  { id: 'errors',         label: 'Errors & Status Codes', group: 'API Reference' },
-  { id: 'troubleshoot',   label: 'Troubleshooting',       group: 'API Reference' },
-  { id: 'best',           label: 'Best Practices',        group: 'Production' },
-  { id: 'webhooks',       label: 'Webhooks',              group: 'Production' },
-  { id: 'support',        label: 'Support',               group: 'Production' },
-];
+/* ────────────────────────────────────────── Header + Lang Toggle */
+function Header({ lang, onLangChange, t }) {
+  return (
+    <header className="sticky top-0 z-40 bg-white/80 backdrop-blur border-b border-slate-200/70">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
+        <Logo size="md" />
+        <nav className="hidden md:flex items-center gap-1 text-sm">
+          <Link href="/" className="px-3 py-2 rounded-md text-slate-600 hover:text-slate-900 transition-colors">
+            {t('Home', 'হোম')}
+          </Link>
+          <Link href="/docs" className="px-3 py-2 rounded-md text-brand-600 font-semibold">
+            {t('Docs', 'ডকুমেন্টেশন')}
+          </Link>
+        </nav>
+        <div className="flex items-center gap-2">
+          <LangToggle lang={lang} onChange={onLangChange} />
+          <Link href="/login" className="hidden sm:inline-flex btn-secondary !py-1.5 !px-3 text-sm">
+            {t('Merchant Login', 'মার্চেন্ট লগইন')}
+          </Link>
+          <Link href="/register" className="btn-primary !py-1.5 !px-3 text-sm">
+            {t('Get started', 'শুরু করুন')}
+          </Link>
+        </div>
+      </div>
+    </header>
+  );
+}
 
-function SidebarNav() {
+function LangToggle({ lang, onChange }) {
+  return (
+    <div className="inline-flex items-center rounded-md border border-slate-200 bg-white p-0.5 text-xs font-semibold shadow-sm">
+      <button
+        type="button"
+        onClick={() => onChange('en')}
+        className={[
+          'px-2.5 py-1 rounded transition-colors',
+          lang === 'en' ? 'bg-brand-600 text-white' : 'text-slate-600 hover:text-slate-900',
+        ].join(' ')}
+        aria-pressed={lang === 'en'}
+      >
+        EN
+      </button>
+      <button
+        type="button"
+        onClick={() => onChange('bn')}
+        className={[
+          'px-2.5 py-1 rounded transition-colors',
+          lang === 'bn' ? 'bg-brand-600 text-white' : 'text-slate-600 hover:text-slate-900',
+        ].join(' ')}
+        aria-pressed={lang === 'bn'}
+      >
+        বাংলা
+      </button>
+    </div>
+  );
+}
+
+/* ────────────────────────────────────────── Sidebar TOC (left) */
+function buildSections(t) {
+  return [
+    { id: 'overview',     label: t('Overview', 'ওভারভিউ'),                  group: t('Get Started', 'শুরু করুন') },
+    { id: 'quickstart',   label: t('Quick Start', 'কুইক স্টার্ট'),            group: t('Get Started', 'শুরু করুন') },
+    { id: 'how',          label: t('How It Works', 'কীভাবে কাজ করে'),       group: t('Get Started', 'শুরু করুন') },
+    { id: 'auth',         label: t('Authentication', 'অথেনটিকেশন'),         group: t('Concepts', 'ধারণা') },
+    { id: 'gateways',     label: t('Gateways', 'গেটওয়ে'),                   group: t('Concepts', 'ধারণা') },
+    { id: 'apk',          label: t('The APK', 'APK সম্পর্কে'),                group: t('Concepts', 'ধারণা') },
+    { id: 'step-register',  label: t('1. Register', '১. রেজিস্টার'),                     group: t('Integration', 'ইন্টিগ্রেশন') },
+    { id: 'step-configure', label: t('2. Configure Gateway', '২. গেটওয়ে কনফিগার করুন'),  group: t('Integration', 'ইন্টিগ্রেশন') },
+    { id: 'step-bind',      label: t('3. Bind the APK', '৩. APK বাঁধাই করুন'),           group: t('Integration', 'ইন্টিগ্রেশন') },
+    { id: 'step-checkout',  label: t('4. Hosted Checkout', '৪. হোস্টেড চেকআউট'),         group: t('Integration', 'ইন্টিগ্রেশন') },
+    { id: 'step-verify',    label: t('5. Verify on Return', '৫. রিটার্নে ভেরিফাই করুন'),  group: t('Integration', 'ইন্টিগ্রেশন') },
+    { id: 'api-sessions',   label: t('Payment Sessions', 'পেমেন্ট সেশন'),                  group: t('API Reference', 'API রেফারেন্স') },
+    { id: 'api-verify',     label: t('Manual Verify', 'ম্যানুয়াল ভেরিফাই'),                 group: t('API Reference', 'API রেফারেন্স') },
+    { id: 'api-devices',    label: t('Devices (APK)', 'ডিভাইস (APK)'),                     group: t('API Reference', 'API রেফারেন্স') },
+    { id: 'errors',         label: t('Errors & Status Codes', 'এরর ও স্ট্যাটাস কোড'),     group: t('API Reference', 'API রেফারেন্স') },
+    { id: 'troubleshoot',   label: t('Troubleshooting', 'ট্রাবলশুটিং'),                     group: t('API Reference', 'API রেফারেন্স') },
+    { id: 'best',           label: t('Best Practices', 'সেরা পদ্ধতি'),                     group: t('Production', 'প্রোডাকশন') },
+    { id: 'webhooks',       label: t('Webhooks', 'ওয়েবহুক'),                              group: t('Production', 'প্রোডাকশন') },
+    { id: 'support',        label: t('Support', 'সাপোর্ট'),                                group: t('Production', 'প্রোডাকশন') },
+  ];
+}
+
+function SidebarNav({ t }) {
   const [active, setActive] = useState('overview');
+  const SECTIONS = buildSections(t);
 
   useEffect(() => {
     const ids = SECTIONS.map((s) => s.id);
@@ -58,6 +136,7 @@ function SidebarNav() {
     onScroll();
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const groups = Array.from(new Set(SECTIONS.map((s) => s.group)));
@@ -89,46 +168,86 @@ function SidebarNav() {
   );
 }
 
-/* ────────────────────────────────────────── Right "On this page" rail (just spacer for now) */
 function OnThisPage() {
   return <aside className="hidden xl:block" />;
 }
 
 /* ────────────────────────────────────────── Main content */
-function ContentArea() {
+function ContentArea({ t }) {
   return (
     <article className="min-w-0 prose-docs">
-      <Hero />
+      <Hero t={t} />
 
-      <Section id="overview" eyebrow="Get Started" title="Overview">
+      <Section
+        id="overview"
+        eyebrow={t('Get Started', 'শুরু করুন')}
+        title={t('Overview', 'ওভারভিউ')}
+      >
         <p>
-          <strong>PayVerify</strong> verifies wallet, bank, and UPI payments by matching the
-          customer&apos;s transaction ID against the actual SMS your bound Android device receives.
-          We don&apos;t process payments — we only confirm them.
+          <strong>PayVerify</strong>{' '}
+          {t(
+            "verifies wallet, bank, and UPI payments by matching the customer's transaction ID against the actual SMS your bound Android device receives. We don't process payments — we only confirm them.",
+            'গ্রাহকের ট্রানজেকশন আইডি আপনার বাঁধা অ্যান্ড্রয়েড ডিভাইসে আসা আসল SMS-এর সাথে মিলিয়ে ওয়ালেট, ব্যাংক এবং UPI পেমেন্ট ভেরিফাই করে। আমরা পেমেন্ট প্রসেস করি না — শুধু নিশ্চিত করি।'
+          )}
         </p>
         <p className="mt-3">
-          This guide walks you through the full integration: from creating your merchant account
-          to having verified transactions land in your dashboard.
+          {t(
+            'This guide walks you through the full integration: from creating your merchant account to having verified transactions land in your dashboard.',
+            'এই গাইডটি আপনাকে পুরো ইন্টিগ্রেশন প্রক্রিয়া দেখাবে: মার্চেন্ট অ্যাকাউন্ট তৈরি করা থেকে শুরু করে ভেরিফাইড লেনদেন আপনার ড্যাশবোর্ডে আসা পর্যন্ত।'
+          )}
         </p>
-        <Callout tone="brand" title="Three things make a payment work">
+        <Callout tone="brand" title={t('Three things make a payment work', 'একটি পেমেন্ট কাজ করতে তিনটি জিনিস লাগে')}>
           <ol className="list-decimal pl-5 space-y-1 text-sm">
-            <li>A configured <strong>gateway</strong> — your wallet/bank account where money lands</li>
-            <li>A bound <strong>APK</strong> on the phone that receives the SMS</li>
-            <li>An <strong>API call</strong> from your backend (or a customer-typed TxnID)</li>
+            <li>
+              {t(
+                <>A configured <strong>gateway</strong> — your wallet/bank account where money lands</>,
+                <>একটি কনফিগার করা <strong>গেটওয়ে</strong> — আপনার ওয়ালেট/ব্যাংক অ্যাকাউন্ট যেখানে টাকা আসে</>
+              )}
+            </li>
+            <li>
+              {t(
+                <>A bound <strong>APK</strong> on the phone that receives the SMS</>,
+                <>SMS গ্রহণকারী ফোনে বাঁধা একটি <strong>APK</strong></>
+              )}
+            </li>
+            <li>
+              {t(
+                <>An <strong>API call</strong> from your backend (or a customer-typed TxnID)</>,
+                <>আপনার ব্যাকএন্ড থেকে একটি <strong>API কল</strong> (অথবা গ্রাহকের টাইপ করা TxnID)</>
+              )}
+            </li>
           </ol>
         </Callout>
       </Section>
 
-      <Section id="quickstart" eyebrow="Get Started" title="Quick Start (5 minutes)">
+      <Section
+        id="quickstart"
+        eyebrow={t('Get Started', 'শুরু করুন')}
+        title={t('Quick Start (5 minutes)', 'কুইক স্টার্ট (৫ মিনিট)')}
+      >
         <ol className="space-y-3 text-slate-700">
-          <li><span className="font-semibold text-slate-900">1.</span> Sign up at <Link href="/register" className="text-brand-600 hover:underline">/register</Link> — pick your country (currency auto-set)</li>
-          <li><span className="font-semibold text-slate-900">2.</span> Note your <code className="text-xs">API Key</code> (Brands page) and <code className="text-xs">Device Auth Key</code> (Devices page)</li>
-          <li><span className="font-semibold text-slate-900">3.</span> Add a Gateway — your wallet/bank account number (or last 4 of bank acct)</li>
-          <li><span className="font-semibold text-slate-900">4.</span> Install the APK on your shop&apos;s phone, paste the Device Auth Key</li>
-          <li><span className="font-semibold text-slate-900">5.</span> Test with a checkout session (see below)</li>
+          <li><span className="font-semibold text-slate-900">1.</span>{' '}
+            {t(<>Sign up at <Link href="/register" className="text-brand-600 hover:underline">/register</Link> — pick your country (currency auto-set)</>,
+               <><Link href="/register" className="text-brand-600 hover:underline">/register</Link>-এ সাইন আপ করুন — আপনার দেশ বাছাই করুন (মুদ্রা স্বয়ংক্রিয়ভাবে সেট হবে)</>)}
+          </li>
+          <li><span className="font-semibold text-slate-900">2.</span>{' '}
+            {t(<>Note your <code className="text-xs">API Key</code> (Brands page) and <code className="text-xs">Device Auth Key</code> (Devices page)</>,
+               <>আপনার <code className="text-xs">API Key</code> (Brands পেজ) এবং <code className="text-xs">Device Auth Key</code> (Devices পেজ) নোট করুন</>)}
+          </li>
+          <li><span className="font-semibold text-slate-900">3.</span>{' '}
+            {t('Add a Gateway — your wallet/bank account number (or last 4 of bank acct)',
+               'একটি গেটওয়ে যোগ করুন — আপনার ওয়ালেট/ব্যাংক অ্যাকাউন্ট নম্বর (অথবা ব্যাংক অ্যাকাউন্টের শেষ ৪ ডিজিট)')}
+          </li>
+          <li><span className="font-semibold text-slate-900">4.</span>{' '}
+            {t("Install the APK on your shop's phone, paste the Device Auth Key",
+               'আপনার দোকানের ফোনে APK ইনস্টল করুন, Device Auth Key পেস্ট করুন')}
+          </li>
+          <li><span className="font-semibold text-slate-900">5.</span>{' '}
+            {t('Test with a checkout session (see below)', 'একটি চেকআউট সেশন দিয়ে পরীক্ষা করুন (নিচে দেখুন)')}
+          </li>
         </ol>
 
-        <CodeBlock language="bash" caption="Test the API now — replace pk_live_... with your key">{`curl -X POST https://checkout.ezypay.it.com/api/payment/sessions \\
+        <CodeBlock language="bash" caption={t('Test the API now — replace pk_live_... with your key', 'এখনই API পরীক্ষা করুন — pk_live_... এর জায়গায় আপনার কী বসান')} copyLabel={t('Copy', 'কপি')} copiedLabel={t('✓ Copied', '✓ কপি হয়েছে')}>{`curl -X POST https://checkout.ezypay.it.com/api/payment/sessions \\
   -H "X-API-Key: pk_live_xxxxxxxxxxxxxxxxxxxxxxxx" \\
   -H "Content-Type: application/json" \\
   -d '{
@@ -137,122 +256,198 @@ function ContentArea() {
     "redirect_url": "https://example.com/done"
   }'`}</CodeBlock>
         <p className="text-sm text-slate-600 mt-2">
-          The response gives you a <code className="text-xs">checkout_url</code> — open it in a
-          browser, pick a gateway, paste a TxnID, click Verify. That&apos;s the whole flow.
+          {t(
+            <>The response gives you a <code className="text-xs">checkout_url</code> — open it in a browser, pick a gateway, paste a TxnID, click Verify. That&apos;s the whole flow.</>,
+            <>রেসপন্সে আপনি একটি <code className="text-xs">checkout_url</code> পাবেন — ব্রাউজারে খুলুন, একটি গেটওয়ে বাছুন, TxnID পেস্ট করুন, Verify ক্লিক করুন। এটাই পুরো ফ্লো।</>
+          )}
         </p>
       </Section>
 
-      <Section id="how" eyebrow="Get Started" title="How It Works">
+      <Section
+        id="how"
+        eyebrow={t('Get Started', 'শুরু করুন')}
+        title={t('How It Works', 'কীভাবে কাজ করে')}
+      >
         <p>
-          PayVerify sits between the merchant&apos;s e-commerce backend, the customer&apos;s browser,
-          and the bound Android phone receiving wallet SMS.
+          {t(
+            "PayVerify sits between the merchant's e-commerce backend, the customer's browser, and the bound Android phone receiving wallet SMS.",
+            'PayVerify মার্চেন্টের ই-কমার্স ব্যাকএন্ড, গ্রাহকের ব্রাউজার এবং ওয়ালেট SMS গ্রহণকারী বাঁধা অ্যান্ড্রয়েড ফোনের মাঝে কাজ করে।'
+          )}
         </p>
 
         <Diagram />
 
         <ul className="mt-4 space-y-2 text-sm text-slate-700">
-          <li><span className="text-brand-600 font-semibold">1.</span> Customer hits your checkout — your backend calls <code className="text-xs">POST /api/payment/sessions</code></li>
-          <li><span className="text-brand-600 font-semibold">2.</span> We return a hosted <code className="text-xs">checkout_url</code> — you redirect the customer</li>
-          <li><span className="text-brand-600 font-semibold">3.</span> Customer pays from their wallet app, then pastes the TxnID on the checkout and clicks Verify</li>
-          <li><span className="text-brand-600 font-semibold">4.</span> Your bound APK forwards the incoming wallet SMS to our backend (pure staging — nothing is auto-created from random SMS)</li>
-          <li><span className="text-brand-600 font-semibold">5.</span> The customer&apos;s TxnID is matched against the staged SMS — match found, transaction marked <strong>Done</strong>, customer redirected back to you</li>
+          <li><span className="text-brand-600 font-semibold">1.</span>{' '}
+            {t(<>Customer hits your checkout — your backend calls <code className="text-xs">POST /api/payment/sessions</code></>,
+               <>গ্রাহক আপনার চেকআউটে আসে — আপনার ব্যাকএন্ড <code className="text-xs">POST /api/payment/sessions</code> কল করে</>)}
+          </li>
+          <li><span className="text-brand-600 font-semibold">2.</span>{' '}
+            {t(<>We return a hosted <code className="text-xs">checkout_url</code> — you redirect the customer</>,
+               <>আমরা একটি হোস্টেড <code className="text-xs">checkout_url</code> ফেরত দিই — আপনি গ্রাহককে রিডাইরেক্ট করেন</>)}
+          </li>
+          <li><span className="text-brand-600 font-semibold">3.</span>{' '}
+            {t('Customer pays from their wallet app, then pastes the TxnID on the checkout and clicks Verify',
+               'গ্রাহক তার ওয়ালেট অ্যাপ থেকে পেমেন্ট করে, তারপর চেকআউটে TxnID পেস্ট করে Verify ক্লিক করে')}
+          </li>
+          <li><span className="text-brand-600 font-semibold">4.</span>{' '}
+            {t('Your bound APK forwards the incoming wallet SMS to our backend (pure staging — nothing is auto-created from random SMS)',
+               'আপনার বাঁধা APK আসা ওয়ালেট SMS আমাদের ব্যাকএন্ডে ফরোয়ার্ড করে (শুধু স্টেজিং — এলোমেলো SMS থেকে কিছু স্বয়ংক্রিয়ভাবে তৈরি হয় না)')}
+          </li>
+          <li><span className="text-brand-600 font-semibold">5.</span>{' '}
+            {t(<>The customer&apos;s TxnID is matched against the staged SMS — match found, transaction marked <strong>Done</strong>, customer redirected back to you</>,
+               <>গ্রাহকের TxnID স্টেজড SMS-এর সাথে মিলানো হয় — মিল পাওয়া গেলে লেনদেন <strong>Done</strong> হিসেবে চিহ্নিত হয়, গ্রাহক আপনার কাছে ফিরে যান</>)}
+          </li>
         </ul>
       </Section>
 
-      <Section id="auth" eyebrow="Concepts" title="Authentication">
-        <p>PayVerify uses three credentials, each for a different actor:</p>
-        <CredentialTable />
-        <Callout tone="amber" title="Keep keys server-side">
-          Never expose <code className="text-xs">api_key</code> or <code className="text-xs">device_auth_key</code> to the
-          browser. They belong on your backend (api_key) or inside the bound APK
-          (device_auth_key) — never in client-side JavaScript.
+      <Section
+        id="auth"
+        eyebrow={t('Concepts', 'ধারণা')}
+        title={t('Authentication', 'অথেনটিকেশন')}
+      >
+        <p>
+          {t('PayVerify uses three credentials, each for a different actor:',
+             'PayVerify তিনটি ক্রেডেনশিয়াল ব্যবহার করে, প্রতিটি ভিন্ন অভিনেতার জন্য:')}
+        </p>
+        <CredentialTable t={t} />
+        <Callout tone="amber" title={t('Keep keys server-side', 'কী সার্ভার-সাইডে রাখুন')}>
+          {t(
+            <>Never expose <code className="text-xs">api_key</code> or <code className="text-xs">device_auth_key</code> to the browser. They belong on your backend (api_key) or inside the bound APK (device_auth_key) — never in client-side JavaScript.</>,
+            <><code className="text-xs">api_key</code> বা <code className="text-xs">device_auth_key</code> কখনো ব্রাউজারে দেখাবেন না। এগুলো আপনার ব্যাকএন্ডে (api_key) বা বাঁধা APK-এর ভিতরে (device_auth_key) থাকবে — কখনো ক্লায়েন্ট-সাইড JavaScript-এ নয়।</>
+          )}
         </Callout>
       </Section>
 
-      <Section id="gateways" eyebrow="Concepts" title="Gateways">
+      <Section
+        id="gateways"
+        eyebrow={t('Concepts', 'ধারণা')}
+        title={t('Gateways', 'গেটওয়ে')}
+      >
         <p>
-          A <strong>gateway</strong> is one wallet/bank account where you receive customer payments —
-          e.g. <em>bKash Personal · 01711111111</em>, or <em>UPI · last-4-of-bank XX6788</em>.
-          Each gateway has an <code className="text-xs">account_number</code> that gets matched against incoming SMS.
+          {t(
+            <>A <strong>gateway</strong> is one wallet/bank account where you receive customer payments — e.g. <em>bKash Personal · 01711111111</em>, or <em>UPI · last-4-of-bank XX6788</em>. Each gateway has an <code className="text-xs">account_number</code> that gets matched against incoming SMS.</>,
+            <>একটি <strong>গেটওয়ে</strong> মানে একটি ওয়ালেট/ব্যাংক অ্যাকাউন্ট যেখানে আপনি গ্রাহকের পেমেন্ট পান — যেমন <em>bKash Personal · 01711111111</em>, অথবা <em>UPI · ব্যাংকের শেষ ৪ ডিজিট XX6788</em>। প্রতিটি গেটওয়ের একটি <code className="text-xs">account_number</code> থাকে যা আসা SMS-এর সাথে মিলানো হয়।</>
+          )}
         </p>
-        <Callout tone="brand" title="Multiple identifiers per gateway">
-          You can comma-separate identifiers in a single gateway. For UPI, store both your{' '}
-          <strong>mobile number</strong> (what customers know) and your <strong>bank account suffix</strong>
-          (what your bank SMS shows). Example: <code className="text-xs">8389834331, XX6788</code> — we match if any one appears in the SMS body.
+        <Callout tone="brand" title={t('Multiple identifiers per gateway', 'প্রতি গেটওয়েতে একাধিক আইডেন্টিফায়ার')}>
+          {t(
+            <>You can comma-separate identifiers in a single gateway. For UPI, store both your <strong>mobile number</strong> (what customers know) and your <strong>bank account suffix</strong> (what your bank SMS shows). Example: <code className="text-xs">8389834331, XX6788</code> — we match if any one appears in the SMS body.</>,
+            <>একটি গেটওয়েতে আইডেন্টিফায়ার কমা দিয়ে আলাদা করতে পারেন। UPI-এর জন্য আপনার <strong>মোবাইল নম্বর</strong> (যা গ্রাহকরা জানে) এবং <strong>ব্যাংক অ্যাকাউন্ট সাফিক্স</strong> (যা ব্যাংক SMS-এ দেখায়) উভয়ই রাখুন। উদাহরণ: <code className="text-xs">8389834331, XX6788</code> — SMS বডিতে যেকোনো একটি থাকলেই মিলবে।</>
+          )}
         </Callout>
       </Section>
 
-      <Section id="apk" eyebrow="Concepts" title="The APK">
+      <Section
+        id="apk"
+        eyebrow={t('Concepts', 'ধারণা')}
+        title={t('The APK', 'APK সম্পর্কে')}
+      >
         <p>
-          The PayVerify Android app runs on the phone you use to receive wallet SMS. It does one job:{' '}
-          <strong>read incoming wallet SMS and forward them to our backend</strong> as data staging.
-          The SMS only becomes a verification when a customer submits a matching TxnID through your
-          checkout — random unrelated SMS sit unused and never become orphan transactions.
+          {t(
+            <>The PayVerify Android app runs on the phone you use to receive wallet SMS. It does one job: <strong>read incoming wallet SMS and forward them to our backend</strong> as data staging. The SMS only becomes a verification when a customer submits a matching TxnID through your checkout — random unrelated SMS sit unused and never become orphan transactions.</>,
+            <>PayVerify অ্যান্ড্রয়েড অ্যাপটি সেই ফোনে চলে যেটিতে আপনি ওয়ালেট SMS পান। এটি একটিই কাজ করে: <strong>আসা ওয়ালেট SMS পড়া এবং আমাদের ব্যাকএন্ডে স্টেজিং ডেটা হিসেবে পাঠানো</strong>। গ্রাহক যখন চেকআউটে মিলে যাওয়া TxnID জমা দেয় তখনই SMS একটি ভেরিফিকেশনে পরিণত হয় — এলোমেলো অপ্রাসঙ্গিক SMS অব্যবহৃত থাকে এবং কখনো orphan লেনদেনে পরিণত হয় না।</>
+          )}
         </p>
         <p className="mt-3">
-          The APK also receives <strong>verify requests</strong> for any pending row a customer
-          submits that hasn&apos;t auto-matched yet, so the merchant can Approve / Reject from the phone
-          (mirror of the dashboard&apos;s Mark Paid / Mark Failed).
+          {t(
+            <>The APK also receives <strong>verify requests</strong> for any pending row a customer submits that hasn&apos;t auto-matched yet, so the merchant can Approve / Reject from the phone (mirror of the dashboard&apos;s Mark Paid / Mark Failed).</>,
+            <>APK <strong>ভেরিফাই রিকোয়েস্ট</strong>ও গ্রহণ করে — গ্রাহকের জমা দেওয়া যেসব পেন্ডিং রো এখনো অটো-ম্যাচ হয়নি তাদের জন্য, যাতে মার্চেন্ট ফোন থেকেই Approve / Reject করতে পারেন (ড্যাশবোর্ডের Mark Paid / Mark Failed-এর মতো)।</>
+          )}
         </p>
         <p className="mt-3">
-          Install the APK on the SIM-receiving device, open it on first launch, paste your{' '}
-          <strong>Device Auth Key</strong> from the dashboard (<code className="text-xs">PV-XXXXXX</code>) — done.
+          {t(
+            <>Install the APK on the SIM-receiving device, open it on first launch, paste your <strong>Device Auth Key</strong> from the dashboard (<code className="text-xs">PV-XXXXXX</code>) — done.</>,
+            <>SIM-রিসিভিং ডিভাইসে APK ইনস্টল করুন, প্রথম লঞ্চে খুলুন, ড্যাশবোর্ড থেকে আপনার <strong>Device Auth Key</strong> (<code className="text-xs">PV-XXXXXX</code>) পেস্ট করুন — হয়ে গেল।</>
+          )}
         </p>
         <p className="mt-3 text-sm text-slate-600">
-          For Android developers building/extending the APK, see the full contract at{' '}
-          <code className="text-xs">docs/APK_API.md</code> in the repo.
+          {t(
+            <>For Android developers building/extending the APK, see the full contract at <code className="text-xs">docs/APK_API.md</code> in the repo.</>,
+            <>APK তৈরি/সম্প্রসারণকারী অ্যান্ড্রয়েড ডেভেলপারদের জন্য, রিপোতে <code className="text-xs">docs/APK_API.md</code>-তে সম্পূর্ণ কন্ট্রাক্ট দেখুন।</>
+          )}
         </p>
       </Section>
 
-      <Section id="step-register" eyebrow="Integration" title="Step 1 — Register">
+      <Section
+        id="step-register"
+        eyebrow={t('Integration', 'ইন্টিগ্রেশন')}
+        title={t('Step 1 — Register', 'স্টেপ ১ — রেজিস্টার')}
+      >
         <p>
-          Visit <Link href="/register" className="text-brand-600 hover:underline">/register</Link>.
-          Fill in your business details. Your country choice determines your default currency
-          (India → INR, Bangladesh → BDT, US → USD, etc.) — you can override per-session later.
+          {t(
+            <>Visit <Link href="/register" className="text-brand-600 hover:underline">/register</Link>. Fill in your business details. Your country choice determines your default currency (India → INR, Bangladesh → BDT, US → USD, etc.) — you can override per-session later.</>,
+            <><Link href="/register" className="text-brand-600 hover:underline">/register</Link>-এ যান। আপনার ব্যবসার বিবরণ পূরণ করুন। আপনার দেশের পছন্দ আপনার ডিফল্ট মুদ্রা নির্ধারণ করে (ভারত → INR, বাংলাদেশ → BDT, US → USD, ইত্যাদি) — পরে প্রতি-সেশনে ওভাররাইড করতে পারবেন।</>
+          )}
         </p>
         <p className="mt-3">
-          On successful registration, four things are generated for you:
+          {t('On successful registration, four things are generated for you:',
+             'সফল রেজিস্ট্রেশনে আপনার জন্য চারটি জিনিস তৈরি হয়:')}
         </p>
         <ul className="mt-2 text-sm text-slate-700 list-disc pl-5 space-y-1">
-          <li><code className="text-xs">api_key</code> (pk_live_...) — for your backend</li>
-          <li><code className="text-xs">secret_key</code> (sk_live_...) — for webhook signatures (future)</li>
-          <li><code className="text-xs">device_auth_key</code> (PV-XXXXXX) — for binding your phone</li>
-          <li>A default <strong>brand</strong> matching your domain</li>
+          <li>{t(<><code className="text-xs">api_key</code> (pk_live_...) — for your backend</>,
+                 <><code className="text-xs">api_key</code> (pk_live_...) — আপনার ব্যাকএন্ডের জন্য</>)}</li>
+          <li>{t(<><code className="text-xs">secret_key</code> (sk_live_...) — for webhook signatures (future)</>,
+                 <><code className="text-xs">secret_key</code> (sk_live_...) — ওয়েবহুক সিগনেচারের জন্য (ভবিষ্যতে)</>)}</li>
+          <li>{t(<><code className="text-xs">device_auth_key</code> (PV-XXXXXX) — for binding your phone</>,
+                 <><code className="text-xs">device_auth_key</code> (PV-XXXXXX) — আপনার ফোন বাঁধার জন্য</>)}</li>
+          <li>{t(<>A default <strong>brand</strong> matching your domain</>,
+                 <>আপনার ডোমেইনের সাথে মিলে যাওয়া একটি ডিফল্ট <strong>ব্র্যান্ড</strong></>)}</li>
         </ul>
       </Section>
 
-      <Section id="step-configure" eyebrow="Integration" title="Step 2 — Configure a Gateway">
+      <Section
+        id="step-configure"
+        eyebrow={t('Integration', 'ইন্টিগ্রেশন')}
+        title={t('Step 2 — Configure a Gateway', 'স্টেপ ২ — একটি গেটওয়ে কনফিগার করুন')}
+      >
         <p>
-          Go to <code className="text-xs">/dashboard/gateways</code> → <strong>Add Gateway</strong> → pick your
-          provider (bKash / Nagad / Rocket / Upay, or whatever admin has configured).
+          {t(
+            <>Go to <code className="text-xs">/dashboard/gateways</code> → <strong>Add Gateway</strong> → pick your provider (bKash / Nagad / Rocket / Upay, or whatever admin has configured).</>,
+            <><code className="text-xs">/dashboard/gateways</code>-এ যান → <strong>Add Gateway</strong> → আপনার প্রোভাইডার বাছুন (bKash / Nagad / Rocket / Upay, অথবা অ্যাডমিন যা কনফিগার করেছে)।</>
+          )}
         </p>
         <p className="mt-3 text-sm text-slate-700">
-          The <strong>Account Number</strong> field must contain what the wallet&apos;s SMS will mention —
-          for UPI/bank deposits, that&apos;s your <strong>bank account suffix</strong> (e.g. <code className="text-xs">XX6788</code>),
-          not your GPay phone (the bank SMS doesn&apos;t echo your GPay number).
+          {t(
+            <>The <strong>Account Number</strong> field must contain what the wallet&apos;s SMS will mention — for UPI/bank deposits, that&apos;s your <strong>bank account suffix</strong> (e.g. <code className="text-xs">XX6788</code>), not your GPay phone (the bank SMS doesn&apos;t echo your GPay number).</>,
+            <><strong>Account Number</strong> ফিল্ডে অবশ্যই সেটাই থাকতে হবে যা ওয়ালেটের SMS উল্লেখ করবে — UPI/ব্যাংক ডিপোজিটের জন্য সেটা আপনার <strong>ব্যাংক অ্যাকাউন্ট সাফিক্স</strong> (যেমন <code className="text-xs">XX6788</code>), আপনার GPay ফোন নয় (ব্যাংক SMS আপনার GPay নম্বর দেখায় না)।</>
+          )}
         </p>
       </Section>
 
-      <Section id="step-bind" eyebrow="Integration" title="Step 3 — Bind the APK">
+      <Section
+        id="step-bind"
+        eyebrow={t('Integration', 'ইন্টিগ্রেশন')}
+        title={t('Step 3 — Bind the APK', 'স্টেপ ৩ — APK বাঁধাই করুন')}
+      >
         <p>
-          Install PayVerify on the Android phone that receives your wallet SMS. On first launch, paste
-          your <code className="text-xs">device_auth_key</code> (PV-XXXXXX). The phone shows up in <code className="text-xs">/dashboard/devices</code> as
-          Online.
+          {t(
+            <>Install PayVerify on the Android phone that receives your wallet SMS. On first launch, paste your <code className="text-xs">device_auth_key</code> (PV-XXXXXX). The phone shows up in <code className="text-xs">/dashboard/devices</code> as Online.</>,
+            <>যে অ্যান্ড্রয়েড ফোন আপনার ওয়ালেট SMS পায় সেটিতে PayVerify ইনস্টল করুন। প্রথম লঞ্চে আপনার <code className="text-xs">device_auth_key</code> (PV-XXXXXX) পেস্ট করুন। ফোনটি <code className="text-xs">/dashboard/devices</code>-এ Online হিসেবে দেখা যাবে।</>
+          )}
         </p>
         <p className="mt-3 text-sm text-slate-700">
-          From this moment, every wallet SMS that arrives on the phone gets forwarded to PayVerify
-          automatically.
+          {t(
+            'From this moment, every wallet SMS that arrives on the phone gets forwarded to PayVerify automatically.',
+            'এই মুহূর্ত থেকে, ফোনে আসা প্রতিটি ওয়ালেট SMS স্বয়ংক্রিয়ভাবে PayVerify-তে ফরোয়ার্ড হবে।'
+          )}
         </p>
       </Section>
 
-      <Section id="step-checkout" eyebrow="Integration" title="Step 4 — Hosted Checkout">
+      <Section
+        id="step-checkout"
+        eyebrow={t('Integration', 'ইন্টিগ্রেশন')}
+        title={t('Step 4 — Hosted Checkout', 'স্টেপ ৪ — হোস্টেড চেকআউট')}
+      >
         <p>
-          When a customer reaches your checkout, your backend creates a payment session and redirects
-          them to the PayVerify checkout URL.
+          {t(
+            'When a customer reaches your checkout, your backend creates a payment session and redirects them to the PayVerify checkout URL.',
+            'যখন একজন গ্রাহক আপনার চেকআউটে আসে, আপনার ব্যাকএন্ড একটি পেমেন্ট সেশন তৈরি করে এবং তাদের PayVerify চেকআউট URL-এ রিডাইরেক্ট করে।'
+          )}
         </p>
 
         <TabGroup tabs={['Node.js', 'PHP', 'Python', 'cURL']}>
-          <CodeBlock language="js">{`// Node.js (Express)
+          <CodeBlock language="js" copyLabel={t('Copy', 'কপি')} copiedLabel={t('✓ Copied', '✓ কপি হয়েছে')}>{`// Node.js (Express)
 app.post('/checkout', async (req, res) => {
   const r = await fetch('https://checkout.ezypay.it.com/api/payment/sessions', {
     method: 'POST',
@@ -271,7 +466,7 @@ app.post('/checkout', async (req, res) => {
   res.redirect(checkout_url);
 });`}</CodeBlock>
 
-          <CodeBlock language="php">{`<?php
+          <CodeBlock language="php" copyLabel={t('Copy', 'কপি')} copiedLabel={t('✓ Copied', '✓ কপি হয়েছে')}>{`<?php
 // PHP
 $ch = curl_init('https://checkout.ezypay.it.com/api/payment/sessions');
 curl_setopt_array($ch, [
@@ -290,7 +485,7 @@ curl_setopt_array($ch, [
 $body = json_decode(curl_exec($ch), true);
 header('Location: ' . $body['checkout_url']);`}</CodeBlock>
 
-          <CodeBlock language="python">{`# Python (Flask / Django)
+          <CodeBlock language="python" copyLabel={t('Copy', 'কপি')} copiedLabel={t('✓ Copied', '✓ কপি হয়েছে')}>{`# Python (Flask / Django)
 import os, requests
 
 r = requests.post(
@@ -305,7 +500,7 @@ r = requests.post(
 )
 return redirect(r.json()['checkout_url'])`}</CodeBlock>
 
-          <CodeBlock language="bash">{`curl -X POST https://checkout.ezypay.it.com/api/payment/sessions \\
+          <CodeBlock language="bash" copyLabel={t('Copy', 'কপি')} copiedLabel={t('✓ Copied', '✓ কপি হয়েছে')}>{`curl -X POST https://checkout.ezypay.it.com/api/payment/sessions \\
   -H "X-API-Key: pk_live_xxxxxxxxxxxx" \\
   -H "Content-Type: application/json" \\
   -d '{
@@ -316,26 +511,36 @@ return redirect(r.json()['checkout_url'])`}</CodeBlock>
   }'`}</CodeBlock>
         </TabGroup>
 
-        <Callout tone="slate" title="Session lifecycle">
-          Sessions expire <strong>30 minutes</strong> after creation. Once a customer submits a TxnID
-          and we verify it, the session flips to <code className="text-xs">success</code>. If they
-          cancel, it flips to <code className="text-xs">cancelled</code>. Beyond 30 min, it auto-expires.
+        <Callout tone="slate" title={t('Session lifecycle', 'সেশন লাইফসাইকেল')}>
+          {t(
+            <>Sessions expire <strong>30 minutes</strong> after creation. Once a customer submits a TxnID and we verify it, the session flips to <code className="text-xs">success</code>. If they cancel, it flips to <code className="text-xs">cancelled</code>. Beyond 30 min, it auto-expires.</>,
+            <>সেশন তৈরির <strong>৩০ মিনিট</strong> পর মেয়াদ শেষ হয়। গ্রাহক TxnID জমা দিয়ে আমরা ভেরিফাই করার পর সেশন <code className="text-xs">success</code>-এ পরিণত হয়। তারা ক্যান্সেল করলে <code className="text-xs">cancelled</code>-এ পরিণত হয়। ৩০ মিনিট পর স্বয়ংক্রিয়ভাবে মেয়াদ শেষ হয়।</>
+          )}
         </Callout>
       </Section>
 
-      <Section id="step-verify" eyebrow="Integration" title="Step 5 — Verify on Return">
+      <Section
+        id="step-verify"
+        eyebrow={t('Integration', 'ইন্টিগ্রেশন')}
+        title={t('Step 5 — Verify on Return', 'স্টেপ ৫ — রিটার্নে ভেরিফাই করুন')}
+      >
         <p>
-          After payment, the customer is redirected back to your <code className="text-xs">redirect_url</code> with query params:
+          {t(
+            <>After payment, the customer is redirected back to your <code className="text-xs">redirect_url</code> with query params:</>,
+            <>পেমেন্টের পর, গ্রাহককে কোয়েরি প্যারামসহ আপনার <code className="text-xs">redirect_url</code>-এ ফেরত পাঠানো হয়:</>
+          )}
         </p>
-        <CodeBlock language="text">{`https://yourstore.com/payment/result?session_id=eNOuUpsg2IGX4ko4HbFL&status=success`}</CodeBlock>
+        <CodeBlock language="text" copyLabel={t('Copy', 'কপি')} copiedLabel={t('✓ Copied', '✓ কপি হয়েছে')}>{`https://yourstore.com/payment/result?session_id=eNOuUpsg2IGX4ko4HbFL&status=success`}</CodeBlock>
 
-        <Callout tone="rose" title="Don't trust query params">
-          A bad actor could craft <code className="text-xs">?status=success</code> directly without paying.
-          Always verify server-side by calling <code className="text-xs">GET /api/payment/sessions/:id</code>.
+        <Callout tone="rose" title={t("Don't trust query params", 'কোয়েরি প্যারামকে বিশ্বাস করবেন না')}>
+          {t(
+            <>A bad actor could craft <code className="text-xs">?status=success</code> directly without paying. Always verify server-side by calling <code className="text-xs">GET /api/payment/sessions/:id</code>.</>,
+            <>একজন খারাপ ব্যক্তি না দিয়েই সরাসরি <code className="text-xs">?status=success</code> বানিয়ে আনতে পারে। সর্বদা <code className="text-xs">GET /api/payment/sessions/:id</code> কল করে সার্ভার-সাইডে ভেরিফাই করুন।</>
+          )}
         </Callout>
 
         <TabGroup tabs={['Node.js', 'PHP', 'cURL']}>
-          <CodeBlock language="js">{`app.get('/payment/result', async (req, res) => {
+          <CodeBlock language="js" copyLabel={t('Copy', 'কপি')} copiedLabel={t('✓ Copied', '✓ কপি হয়েছে')}>{`app.get('/payment/result', async (req, res) => {
   const r = await fetch(
     \`https://checkout.ezypay.it.com/api/payment/sessions/\${req.query.session_id}\`,
     { headers: { 'X-API-Key': process.env.PAYVERIFY_API_KEY } }
@@ -349,7 +554,7 @@ return redirect(r.json()['checkout_url'])`}</CodeBlock>
   }
 });`}</CodeBlock>
 
-          <CodeBlock language="php">{`<?php
+          <CodeBlock language="php" copyLabel={t('Copy', 'কপি')} copiedLabel={t('✓ Copied', '✓ কপি হয়েছে')}>{`<?php
 $id = $_GET['session_id'];
 $ch = curl_init("https://checkout.ezypay.it.com/api/payment/sessions/$id");
 curl_setopt_array($ch, [
@@ -361,17 +566,25 @@ if ($body['session']['status'] === 'success') {
   mark_order_paid($body['session']['order_id']);
 }`}</CodeBlock>
 
-          <CodeBlock language="bash">{`curl https://checkout.ezypay.it.com/api/payment/sessions/eNOuUpsg2IGX4ko4HbFL \\
+          <CodeBlock language="bash" copyLabel={t('Copy', 'কপি')} copiedLabel={t('✓ Copied', '✓ কপি হয়েছে')}>{`curl https://checkout.ezypay.it.com/api/payment/sessions/eNOuUpsg2IGX4ko4HbFL \\
   -H "X-API-Key: pk_live_xxxxxxxxxxxx"`}</CodeBlock>
         </TabGroup>
       </Section>
 
-      <Section id="api-sessions" eyebrow="API Reference" title="Payment Sessions">
+      <Section
+        id="api-sessions"
+        eyebrow={t('API Reference', 'API রেফারেন্স')}
+        title={t('Payment Sessions', 'পেমেন্ট সেশন')}
+      >
         <ApiEndpoint
+          t={t}
           method="POST"
           path="/api/payment/sessions"
           auth="X-API-Key"
-          description="Create a new checkout session for a customer. order_id is enforced unique-per-merchant (see status codes below)."
+          description={t(
+            'Create a new checkout session for a customer. order_id is enforced unique-per-merchant (see status codes below).',
+            'একজন গ্রাহকের জন্য নতুন চেকআউট সেশন তৈরি করুন। order_id প্রতি-মার্চেন্টে অনন্য বাধ্যতামূলক (নিচে স্ট্যাটাস কোড দেখুন)।'
+          )}
           request={`{
   "amount":         500.00,
   "order_id":       "ORD-1001",
@@ -406,18 +619,22 @@ if ($body['session']['status'] === 'success') {
   "insufficient_balance": true, "balance": 0, "fee": 2, "threshold": 10 }`}
         />
 
-        <Callout tone="slate" title="Handling the response">
-          Always use <code className="text-xs">data.checkout_url</code> regardless of whether you get 201 or 200 —
-          the URL is the same when <code className="text-xs">existed: true</code>. Treat <strong>409</strong> as
-          "this order is done — show the customer the paid state, don&apos;t retry." Treat <strong>402</strong>{' '}
-          as "merchant configuration issue — surface a friendly retry-later message."
+        <Callout tone="slate" title={t('Handling the response', 'রেসপন্স হ্যান্ডেল করা')}>
+          {t(
+            <>Always use <code className="text-xs">data.checkout_url</code> regardless of whether you get 201 or 200 — the URL is the same when <code className="text-xs">existed: true</code>. Treat <strong>409</strong> as &quot;this order is done — show the customer the paid state, don&apos;t retry.&quot; Treat <strong>402</strong> as &quot;merchant configuration issue — surface a friendly retry-later message.&quot;</>,
+            <>আপনি 201 বা 200 যাই পান, সর্বদা <code className="text-xs">data.checkout_url</code> ব্যবহার করুন — <code className="text-xs">existed: true</code> হলেও URL একই থাকে। <strong>409</strong>-কে এভাবে দেখুন: &quot;এই অর্ডার সম্পন্ন — গ্রাহককে পেইড অবস্থা দেখান, পুনরায় চেষ্টা করবেন না।&quot; <strong>402</strong>-কে এভাবে দেখুন: &quot;মার্চেন্ট কনফিগারেশন সমস্যা — পরে আবার চেষ্টা করার বন্ধুসুলভ বার্তা দিন।&quot;</>
+          )}
         </Callout>
 
         <ApiEndpoint
+          t={t}
           method="GET"
           path="/api/payment/sessions/:id"
           auth="X-API-Key"
-          description="Fetch the current status of a session. Use this after the customer returns."
+          description={t(
+            'Fetch the current status of a session. Use this after the customer returns.',
+            'একটি সেশনের বর্তমান স্ট্যাটাস আনুন। গ্রাহক ফেরত আসার পর এটি ব্যবহার করুন।'
+          )}
           response={`{
   "session": {
     "id":          "eNOuUpsg2IGX4ko4HbFL",
@@ -437,12 +654,20 @@ if ($body['session']['status'] === 'success') {
         />
       </Section>
 
-      <Section id="api-verify" eyebrow="API Reference" title="Manual Verify">
+      <Section
+        id="api-verify"
+        eyebrow={t('API Reference', 'API রেফারেন্স')}
+        title={t('Manual Verify', 'ম্যানুয়াল ভেরিফাই')}
+      >
         <ApiEndpoint
+          t={t}
           method="POST"
           path="/api/merchant/verify"
           auth="Bearer JWT (merchant login)"
-          description="Manually verify a TxnID given to you out-of-band. Used by the dashboard's Verify page. Looks up SMS, extracts amount + gateway, creates a transaction if it all matches."
+          description={t(
+            "Manually verify a TxnID given to you out-of-band. Used by the dashboard's Verify page. Looks up SMS, extracts amount + gateway, creates a transaction if it all matches.",
+            'বাইরে থেকে পাওয়া TxnID ম্যানুয়ালি ভেরিফাই করুন। ড্যাশবোর্ডের Verify পেজ এটি ব্যবহার করে। SMS খোঁজে, অ্যামাউন্ট + গেটওয়ে বের করে, সব মিলে গেলে একটি লেনদেন তৈরি করে।'
+          )}
           request={`{
   "txnid": "613384596583"
 }`}
@@ -461,40 +686,64 @@ if ($body['session']['status'] === 'success') {
         />
       </Section>
 
-      <Section id="api-devices" eyebrow="API Reference" title="Devices (APK)">
+      <Section
+        id="api-devices"
+        eyebrow={t('API Reference', 'API রেফারেন্স')}
+        title={t('Devices (APK)', 'ডিভাইস (APK)')}
+      >
         <p className="mb-4 text-slate-700">
-          These endpoints are called by your <strong>Android APK</strong>, authenticated by{' '}
-          <code className="text-xs">device_auth_key</code> in the body. Never call from a server or browser.
+          {t(
+            <>These endpoints are called by your <strong>Android APK</strong>, authenticated by <code className="text-xs">device_auth_key</code> in the body. Never call from a server or browser.</>,
+            <>এই এন্ডপয়েন্টগুলো আপনার <strong>অ্যান্ড্রয়েড APK</strong> কল করে, বডিতে <code className="text-xs">device_auth_key</code> দিয়ে অথেনটিকেট। সার্ভার বা ব্রাউজার থেকে কখনো কল করবেন না।</>
+          )}
         </p>
 
-        <Callout tone="amber" title="Wallet-empty (402) handling">
-          Every APK endpoint EXCEPT <code className="text-xs">/bind</code> and <code className="text-xs">/unbind</code> returns{' '}
-          <strong>402</strong> with <code className="text-xs">{'{ insufficient_balance: true, balance, fee, threshold }'}</code>{' '}
-          when the merchant&apos;s wallet doesn&apos;t have enough to cover the per-verification fee. The APK
-          should switch to a <em>"Wallet empty — please top up"</em> screen and keep heartbeating; when{' '}
-          <code className="text-xs">/heartbeat</code> returns 200 again, auto-recover.
+        <Callout tone="amber" title={t('Wallet-empty (402) handling', 'ওয়ালেট-খালি (402) হ্যান্ডলিং')}>
+          {t(
+            <>Every APK endpoint EXCEPT <code className="text-xs">/bind</code> and <code className="text-xs">/unbind</code> returns <strong>402</strong> with <code className="text-xs">{'{ insufficient_balance: true, balance, fee, threshold }'}</code> when the merchant&apos;s wallet doesn&apos;t have enough to cover the per-verification fee. The APK should switch to a <em>&quot;Wallet empty — please top up&quot;</em> screen and keep heartbeating; when <code className="text-xs">/heartbeat</code> returns 200 again, auto-recover.</>,
+            <><code className="text-xs">/bind</code> এবং <code className="text-xs">/unbind</code> ছাড়া প্রতিটি APK এন্ডপয়েন্ট <strong>402</strong> ফেরত দেয় <code className="text-xs">{'{ insufficient_balance: true, balance, fee, threshold }'}</code> সহ, যখন মার্চেন্টের ওয়ালেটে প্রতি-ভেরিফিকেশন ফি কভার করার মতো ব্যালেন্স থাকে না। APK-কে একটি <em>&quot;ওয়ালেট খালি — দয়া করে টপ-আপ করুন&quot;</em> স্ক্রিনে স্যুইচ করতে হবে এবং হার্টবিট চালিয়ে যেতে হবে; যখন <code className="text-xs">/heartbeat</code> আবার 200 ফেরত দেবে, স্বয়ংক্রিয়ভাবে রিকভার হবে।</>
+          )}
         </Callout>
 
-        <ApiEndpoint method="POST" path="/api/device/bind"
+        <ApiEndpoint
+          t={t}
+          method="POST"
+          path="/api/device/bind"
           auth="device_auth_key"
-          description="Register a phone with the merchant account. Idempotent — re-binding the same device_id refreshes the row."
+          description={t(
+            'Register a phone with the merchant account. Idempotent — re-binding the same device_id refreshes the row.',
+            'একটি ফোনকে মার্চেন্ট অ্যাকাউন্টে নিবন্ধন করুন। Idempotent — একই device_id পুনরায় বাঁধাই করলে রো রিফ্রেশ হয়।'
+          )}
           request={`{
   "auth_key":     "PV-XXXXXX",
   "device_id":    "android-stable-id",
   "model":        "CPH1937",
   "manufacturer": "OPPO",
   "os_version":   "11"
-}`} />
+}`}
+        />
 
-        <ApiEndpoint method="POST" path="/api/device/unbind"
+        <ApiEndpoint
+          t={t}
+          method="POST"
+          path="/api/device/unbind"
           auth="device_auth_key"
-          description='User taps "Disconnect" in the app. Soft-delete — the row stays in history.'
+          description={t(
+            'User taps "Disconnect" in the app. Soft-delete — the row stays in history.',
+            'ব্যবহারকারী অ্যাপে "Disconnect" ট্যাপ করে। সফট-ডিলিট — রো ইতিহাসে থাকে।'
+          )}
           request={`{ "auth_key": "PV-XXXXXX", "device_id": "android-stable-id" }`}
         />
 
-        <ApiEndpoint method="POST" path="/api/device/sms"
+        <ApiEndpoint
+          t={t}
+          method="POST"
+          path="/api/device/sms"
           auth="device_auth_key"
-          description="Forward incoming wallet SMS. Backend stores the SMS as staging data only — it becomes a verification when a customer submits a matching TxnID through the checkout. Unmatched SMS never become orphan transactions."
+          description={t(
+            'Forward incoming wallet SMS. Backend stores the SMS as staging data only — it becomes a verification when a customer submits a matching TxnID through the checkout. Unmatched SMS never become orphan transactions.',
+            'আসা ওয়ালেট SMS ফরোয়ার্ড করুন। ব্যাকএন্ড SMS-কে শুধু স্টেজিং ডেটা হিসেবে সংরক্ষণ করে — গ্রাহক চেকআউটে মিলে যাওয়া TxnID জমা দিলে এটি ভেরিফিকেশনে পরিণত হয়। মিল না হওয়া SMS কখনো orphan লেনদেনে পরিণত হয় না।'
+          )}
           request={`{
   "auth_key":  "PV-XXXXXX",
   "device_id": "android-stable-id",
@@ -503,11 +752,18 @@ if ($body['session']['status'] === 'success') {
     "body":        "Cash In Tk 500.00 successful. TrxID: BKX92H1 from 01712345678",
     "received_at": "2026-05-12T11:25:30Z"
   }]
-}`} />
+}`}
+        />
 
-        <ApiEndpoint method="POST" path="/api/device/poll"
+        <ApiEndpoint
+          t={t}
+          method="POST"
+          path="/api/device/poll"
           auth="device_auth_key"
-          description="Fetch pending verifications waiting for a decision. Call on a timer (every 10–30s). Each returned row has the data needed to render an Approve/Reject prompt offline."
+          description={t(
+            'Fetch pending verifications waiting for a decision. Call on a timer (every 10–30s). Each returned row has the data needed to render an Approve/Reject prompt offline.',
+            'সিদ্ধান্তের অপেক্ষায় থাকা পেন্ডিং ভেরিফিকেশন আনুন। টাইমারে কল করুন (প্রতি ১০–৩০ সেকেন্ডে)। ফিরে আসা প্রতিটি রো-তে অফলাইনে Approve/Reject প্রম্পট রেন্ডার করার জন্য প্রয়োজনীয় ডেটা থাকে।'
+          )}
           request={`{ "auth_key": "PV-XXXXXX", "device_id": "android-stable-id" }`}
           response={`{
   "verifications": [{
@@ -523,11 +779,18 @@ if ($body['session']['status'] === 'success') {
     "account_number":  "01799999999",
     "created_at":      "2026-05-12T11:25:30Z"
   }]
-}`} />
+}`}
+        />
 
-        <ApiEndpoint method="POST" path="/api/device/report"
+        <ApiEndpoint
+          t={t}
+          method="POST"
+          path="/api/device/report"
           auth="device_auth_key"
-          description={`Resolve a pending verification from the APK ("Approve" / "Reject" buttons). Mirrors the web dashboard's Mark Paid / Mark Failed.`}
+          description={t(
+            `Resolve a pending verification from the APK ("Approve" / "Reject" buttons). Mirrors the web dashboard's Mark Paid / Mark Failed.`,
+            'APK থেকে একটি পেন্ডিং ভেরিফিকেশন রেজলভ করুন ("Approve" / "Reject" বাটন)। ওয়েব ড্যাশবোর্ডের Mark Paid / Mark Failed-এর মতো।'
+          )}
           request={`{
   "auth_key":        "PV-XXXXXX",
   "device_id":       "android-stable-id",
@@ -546,11 +809,18 @@ if ($body['session']['status'] === 'success') {
     "status":        "success",
     "result_source": "apk"
   }
-}`} />
+}`}
+        />
 
-        <ApiEndpoint method="POST" path="/api/device/transactions"
+        <ApiEndpoint
+          t={t}
+          method="POST"
+          path="/api/device/transactions"
           auth="device_auth_key"
-          description="List recent transactions (pending + history) for the merchant on the APK. Filter by status, search by TxnID or order_id."
+          description={t(
+            'List recent transactions (pending + history) for the merchant on the APK. Filter by status, search by TxnID or order_id.',
+            'APK-তে মার্চেন্টের জন্য সাম্প্রতিক লেনদেন (পেন্ডিং + ইতিহাস) তালিকা করুন। স্ট্যাটাস দিয়ে ফিল্টার করুন, TxnID বা order_id দিয়ে সার্চ করুন।'
+          )}
           request={`{
   "auth_key":  "PV-XXXXXX",
   "device_id": "android-stable-id",
@@ -573,11 +843,18 @@ if ($body['session']['status'] === 'success') {
     "customer_name":   "Customer Name",
     "created_at":      "2026-05-12T11:25:30Z"
   }]
-}`} />
+}`}
+        />
 
-        <ApiEndpoint method="POST" path="/api/device/verify"
+        <ApiEndpoint
+          t={t}
+          method="POST"
+          path="/api/device/verify"
           auth="device_auth_key"
-          description="Paste a TxnID into the APK. Backend searches received SMS, validates against a configured gateway, creates a successful transaction if everything aligns. Mirrors the web Verify page."
+          description={t(
+            'Paste a TxnID into the APK. Backend searches received SMS, validates against a configured gateway, creates a successful transaction if everything aligns. Mirrors the web Verify page.',
+            'APK-তে একটি TxnID পেস্ট করুন। ব্যাকএন্ড গ্রহণ করা SMS খোঁজে, কনফিগার করা গেটওয়ের বিপরীতে যাচাই করে, সব মিলে গেলে সফল লেনদেন তৈরি করে। ওয়েব Verify পেজের মতো।'
+          )}
           request={`{
   "auth_key":  "PV-XXXXXX",
   "device_id": "android-stable-id",
@@ -592,44 +869,64 @@ if ($body['session']['status'] === 'success') {
     "provider": "bkash", "account_number": "01799999999"
   },
   "sms": { "id": 7711, "sender": "bKash", "body": "...", "received_at": "..." }
-}`} />
+}`}
+        />
 
-        <Callout tone="slate" title="Manual verification flow inside the APK">
-          The APK has the same verification powers as the web dashboard:
+        <Callout tone="slate" title={t('Manual verification flow inside the APK', 'APK-এর ভিতরে ম্যানুয়াল ভেরিফিকেশন ফ্লো')}>
+          {t('The APK has the same verification powers as the web dashboard:',
+             'APK-এ ওয়েব ড্যাশবোর্ডের মতোই ভেরিফিকেশন ক্ষমতা আছে:')}
           <ul className="mt-2 list-disc pl-5 space-y-1">
-            <li><strong>List view:</strong> call <code className="text-xs">/api/device/transactions</code> for full history, or <code className="text-xs">/api/device/poll</code> for pending-only.</li>
-            <li><strong>Approve / Reject:</strong> call <code className="text-xs">/api/device/report</code> with <code className="text-xs">result: &quot;success&quot;</code> or <code className="text-xs">&quot;failed&quot;</code>.</li>
-            <li><strong>Type-a-TxnID verify:</strong> call <code className="text-xs">/api/device/verify</code> — searches SMS, auto-resolves.</li>
+            <li>
+              {t(<><strong>List view:</strong> call <code className="text-xs">/api/device/transactions</code> for full history, or <code className="text-xs">/api/device/poll</code> for pending-only.</>,
+                 <><strong>লিস্ট ভিউ:</strong> সম্পূর্ণ ইতিহাসের জন্য <code className="text-xs">/api/device/transactions</code> কল করুন, বা শুধু পেন্ডিং-এর জন্য <code className="text-xs">/api/device/poll</code>।</>)}
+            </li>
+            <li>
+              {t(<><strong>Approve / Reject:</strong> call <code className="text-xs">/api/device/report</code> with <code className="text-xs">result: &quot;success&quot;</code> or <code className="text-xs">&quot;failed&quot;</code>.</>,
+                 <><strong>Approve / Reject:</strong> <code className="text-xs">result: &quot;success&quot;</code> বা <code className="text-xs">&quot;failed&quot;</code> দিয়ে <code className="text-xs">/api/device/report</code> কল করুন।</>)}
+            </li>
+            <li>
+              {t(<><strong>Type-a-TxnID verify:</strong> call <code className="text-xs">/api/device/verify</code> — searches SMS, auto-resolves.</>,
+                 <><strong>TxnID টাইপ-করে ভেরিফাই:</strong> <code className="text-xs">/api/device/verify</code> কল করুন — SMS খোঁজে, স্বয়ংক্রিয়ভাবে রেজলভ করে।</>)}
+            </li>
           </ul>
-          All of these flip the same <code className="text-xs">transactions</code> row that the web dashboard reads, so a decision from the phone shows up on the dashboard immediately.
+          {t(
+            <>All of these flip the same <code className="text-xs">transactions</code> row that the web dashboard reads, so a decision from the phone shows up on the dashboard immediately.</>,
+            <>এই সবই সেই একই <code className="text-xs">transactions</code> রো ফ্লিপ করে যা ওয়েব ড্যাশবোর্ড পড়ে, তাই ফোন থেকে নেওয়া সিদ্ধান্ত ড্যাশবোর্ডে তাৎক্ষণিক দেখা যায়।</>
+          )}
         </Callout>
 
         <p className="mt-4 text-sm text-slate-600">
-          Full APK contract (poll/report patterns, SMS matching rules, permissions) lives in{' '}
-          <code className="text-xs">docs/APK_API.md</code>.
+          {t(
+            <>Full APK contract (poll/report patterns, SMS matching rules, permissions) lives in <code className="text-xs">docs/APK_API.md</code>.</>,
+            <>সম্পূর্ণ APK কন্ট্রাক্ট (poll/report প্যাটার্ন, SMS ম্যাচিং নিয়ম, পারমিশন) <code className="text-xs">docs/APK_API.md</code>-তে রয়েছে।</>
+          )}
         </p>
       </Section>
 
-      <Section id="errors" eyebrow="API Reference" title="Errors & Status Codes">
+      <Section
+        id="errors"
+        eyebrow={t('API Reference', 'API রেফারেন্স')}
+        title={t('Errors & Status Codes', 'এরর ও স্ট্যাটাস কোড')}
+      >
         <table className="w-full text-sm border-collapse">
           <thead>
             <tr className="bg-slate-50">
-              <th className="text-left p-3 border border-slate-200">Code</th>
-              <th className="text-left p-3 border border-slate-200">Meaning</th>
+              <th className="text-left p-3 border border-slate-200">{t('Code', 'কোড')}</th>
+              <th className="text-left p-3 border border-slate-200">{t('Meaning', 'অর্থ')}</th>
             </tr>
           </thead>
           <tbody>
             {[
-              ['200', 'OK (existing resource fetched)'],
-              ['201', 'Created (new session / new resource)'],
-              ['202', 'Accepted (TxnID submitted, verification pending)'],
-              ['400', 'Bad request — check error message; usually a missing/invalid field'],
-              ['401', 'Invalid or missing API key (X-API-Key or JWT)'],
-              ['402', 'Merchant wallet has insufficient balance — top up to resume'],
-              ['403', 'Forbidden — usually merchant suspended'],
-              ['404', 'Resource not found (wrong id, or not yours)'],
-              ['409', 'Conflict — duplicate (TxnID reused, order already paid, session in wrong state)'],
-              ['5xx', 'Server error — retry with exponential backoff'],
+              ['200', t('OK (existing resource fetched)', 'OK (বিদ্যমান রিসোর্স আনা হয়েছে)')],
+              ['201', t('Created (new session / new resource)', 'Created (নতুন সেশন / নতুন রিসোর্স)')],
+              ['202', t('Accepted (TxnID submitted, verification pending)', 'Accepted (TxnID জমা হয়েছে, ভেরিফিকেশন পেন্ডিং)')],
+              ['400', t('Bad request — check error message; usually a missing/invalid field', 'Bad request — এরর বার্তা দেখুন; সাধারণত একটি মিসিং/অবৈধ ফিল্ড')],
+              ['401', t('Invalid or missing API key (X-API-Key or JWT)', 'অবৈধ বা মিসিং API কী (X-API-Key বা JWT)')],
+              ['402', t('Merchant wallet has insufficient balance — top up to resume', 'মার্চেন্ট ওয়ালেটে অপর্যাপ্ত ব্যালেন্স — পুনরায় শুরু করতে টপ-আপ করুন')],
+              ['403', t('Forbidden — usually merchant suspended', 'Forbidden — সাধারণত মার্চেন্ট সাসপেন্ডেড')],
+              ['404', t('Resource not found (wrong id, or not yours)', 'রিসোর্স পাওয়া যায়নি (ভুল id, বা আপনার নয়)')],
+              ['409', t('Conflict — duplicate (TxnID reused, order already paid, session in wrong state)', 'Conflict — ডুপ্লিকেট (TxnID পুনঃব্যবহৃত, অর্ডার ইতিমধ্যে পেইড, সেশন ভুল অবস্থায়)')],
+              ['5xx', t('Server error — retry with exponential backoff', 'সার্ভার এরর — এক্সপোনেনশিয়াল ব্যাকঅফ দিয়ে পুনরায় চেষ্টা করুন')],
             ].map(([c, m]) => (
               <tr key={c}>
                 <td className="p-3 border border-slate-200 font-mono">{c}</td>
@@ -639,35 +936,41 @@ if ($body['session']['status'] === 'success') {
           </tbody>
         </table>
 
-        <h3 className="mt-8 font-semibold text-slate-900">Error response shape</h3>
+        <h3 className="mt-8 font-semibold text-slate-900">{t('Error response shape', 'এরর রেসপন্স গঠন')}</h3>
         <p className="mt-2 text-sm text-slate-700">
-          Customer-facing endpoints (<code className="text-xs">/api/payment/sessions</code>,{' '}
-          <code className="text-xs">/api/checkout/:id/submit</code>) split every error into two
-          tiers so you can safely route the right text to each audience:
+          {t(
+            <>Customer-facing endpoints (<code className="text-xs">/api/payment/sessions</code>, <code className="text-xs">/api/checkout/:id/submit</code>) split every error into two tiers so you can safely route the right text to each audience:</>,
+            <>গ্রাহক-মুখী এন্ডপয়েন্ট (<code className="text-xs">/api/payment/sessions</code>, <code className="text-xs">/api/checkout/:id/submit</code>) প্রতিটি এররকে দুটি স্তরে ভাগ করে যাতে আপনি নিরাপদে প্রতিটি শ্রোতার কাছে সঠিক টেক্সট রুট করতে পারেন:</>
+          )}
         </p>
-        <CodeBlock language="json">{`{
+        <CodeBlock language="json" copyLabel={t('Copy', 'কপি')} copiedLabel={t('✓ Copied', '✓ কপি হয়েছে')}>{`{
   "error":            "Services currently unavailable.",
   "merchant_message": "Merchant wallet has insufficient balance to cover the per-verification fee. Top up at the dashboard.",
   "insufficient_balance": true,
   "code":             "merchant_wallet_empty"
 }`}</CodeBlock>
         <ul className="mt-2 text-sm text-slate-700 list-disc pl-5 space-y-1">
-          <li><code className="text-xs">error</code> — <strong>safe to display to your customer</strong>. Neutral, no PayVerify-specific language, no numeric leaks.</li>
-          <li><code className="text-xs">merchant_message</code> — <strong>for your server logs / admin alerts only</strong>. Tells you exactly what to fix. Never render this to the end customer.</li>
-          <li><code className="text-xs">code</code> — stable machine-readable identifier (e.g. <code className="text-xs">merchant_wallet_empty</code>, <code className="text-xs">order_already_paid</code>). Use this for programmatic branching.</li>
-          <li>Other fields like <code className="text-xs">insufficient_balance</code> or <code className="text-xs">existing_session_id</code> are programmatic hints — safe but uninformative if shown.</li>
+          <li>{t(<><code className="text-xs">error</code> — <strong>safe to display to your customer</strong>. Neutral, no PayVerify-specific language, no numeric leaks.</>,
+                 <><code className="text-xs">error</code> — <strong>আপনার গ্রাহককে দেখানো নিরাপদ</strong>। নিরপেক্ষ, PayVerify-নির্দিষ্ট ভাষা নয়, কোনো সংখ্যাগত লিক নেই।</>)}</li>
+          <li>{t(<><code className="text-xs">merchant_message</code> — <strong>for your server logs / admin alerts only</strong>. Tells you exactly what to fix. Never render this to the end customer.</>,
+                 <><code className="text-xs">merchant_message</code> — <strong>শুধু আপনার সার্ভার লগ / অ্যাডমিন অ্যালার্টের জন্য</strong>। ঠিক কী ঠিক করতে হবে বলে। শেষ গ্রাহকের কাছে কখনো রেন্ডার করবেন না।</>)}</li>
+          <li>{t(<><code className="text-xs">code</code> — stable machine-readable identifier (e.g. <code className="text-xs">merchant_wallet_empty</code>, <code className="text-xs">order_already_paid</code>). Use this for programmatic branching.</>,
+                 <><code className="text-xs">code</code> — স্থিতিশীল মেশিন-পাঠযোগ্য আইডেন্টিফায়ার (যেমন <code className="text-xs">merchant_wallet_empty</code>, <code className="text-xs">order_already_paid</code>)। প্রোগ্রাম্যাটিক ব্রাঞ্চিং-এর জন্য এটি ব্যবহার করুন।</>)}</li>
+          <li>{t(<>Other fields like <code className="text-xs">insufficient_balance</code> or <code className="text-xs">existing_session_id</code> are programmatic hints — safe but uninformative if shown.</>,
+                 <><code className="text-xs">insufficient_balance</code> বা <code className="text-xs">existing_session_id</code>-এর মতো অন্যান্য ফিল্ড প্রোগ্রাম্যাটিক ইঙ্গিত — নিরাপদ কিন্তু দেখালে তথ্যবহুল নয়।</>)}</li>
         </ul>
 
-        <Callout tone="rose" title="Don't dump the whole response to the customer">
-          A common integration bug: <code className="text-xs">alert(JSON.stringify(response))</code> on
-          the customer's screen. They see "Merchant wallet has insufficient balance" and lose trust
-          in your site. <strong>Always read <code className="text-xs">error</code> and display only that.</strong>
+        <Callout tone="rose" title={t("Don't dump the whole response to the customer", 'গ্রাহকের কাছে পুরো রেসপন্স ডাম্প করবেন না')}>
+          {t(
+            <>A common integration bug: <code className="text-xs">alert(JSON.stringify(response))</code> on the customer&apos;s screen. They see &quot;Merchant wallet has insufficient balance&quot; and lose trust in your site. <strong>Always read <code className="text-xs">error</code> and display only that.</strong></>,
+            <>একটি সাধারণ ইন্টিগ্রেশন বাগ: গ্রাহকের স্ক্রিনে <code className="text-xs">alert(JSON.stringify(response))</code>। তারা &quot;Merchant wallet has insufficient balance&quot; দেখে এবং আপনার সাইটে বিশ্বাস হারায়। <strong>সর্বদা <code className="text-xs">error</code> পড়ুন এবং শুধু তা দেখান।</strong></>
+          )}
         </Callout>
 
         <p className="mt-3 text-sm text-slate-700">
-          Reference handler (Node):
+          {t('Reference handler (Node):', 'রেফারেন্স হ্যান্ডলার (Node):')}
         </p>
-        <CodeBlock language="js">{`const r = await fetch(...);
+        <CodeBlock language="js" copyLabel={t('Copy', 'কপি')} copiedLabel={t('✓ Copied', '✓ কপি হয়েছে')}>{`const r = await fetch(...);
 const body = await r.json();
 if (!r.ok) {
   // Log the technical detail for ops
@@ -677,39 +980,48 @@ if (!r.ok) {
 }`}</CodeBlock>
       </Section>
 
-      <Section id="troubleshoot" eyebrow="API Reference" title="Troubleshooting">
+      <Section
+        id="troubleshoot"
+        eyebrow={t('API Reference', 'API রেফারেন্স')}
+        title={t('Troubleshooting', 'ট্রাবলশুটিং')}
+      >
         <p className="text-slate-600">
-          Issues integrators hit most often, with the fix.
+          {t('Issues integrators hit most often, with the fix.',
+             'ইন্টিগ্রেটররা সবচেয়ে বেশি সম্মুখীন হয় এমন সমস্যা, সমাধানসহ।')}
         </p>
 
         <h3 className="mt-6 font-semibold text-slate-900">
           PHP cURL: <code className="text-xs">SSL routines:ssl3_read_bytes:tlsv1 unrecognized name</code>
         </h3>
         <p className="mt-2 text-sm text-slate-700">
-          TLS handshake error. The client didn&apos;t send a Server Name Indication (SNI) the cert
-          recognizes, and old OpenSSL (≤ 1.0.x, common in PHP 5.x / 7.0–7.3) treats it as fatal
-          instead of a warning. Three checks, in order:
+          {t(
+            "TLS handshake error. The client didn't send a Server Name Indication (SNI) the cert recognizes, and old OpenSSL (≤ 1.0.x, common in PHP 5.x / 7.0–7.3) treats it as fatal instead of a warning. Three checks, in order:",
+            'TLS হ্যান্ডশেক এরর। ক্লায়েন্ট এমন SNI পাঠায়নি যা সার্টিফিকেট চিনতে পারে, এবং পুরনো OpenSSL (≤ 1.0.x, PHP 5.x / 7.0–7.3-এ সাধারণ) এটিকে সতর্কতার পরিবর্তে গুরুতর হিসেবে নেয়। ক্রমানুসারে তিনটি চেক:'
+          )}
         </p>
         <ol className="mt-3 space-y-2 text-sm text-slate-700 list-decimal pl-5">
           <li>
-            <strong>Hostname must be exact.</strong> Use{' '}
-            <code className="text-xs">https://checkout.ezypay.it.com</code> — not an IP, not{' '}
-            <code className="text-xs">www.</code>, not a CDN alias. Calling by IP doesn&apos;t send SNI at all.
+            {t(
+              <><strong>Hostname must be exact.</strong> Use <code className="text-xs">https://checkout.ezypay.it.com</code> — not an IP, not <code className="text-xs">www.</code>, not a CDN alias. Calling by IP doesn&apos;t send SNI at all.</>,
+              <><strong>হোস্টনেম অবশ্যই সঠিক হতে হবে।</strong> <code className="text-xs">https://checkout.ezypay.it.com</code> ব্যবহার করুন — IP নয়, <code className="text-xs">www.</code> নয়, CDN অ্যালিয়াস নয়। IP দিয়ে কল করলে SNI পাঠায়ই না।</>
+            )}
           </li>
           <li>
-            <strong>Don&apos;t bypass DNS.</strong> Do NOT set <code className="text-xs">CURLOPT_RESOLVE</code> or pass{' '}
-            <code className="text-xs">--resolve</code> on the CLI — both can send the wrong SNI name.
+            {t(
+              <><strong>Don&apos;t bypass DNS.</strong> Do NOT set <code className="text-xs">CURLOPT_RESOLVE</code> or pass <code className="text-xs">--resolve</code> on the CLI — both can send the wrong SNI name.</>,
+              <><strong>DNS বাইপাস করবেন না।</strong> <code className="text-xs">CURLOPT_RESOLVE</code> সেট করবেন না বা CLI-তে <code className="text-xs">--resolve</code> পাস করবেন না — উভয়ই ভুল SNI নাম পাঠাতে পারে।</>
+            )}
           </li>
           <li>
-            <strong>Force TLS 1.2 and keep verification on.</strong> Don&apos;t disable{' '}
-            <code className="text-xs">CURLOPT_SSL_VERIFYPEER</code> or{' '}
-            <code className="text-xs">CURLOPT_SSL_VERIFYHOST</code> — that often makes the problem
-            worse, not better.
+            {t(
+              <><strong>Force TLS 1.2 and keep verification on.</strong> Don&apos;t disable <code className="text-xs">CURLOPT_SSL_VERIFYPEER</code> or <code className="text-xs">CURLOPT_SSL_VERIFYHOST</code> — that often makes the problem worse, not better.</>,
+              <><strong>TLS 1.2 জোর করুন এবং ভেরিফিকেশন চালু রাখুন।</strong> <code className="text-xs">CURLOPT_SSL_VERIFYPEER</code> বা <code className="text-xs">CURLOPT_SSL_VERIFYHOST</code> নিষ্ক্রিয় করবেন না — এটি প্রায়ই সমস্যা ভালো না করে আরও খারাপ করে।</>
+            )}
           </li>
         </ol>
 
-        <p className="mt-4 text-sm font-semibold text-slate-900">Working PHP example:</p>
-        <CodeBlock language="php">{`<?php
+        <p className="mt-4 text-sm font-semibold text-slate-900">{t('Working PHP example:', 'কর্মক্ষম PHP উদাহরণ:')}</p>
+        <CodeBlock language="php" copyLabel={t('Copy', 'কপি')} copiedLabel={t('✓ Copied', '✓ কপি হয়েছে')}>{`<?php
 $ch = curl_init('https://checkout.ezypay.it.com/api/payment/sessions');
 curl_setopt_array($ch, [
     CURLOPT_RETURNTRANSFER => true,
@@ -738,171 +1050,228 @@ $body = json_decode($response, true);
 header('Location: ' . $body['checkout_url']);`}</CodeBlock>
 
         <p className="mt-4 text-sm text-slate-700">
-          Still failing? Test from the shell first:
+          {t('Still failing? Test from the shell first:', 'এখনো ব্যর্থ হচ্ছে? প্রথমে শেল থেকে পরীক্ষা করুন:')}
         </p>
-        <CodeBlock language="bash">{`curl -v https://checkout.ezypay.it.com/api/providers`}</CodeBlock>
+        <CodeBlock language="bash" copyLabel={t('Copy', 'কপি')} copiedLabel={t('✓ Copied', '✓ কপি হয়েছে')}>{`curl -v https://checkout.ezypay.it.com/api/providers`}</CodeBlock>
         <ul className="mt-2 text-sm text-slate-700 list-disc pl-5 space-y-1">
-          <li><code className="text-xs">curl</code> works, PHP fails → upgrade PHP/OpenSSL (PHP ≥ 7.4 with OpenSSL ≥ 1.1.1 fixes it permanently).</li>
-          <li>Both fail with the same SNI error → you&apos;re on the wrong hostname, or behind a corporate proxy mangling SNI.</li>
-          <li>Both succeed but your code still errors → it&apos;s your request body, not TLS. Check the response status &amp; body.</li>
+          <li>{t(<><code className="text-xs">curl</code> works, PHP fails → upgrade PHP/OpenSSL (PHP ≥ 7.4 with OpenSSL ≥ 1.1.1 fixes it permanently).</>,
+                 <><code className="text-xs">curl</code> কাজ করে, PHP ব্যর্থ হয় → PHP/OpenSSL আপগ্রেড করুন (PHP ≥ 7.4 OpenSSL ≥ 1.1.1 সহ এটি স্থায়ীভাবে ঠিক করে)।</>)}</li>
+          <li>{t("Both fail with the same SNI error → you're on the wrong hostname, or behind a corporate proxy mangling SNI.",
+                 'উভয়ই একই SNI এরর দিয়ে ব্যর্থ হয় → আপনি ভুল হোস্টনেমে আছেন, বা SNI বিকৃত করছে এমন কর্পোরেট প্রক্সির পিছনে।')}</li>
+          <li>{t("Both succeed but your code still errors → it's your request body, not TLS. Check the response status & body.",
+                 'উভয়ই সফল হয় কিন্তু আপনার কোড এখনো এরর দেয় → এটি আপনার রিকোয়েস্ট বডি, TLS নয়। রেসপন্স স্ট্যাটাস ও বডি চেক করুন।')}</li>
         </ul>
 
         <h3 className="mt-8 font-semibold text-slate-900">
-          404 from <code className="text-xs">/api/payment/sessions</code>
+          {t('404 from', '404 এর উৎস')} <code className="text-xs">/api/payment/sessions</code>
         </h3>
         <p className="mt-2 text-sm text-slate-700">
-          You&apos;re hitting the wrong host. PayVerify has two services — the dashboard UI and the
-          API — on different domains. The API base URL is{' '}
-          <code className="text-xs">https://checkout.ezypay.it.com</code>. Pointing your backend
-          at the dashboard URL returns 404 because the dashboard doesn&apos;t serve the API.
+          {t(
+            <>You&apos;re hitting the wrong host. PayVerify has two services — the dashboard UI and the API — on different domains. The API base URL is <code className="text-xs">https://checkout.ezypay.it.com</code>. Pointing your backend at the dashboard URL returns 404 because the dashboard doesn&apos;t serve the API.</>,
+            <>আপনি ভুল হোস্টে যাচ্ছেন। PayVerify-এর দুটি সার্ভিস রয়েছে — ড্যাশবোর্ড UI এবং API — ভিন্ন ডোমেইনে। API বেস URL হলো <code className="text-xs">https://checkout.ezypay.it.com</code>। ড্যাশবোর্ড URL-এ আপনার ব্যাকএন্ড পয়েন্ট করলে 404 আসে কারণ ড্যাশবোর্ড API সার্ভ করে না।</>
+          )}
         </p>
         <p className="mt-2 text-sm text-slate-700">
-          Sanity check: <code className="text-xs">curl https://checkout.ezypay.it.com/api/providers</code>{' '}
-          should return JSON with the provider list (no auth needed). If it does, the URL is correct;
-          if it doesn&apos;t, fix the base URL first.
+          {t(
+            <>Sanity check: <code className="text-xs">curl https://checkout.ezypay.it.com/api/providers</code> should return JSON with the provider list (no auth needed). If it does, the URL is correct; if it doesn&apos;t, fix the base URL first.</>,
+            <>স্যানিটি চেক: <code className="text-xs">curl https://checkout.ezypay.it.com/api/providers</code> প্রোভাইডার তালিকাসহ JSON ফেরত দেওয়া উচিত (অথ লাগে না)। যদি দেয়, URL সঠিক; যদি না দেয়, প্রথমে বেস URL ঠিক করুন।</>
+          )}
         </p>
 
         <h3 className="mt-8 font-semibold text-slate-900">
           401 <code className="text-xs">Invalid or expired token</code>
         </h3>
         <p className="mt-2 text-sm text-slate-700">
-          You sent the wrong header for the wrong endpoint:
+          {t('You sent the wrong header for the wrong endpoint:', 'আপনি ভুল এন্ডপয়েন্টের জন্য ভুল হেডার পাঠিয়েছেন:')}
         </p>
         <ul className="mt-2 text-sm text-slate-700 list-disc pl-5 space-y-1">
-          <li>
-            Backend-to-PayVerify (<code className="text-xs">/api/payment/...</code>): use{' '}
-            <code className="text-xs">X-API-Key: pk_live_...</code>
-          </li>
-          <li>
-            Merchant dashboard / your own JWT calls (<code className="text-xs">/api/merchant/...</code>):{' '}
-            use <code className="text-xs">Authorization: Bearer &lt;jwt&gt;</code>
-          </li>
-          <li>
-            APK calls (<code className="text-xs">/api/device/...</code>): use the{' '}
-            <code className="text-xs">auth_key</code> field in the JSON body.
-          </li>
+          <li>{t(<>Backend-to-PayVerify (<code className="text-xs">/api/payment/...</code>): use <code className="text-xs">X-API-Key: pk_live_...</code></>,
+                 <>ব্যাকএন্ড-থেকে-PayVerify (<code className="text-xs">/api/payment/...</code>): <code className="text-xs">X-API-Key: pk_live_...</code> ব্যবহার করুন</>)}</li>
+          <li>{t(<>Merchant dashboard / your own JWT calls (<code className="text-xs">/api/merchant/...</code>): use <code className="text-xs">Authorization: Bearer &lt;jwt&gt;</code></>,
+                 <>মার্চেন্ট ড্যাশবোর্ড / আপনার নিজস্ব JWT কল (<code className="text-xs">/api/merchant/...</code>): <code className="text-xs">Authorization: Bearer &lt;jwt&gt;</code> ব্যবহার করুন</>)}</li>
+          <li>{t(<>APK calls (<code className="text-xs">/api/device/...</code>): use the <code className="text-xs">auth_key</code> field in the JSON body.</>,
+                 <>APK কল (<code className="text-xs">/api/device/...</code>): JSON বডিতে <code className="text-xs">auth_key</code> ফিল্ড ব্যবহার করুন।</>)}</li>
         </ul>
 
         <h3 className="mt-8 font-semibold text-slate-900">
-          Trailing-slash double-slash <code className="text-xs">//api/...</code>
+          {t('Trailing-slash double-slash', 'ট্রেইলিং-স্ল্যাশ ডাবল-স্ল্যাশ')} <code className="text-xs">//api/...</code>
         </h3>
         <p className="mt-2 text-sm text-slate-700">
-          If your config stores the base URL with a trailing slash and your code appends{' '}
-          <code className="text-xs">/api/payment/...</code>, you&apos;ll request{' '}
-          <code className="text-xs">https://checkout.ezypay.it.com//api/payment/sessions</code>.
-          Some nginx setups normalize this; others 404. Strip the trailing slash from your base URL.
+          {t(
+            <>If your config stores the base URL with a trailing slash and your code appends <code className="text-xs">/api/payment/...</code>, you&apos;ll request <code className="text-xs">https://checkout.ezypay.it.com//api/payment/sessions</code>. Some nginx setups normalize this; others 404. Strip the trailing slash from your base URL.</>,
+            <>আপনার কনফিগ ট্রেইলিং স্ল্যাশসহ বেস URL সংরক্ষণ করলে এবং আপনার কোড <code className="text-xs">/api/payment/...</code> যোগ করলে, আপনি <code className="text-xs">https://checkout.ezypay.it.com//api/payment/sessions</code> অনুরোধ করবেন। কিছু nginx সেটআপ এটি স্বাভাবিক করে; অন্যরা 404 দেয়। আপনার বেস URL থেকে ট্রেইলিং স্ল্যাশ সরান।</>
+          )}
         </p>
 
         <h3 className="mt-8 font-semibold text-slate-900">
           402 <code className="text-xs">insufficient_balance</code>
         </h3>
         <p className="mt-2 text-sm text-slate-700">
-          PayVerify charges merchants a small per-verification fee, debited from the merchant&apos;s wallet on
-          every successful verification. When the wallet drops below that fee, the merchant&apos;s operations
-          are paused:
+          {t(
+            "PayVerify charges merchants a small per-verification fee, debited from the merchant's wallet on every successful verification. When the wallet drops below that fee, the merchant's operations are paused:",
+            'PayVerify মার্চেন্টদের ছোট প্রতি-ভেরিফিকেশন ফি চার্জ করে, প্রতিটি সফল ভেরিফিকেশনে মার্চেন্টের ওয়ালেট থেকে কাটা হয়। যখন ওয়ালেট সেই ফি-র নিচে নামে, মার্চেন্টের কার্যক্রম থামিয়ে দেওয়া হয়:'
+          )}
         </p>
         <ul className="mt-2 text-sm text-slate-700 list-disc pl-5 space-y-1">
-          <li>New <code className="text-xs">POST /api/payment/sessions</code> calls return 402 — xyz.com can&apos;t create new checkouts.</li>
-          <li>APK endpoints (poll/sms/report/verify/heartbeat) return 402 — the phone shows a "Wallet empty" screen.</li>
-          <li><code className="text-xs">/bind</code> and <code className="text-xs">/unbind</code> stay available so the phone can disconnect/reconnect.</li>
+          <li>{t(<>New <code className="text-xs">POST /api/payment/sessions</code> calls return 402 — xyz.com can&apos;t create new checkouts.</>,
+                 <>নতুন <code className="text-xs">POST /api/payment/sessions</code> কল 402 ফেরত দেয় — xyz.com নতুন চেকআউট তৈরি করতে পারে না।</>)}</li>
+          <li>{t('APK endpoints (poll/sms/report/verify/heartbeat) return 402 — the phone shows a "Wallet empty" screen.',
+                 'APK এন্ডপয়েন্ট (poll/sms/report/verify/heartbeat) 402 ফেরত দেয় — ফোন একটি "Wallet empty" স্ক্রিন দেখায়।')}</li>
+          <li>{t(<><code className="text-xs">/bind</code> and <code className="text-xs">/unbind</code> stay available so the phone can disconnect/reconnect.</>,
+                 <><code className="text-xs">/bind</code> এবং <code className="text-xs">/unbind</code> উপলব্ধ থাকে যাতে ফোন ডিসকানেক্ট/রিকানেক্ট করতে পারে।</>)}</li>
         </ul>
         <p className="mt-2 text-sm text-slate-700">
-          <strong>Fix:</strong> log into the merchant dashboard → <strong>Wallet</strong> → <strong>Add Balance</strong>{' '}
-          → pay via wallet. Operations resume on the next request after the recharge confirms.
+          {t(
+            <><strong>Fix:</strong> log into the merchant dashboard → <strong>Wallet</strong> → <strong>Add Balance</strong> → pay via wallet. Operations resume on the next request after the recharge confirms.</>,
+            <><strong>সমাধান:</strong> মার্চেন্ট ড্যাশবোর্ডে লগ ইন করুন → <strong>Wallet</strong> → <strong>Add Balance</strong> → ওয়ালেট দিয়ে পে করুন। রিচার্জ নিশ্চিত হওয়ার পরের রিকোয়েস্টে কার্যক্রম পুনরায় শুরু হবে।</>
+          )}
         </p>
 
         <h3 className="mt-8 font-semibold text-slate-900">
-          409 <code className="text-xs">"This order has already been paid"</code>
+          409 <code className="text-xs">&quot;This order has already been paid&quot;</code>
         </h3>
         <p className="mt-2 text-sm text-slate-700">
-          You called <code className="text-xs">POST /sessions</code> with an <code className="text-xs">order_id</code>{' '}
-          that already has a successful session. Don&apos;t retry — fetch the existing session via{' '}
-          <code className="text-xs">existing_session_id</code> in the error body and treat the order as fulfilled.
+          {t(
+            <>You called <code className="text-xs">POST /sessions</code> with an <code className="text-xs">order_id</code> that already has a successful session. Don&apos;t retry — fetch the existing session via <code className="text-xs">existing_session_id</code> in the error body and treat the order as fulfilled.</>,
+            <>আপনি এমন একটি <code className="text-xs">order_id</code> দিয়ে <code className="text-xs">POST /sessions</code> কল করেছেন যার ইতিমধ্যে একটি সফল সেশন রয়েছে। পুনরায় চেষ্টা করবেন না — এরর বডিতে <code className="text-xs">existing_session_id</code> দিয়ে বিদ্যমান সেশন আনুন এবং অর্ডারটিকে সম্পন্ন হিসেবে গণ্য করুন।</>
+          )}
         </p>
 
-        <h3 className="mt-8 font-semibold text-slate-900">Transactions stuck on Pending</h3>
+        <h3 className="mt-8 font-semibold text-slate-900">{t('Transactions stuck on Pending', 'লেনদেন Pending-এ আটকে আছে')}</h3>
         <p className="mt-2 text-sm text-slate-700">
-          The customer submitted a TxnID but no matching SMS has reached the backend. Two common
-          causes:
+          {t(
+            'The customer submitted a TxnID but no matching SMS has reached the backend. Two common causes:',
+            'গ্রাহক একটি TxnID জমা দিয়েছে কিন্তু কোনো মিল-করা SMS ব্যাকএন্ডে পৌঁছায়নি। দুটি সাধারণ কারণ:'
+          )}
         </p>
         <ul className="mt-2 text-sm text-slate-700 list-disc pl-5 space-y-1">
-          <li>
-            <strong>No bound device.</strong> Check Dashboard → Devices. An &quot;Online&quot;
-            row means the APK is heartbeating; it does NOT guarantee SMS is being forwarded. If the
-            SMS log (Dashboard → SMS) is empty, the APK isn&apos;t uploading.
-          </li>
-          <li>
-            <strong>Gateway identifier mismatch.</strong> The number you set on the gateway must
-            appear in the SMS body. For SMS that show only a masked bank suffix (e.g.{' '}
-            <code className="text-xs">XX6788</code>), store multiple identifiers comma-separated.
-          </li>
+          <li>{t(<><strong>No bound device.</strong> Check Dashboard → Devices. An &quot;Online&quot; row means the APK is heartbeating; it does NOT guarantee SMS is being forwarded. If the SMS log (Dashboard → SMS) is empty, the APK isn&apos;t uploading.</>,
+                 <><strong>কোনো বাঁধা ডিভাইস নেই।</strong> Dashboard → Devices চেক করুন। একটি &quot;Online&quot; রো মানে APK হার্টবিট করছে; এটি SMS ফরোয়ার্ড হওয়ার গ্যারান্টি দেয় না। যদি SMS লগ (Dashboard → SMS) খালি থাকে, APK আপলোড করছে না।</>)}</li>
+          <li>{t(<><strong>Gateway identifier mismatch.</strong> The number you set on the gateway must appear in the SMS body. For SMS that show only a masked bank suffix (e.g. <code className="text-xs">XX6788</code>), store multiple identifiers comma-separated.</>,
+                 <><strong>গেটওয়ে আইডেন্টিফায়ার মিসম্যাচ।</strong> গেটওয়েতে আপনি যে নম্বর সেট করেছেন তা অবশ্যই SMS বডিতে থাকতে হবে। যেসব SMS শুধু একটি মাস্কড ব্যাংক সাফিক্স দেখায় (যেমন <code className="text-xs">XX6788</code>), কমা-আলাদা একাধিক আইডেন্টিফায়ার রাখুন।</>)}</li>
         </ul>
         <p className="mt-2 text-sm text-slate-700">
-          As a fallback, the merchant can resolve any pending row from Dashboard → Transactions
-          (Mark Paid / Mark Failed). The customer&apos;s checkout polls and reflects the decision
-          within a few seconds.
+          {t(
+            "As a fallback, the merchant can resolve any pending row from Dashboard → Transactions (Mark Paid / Mark Failed). The customer's checkout polls and reflects the decision within a few seconds.",
+            'ব্যাকআপ হিসেবে, মার্চেন্ট Dashboard → Transactions (Mark Paid / Mark Failed) থেকে যেকোনো পেন্ডিং রো রেজলভ করতে পারেন। গ্রাহকের চেকআউট পোল করে এবং কয়েক সেকেন্ডের মধ্যে সিদ্ধান্ত প্রতিফলিত হয়।'
+          )}
         </p>
       </Section>
 
-      <Section id="best" eyebrow="Production" title="Best Practices">
+      <Section
+        id="best"
+        eyebrow={t('Production', 'প্রোডাকশন')}
+        title={t('Best Practices', 'সেরা পদ্ধতি')}
+      >
         <ul className="space-y-3 text-slate-700">
-          <li><strong>1. Always verify server-side.</strong> Don&apos;t trust query params on return — call <code className="text-xs">GET /sessions/:id</code> from your backend before fulfilling.</li>
-          <li><strong>2. Keep keys out of git + browser.</strong> Store <code className="text-xs">api_key</code> in env vars; never log it.</li>
-          <li><strong>3. Set <code className="text-xs">customer_phone</code> on the session.</strong> Tightens SMS matching, reduces false positives dramatically.</li>
-          <li><strong>4. Use HTTPS for <code className="text-xs">redirect_url</code>.</strong> No exceptions in production.</li>
-          <li><strong>5. Configure multiple identifiers per gateway.</strong> Mobile + bank suffix (comma-separated) means new banks rolling out won&apos;t silently stop working.</li>
-          <li><strong>6. Monitor <code className="text-xs">/dashboard/devices</code>.</strong> If the bound phone goes offline, verifications queue but don&apos;t complete. Set a backup phone if you can.</li>
-          <li><strong>7. Keep your wallet topped up.</strong> Each successful verification debits a small fee from your wallet balance. Below the per-verification fee, all your endpoints return 402 and your APK is paused. The dashboard shows an amber warning before you hit empty — top up then. <Link href="/dashboard/wallet" className="text-brand-600 hover:underline">Wallet →</Link></li>
-          <li><strong>8. Handle the order_id idempotency response.</strong> POST /sessions can return 200 (with <code className="text-xs">existed:true</code>) when the same order_id has a live pending session — use the URL it returns, don&apos;t create a parallel checkout.</li>
+          <li>{t(
+            <><strong>1. Always verify server-side.</strong> Don&apos;t trust query params on return — call <code className="text-xs">GET /sessions/:id</code> from your backend before fulfilling.</>,
+            <><strong>১. সর্বদা সার্ভার-সাইডে ভেরিফাই করুন।</strong> রিটার্নে কোয়েরি প্যারামকে বিশ্বাস করবেন না — পূর্ণ করার আগে আপনার ব্যাকএন্ড থেকে <code className="text-xs">GET /sessions/:id</code> কল করুন।</>
+          )}</li>
+          <li>{t(
+            <><strong>2. Keep keys out of git + browser.</strong> Store <code className="text-xs">api_key</code> in env vars; never log it.</>,
+            <><strong>২. কী গিট ও ব্রাউজারের বাইরে রাখুন।</strong> <code className="text-xs">api_key</code> env ভেরিয়েবলে রাখুন; কখনো লগ করবেন না।</>
+          )}</li>
+          <li>{t(
+            <><strong>3. Set <code className="text-xs">customer_phone</code> on the session.</strong> Tightens SMS matching, reduces false positives dramatically.</>,
+            <><strong>৩. সেশনে <code className="text-xs">customer_phone</code> সেট করুন।</strong> SMS ম্যাচিং কঠোর করে, ফল্‌স পজিটিভ অনেক কমায়।</>
+          )}</li>
+          <li>{t(
+            <><strong>4. Use HTTPS for <code className="text-xs">redirect_url</code>.</strong> No exceptions in production.</>,
+            <><strong>৪. <code className="text-xs">redirect_url</code>-এর জন্য HTTPS ব্যবহার করুন।</strong> প্রোডাকশনে কোনো ব্যতিক্রম নেই।</>
+          )}</li>
+          <li>{t(
+            <><strong>5. Configure multiple identifiers per gateway.</strong> Mobile + bank suffix (comma-separated) means new banks rolling out won&apos;t silently stop working.</>,
+            <><strong>৫. প্রতি গেটওয়েতে একাধিক আইডেন্টিফায়ার কনফিগার করুন।</strong> মোবাইল + ব্যাংক সাফিক্স (কমা-আলাদা) মানে নতুন ব্যাংক চালু হলে নীরবে কাজ বন্ধ হবে না।</>
+          )}</li>
+          <li>{t(
+            <><strong>6. Monitor <code className="text-xs">/dashboard/devices</code>.</strong> If the bound phone goes offline, verifications queue but don&apos;t complete. Set a backup phone if you can.</>,
+            <><strong>৬. <code className="text-xs">/dashboard/devices</code> মনিটর করুন।</strong> বাঁধা ফোন অফলাইনে গেলে ভেরিফিকেশন কিউতে যায় কিন্তু সম্পন্ন হয় না। সম্ভব হলে একটি ব্যাকআপ ফোন রাখুন।</>
+          )}</li>
+          <li>{t(
+            <><strong>7. Keep your wallet topped up.</strong> Each successful verification debits a small fee from your wallet balance. Below the per-verification fee, all your endpoints return 402 and your APK is paused. The dashboard shows an amber warning before you hit empty — top up then. <Link href="/dashboard/wallet" className="text-brand-600 hover:underline">Wallet →</Link></>,
+            <><strong>৭. আপনার ওয়ালেট টপ-আপ করে রাখুন।</strong> প্রতিটি সফল ভেরিফিকেশন আপনার ওয়ালেট ব্যালেন্স থেকে একটি ছোট ফি কাটে। প্রতি-ভেরিফিকেশন ফি-র নিচে গেলে, আপনার সব এন্ডপয়েন্ট 402 ফেরত দেয় এবং আপনার APK থামিয়ে দেওয়া হয়। খালি হওয়ার আগে ড্যাশবোর্ড অ্যাম্বার সতর্কতা দেখায় — তখনই টপ-আপ করুন। <Link href="/dashboard/wallet" className="text-brand-600 hover:underline">Wallet →</Link></>
+          )}</li>
+          <li>{t(
+            <><strong>8. Handle the order_id idempotency response.</strong> POST /sessions can return 200 (with <code className="text-xs">existed:true</code>) when the same order_id has a live pending session — use the URL it returns, don&apos;t create a parallel checkout.</>,
+            <><strong>৮. order_id idempotency রেসপন্স হ্যান্ডেল করুন।</strong> POST /sessions 200 (<code className="text-xs">existed:true</code> সহ) ফেরত দিতে পারে যখন একই order_id-এর একটি লাইভ পেন্ডিং সেশন থাকে — এটি যে URL ফেরত দেয় সেটি ব্যবহার করুন, সমান্তরাল চেকআউট তৈরি করবেন না।</>
+          )}</li>
         </ul>
       </Section>
 
-      <Section id="webhooks" eyebrow="Production" title="Webhooks (Coming Soon)">
+      <Section
+        id="webhooks"
+        eyebrow={t('Production', 'প্রোডাকশন')}
+        title={t('Webhooks (Coming Soon)', 'ওয়েবহুক (শীঘ্রই আসছে)')}
+      >
         <p>
-          Today, you confirm payments by polling <code className="text-xs">GET /sessions/:id</code> after the customer returns.
+          {t(
+            <>Today, you confirm payments by polling <code className="text-xs">GET /sessions/:id</code> after the customer returns.</>,
+            <>আজ, আপনি গ্রাহক ফেরত আসার পর <code className="text-xs">GET /sessions/:id</code> পোল করে পেমেন্ট নিশ্চিত করেন।</>
+          )}
         </p>
         <p className="mt-3">
-          Webhooks are on the roadmap. When live, PayVerify will <code className="text-xs">POST</code> to a URL on
-          your domain whenever a session resolves, signed with HMAC-SHA256 of the body using your
-          brand&apos;s <code className="text-xs">secret_key</code>:
+          {t(
+            <>Webhooks are on the roadmap. When live, PayVerify will <code className="text-xs">POST</code> to a URL on your domain whenever a session resolves, signed with HMAC-SHA256 of the body using your brand&apos;s <code className="text-xs">secret_key</code>:</>,
+            <>ওয়েবহুক রোডম্যাপে রয়েছে। লাইভ হলে, যখনই একটি সেশন রেজলভ হবে, PayVerify আপনার ডোমেইনের একটি URL-এ <code className="text-xs">POST</code> করবে, আপনার ব্র্যান্ডের <code className="text-xs">secret_key</code> ব্যবহার করে বডির HMAC-SHA256-এ স্বাক্ষরিত:</>
+          )}
         </p>
-        <CodeBlock language="http">{`POST https://yourstore.com/payverify/webhook
+        <CodeBlock language="http" copyLabel={t('Copy', 'কপি')} copiedLabel={t('✓ Copied', '✓ কপি হয়েছে')}>{`POST https://yourstore.com/payverify/webhook
 X-PayVerify-Signature: t=1683900000,v1=<hmac-sha256-hex>
 
 { "event": "session.success", "session": { ... } }`}</CodeBlock>
-        <p className="mt-3 text-sm text-slate-600">Until then, polling on customer return is the recommended pattern.</p>
+        <p className="mt-3 text-sm text-slate-600">
+          {t('Until then, polling on customer return is the recommended pattern.',
+             'ততক্ষণ পর্যন্ত, গ্রাহক ফেরত আসায় পোল করা সুপারিশকৃত প্যাটার্ন।')}
+        </p>
       </Section>
 
-      <Section id="support" eyebrow="Production" title="Support">
+      <Section
+        id="support"
+        eyebrow={t('Production', 'প্রোডাকশন')}
+        title={t('Support', 'সাপোর্ট')}
+      >
         <p>
-          Questions? Run into something the docs don&apos;t cover?
+          {t("Questions? Run into something the docs don't cover?",
+             'প্রশ্ন? এমন কিছুতে আটকে গেছেন যা ডকুমেন্টেশন কভার করে না?')}
         </p>
         <ul className="mt-3 space-y-1 text-slate-700">
-          <li>📧 Email: <a href="mailto:support@payverify.com" className="text-brand-600 hover:underline">support@payverify.com</a></li>
-          <li>🐛 Bugs / API issues: open a ticket from your dashboard</li>
-          <li>📖 APK developer reference: <code className="text-xs">docs/APK_API.md</code></li>
-          <li>📖 Integration deep-dive: <code className="text-xs">docs/INTEGRATION.md</code></li>
+          <li>{t(<>📧 Email: <a href="mailto:support@payverify.com" className="text-brand-600 hover:underline">support@payverify.com</a></>,
+                 <>📧 ইমেইল: <a href="mailto:support@payverify.com" className="text-brand-600 hover:underline">support@payverify.com</a></>)}</li>
+          <li>{t('🐛 Bugs / API issues: open a ticket from your dashboard',
+                 '🐛 বাগ / API সমস্যা: আপনার ড্যাশবোর্ড থেকে টিকিট খুলুন')}</li>
+          <li>{t(<>📖 APK developer reference: <code className="text-xs">docs/APK_API.md</code></>,
+                 <>📖 APK ডেভেলপার রেফারেন্স: <code className="text-xs">docs/APK_API.md</code></>)}</li>
+          <li>{t(<>📖 Integration deep-dive: <code className="text-xs">docs/INTEGRATION.md</code></>,
+                 <>📖 ইন্টিগ্রেশন ডিপ-ডাইভ: <code className="text-xs">docs/INTEGRATION.md</code></>)}</li>
         </ul>
       </Section>
 
       <div className="mt-16 mb-8 text-center text-sm text-slate-500">
-        That&apos;s everything. Time to ship → <Link href="/register" className="text-brand-600 font-semibold hover:underline">Create your merchant account</Link>
+        {t(
+          <>That&apos;s everything. Time to ship → <Link href="/register" className="text-brand-600 font-semibold hover:underline">Create your merchant account</Link></>,
+          <>এটাই সব। শিপ করার সময় → <Link href="/register" className="text-brand-600 font-semibold hover:underline">আপনার মার্চেন্ট অ্যাকাউন্ট তৈরি করুন</Link></>
+        )}
       </div>
     </article>
   );
 }
 
 /* ────────────────────────────────────────── Building blocks */
-function Hero() {
+function Hero({ t }) {
   return (
     <div className="mb-12 pb-8 border-b border-slate-200">
-      <div className="text-xs font-semibold uppercase tracking-widest text-brand-600">Developer Documentation</div>
+      <div className="text-xs font-semibold uppercase tracking-widest text-brand-600">
+        {t('Developer Documentation', 'ডেভেলপার ডকুমেন্টেশন')}
+      </div>
       <h1 className="mt-2 text-3xl sm:text-4xl font-bold tracking-tight text-slate-900">
-        PayVerify <span className="text-slate-500 font-normal">Integration Guide</span>
+        PayVerify <span className="text-slate-500 font-normal">{t('Integration Guide', 'ইন্টিগ্রেশন গাইড')}</span>
       </h1>
       <p className="mt-3 text-slate-600 max-w-2xl">
-        Everything you need to integrate SMS-based wallet payment verification into your ecommerce
-        flow. Step-by-step, with copy-pasteable code in Node, PHP, Python and cURL.
+        {t(
+          'Everything you need to integrate SMS-based wallet payment verification into your ecommerce flow. Step-by-step, with copy-pasteable code in Node, PHP, Python and cURL.',
+          'আপনার ই-কমার্স ফ্লোতে SMS-ভিত্তিক ওয়ালেট পেমেন্ট ভেরিফিকেশন ইন্টিগ্রেট করতে যা প্রয়োজন সবকিছু। ধাপে ধাপে, Node, PHP, Python এবং cURL-এ কপি-পেস্টযোগ্য কোডসহ।'
+        )}
       </p>
     </div>
   );
@@ -933,7 +1302,7 @@ function Callout({ tone = 'brand', title, children }) {
   );
 }
 
-function CodeBlock({ children, language, caption }) {
+function CodeBlock({ children, language, caption, copyLabel = 'Copy', copiedLabel = '✓ Copied' }) {
   const [copied, setCopied] = useState(false);
   const onCopy = async () => {
     try { await navigator.clipboard.writeText(children); setCopied(true); setTimeout(() => setCopied(false), 1500); } catch {}
@@ -948,7 +1317,7 @@ function CodeBlock({ children, language, caption }) {
             onClick={onCopy}
             className={`text-xs px-2 py-1 rounded transition-colors ${copied ? 'text-emerald-400' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}
           >
-            {copied ? '✓ Copied' : 'Copy'}
+            {copied ? copiedLabel : copyLabel}
           </button>
         </div>
         <pre className="px-4 py-3 overflow-x-auto text-sm text-slate-100 font-mono leading-relaxed"><code>{children}</code></pre>
@@ -963,15 +1332,15 @@ function TabGroup({ tabs, children }) {
   return (
     <div className="my-4">
       <div className="flex gap-1 border-b border-slate-200">
-        {tabs.map((t, i) => (
+        {tabs.map((tab, i) => (
           <button
-            key={t}
+            key={tab}
             onClick={() => setIdx(i)}
             className={`px-3 py-2 text-sm font-medium rounded-t-md transition-colors ${
               i === idx ? 'text-brand-700 border-b-2 border-brand-600 -mb-px' : 'text-slate-500 hover:text-slate-900'
             }`}
           >
-            {t}
+            {tab}
           </button>
         ))}
       </div>
@@ -980,7 +1349,7 @@ function TabGroup({ tabs, children }) {
   );
 }
 
-function ApiEndpoint({ method, path, auth, description, request, response }) {
+function ApiEndpoint({ t, method, path, auth, description, request, response }) {
   const methodColor = {
     GET:    'bg-emerald-100 text-emerald-700',
     POST:   'bg-blue-100   text-blue-700',
@@ -997,29 +1366,51 @@ function ApiEndpoint({ method, path, auth, description, request, response }) {
       </div>
       <div className="p-4 space-y-3">
         {description && <p className="text-sm text-slate-700">{description}</p>}
-        {request  && <div><div className="text-xs font-semibold uppercase tracking-widest text-slate-500 mb-1">Request body</div><CodeBlock language="json">{request}</CodeBlock></div>}
-        {response && <div><div className="text-xs font-semibold uppercase tracking-widest text-slate-500 mb-1">Response (200)</div><CodeBlock language="json">{response}</CodeBlock></div>}
+        {request  && (
+          <div>
+            <div className="text-xs font-semibold uppercase tracking-widest text-slate-500 mb-1">
+              {t ? t('Request body', 'রিকোয়েস্ট বডি') : 'Request body'}
+            </div>
+            <CodeBlock
+              language="json"
+              copyLabel={t ? t('Copy', 'কপি') : 'Copy'}
+              copiedLabel={t ? t('✓ Copied', '✓ কপি হয়েছে') : '✓ Copied'}
+            >{request}</CodeBlock>
+          </div>
+        )}
+        {response && (
+          <div>
+            <div className="text-xs font-semibold uppercase tracking-widest text-slate-500 mb-1">
+              {t ? t('Response (200)', 'রেসপন্স (200)') : 'Response (200)'}
+            </div>
+            <CodeBlock
+              language="json"
+              copyLabel={t ? t('Copy', 'কপি') : 'Copy'}
+              copiedLabel={t ? t('✓ Copied', '✓ কপি হয়েছে') : '✓ Copied'}
+            >{response}</CodeBlock>
+          </div>
+        )}
       </div>
     </div>
   );
 }
 
-function CredentialTable() {
+function CredentialTable({ t }) {
   const rows = [
-    ['api_key (pk_live_...)',   'Per brand',    "Merchant's server",        'Create checkout sessions, query session status'],
-    ['secret_key (sk_live_...)', 'Per brand',    "Merchant's server",        'Sign webhook payloads (future)'],
-    ['device_auth_key (PV-…)',  'Per merchant', 'The APK on your phone',   'Bind device, upload SMS, poll for pending verifications'],
-    ['JWT (Bearer)',            'Per session',  'Merchant dashboard',       'Logged-in merchant access to /api/merchant/*'],
+    ['api_key (pk_live_...)',    t('Per brand', 'প্রতি ব্র্যান্ড'),    t("Merchant's server", 'মার্চেন্টের সার্ভার'),     t('Create checkout sessions, query session status', 'চেকআউট সেশন তৈরি, সেশন স্ট্যাটাস কোয়েরি')],
+    ['secret_key (sk_live_...)', t('Per brand', 'প্রতি ব্র্যান্ড'),    t("Merchant's server", 'মার্চেন্টের সার্ভার'),     t('Sign webhook payloads (future)', 'ওয়েবহুক পেলোডে স্বাক্ষর (ভবিষ্যত)')],
+    ['device_auth_key (PV-…)',   t('Per merchant', 'প্রতি মার্চেন্ট'), t('The APK on your phone', 'আপনার ফোনের APK'),       t('Bind device, upload SMS, poll for pending verifications', 'ডিভাইস বাঁধাই, SMS আপলোড, পেন্ডিং ভেরিফিকেশন পোল')],
+    ['JWT (Bearer)',             t('Per session', 'প্রতি সেশন'),       t('Merchant dashboard', 'মার্চেন্ট ড্যাশবোর্ড'),     t('Logged-in merchant access to /api/merchant/*', '/api/merchant/*-এ লগ-ইন মার্চেন্ট অ্যাক্সেস')],
   ];
   return (
     <div className="my-4 overflow-x-auto">
       <table className="w-full text-sm border-collapse">
         <thead>
           <tr className="bg-slate-50">
-            <th className="text-left p-3 border border-slate-200">Credential</th>
-            <th className="text-left p-3 border border-slate-200">Scope</th>
-            <th className="text-left p-3 border border-slate-200">Used by</th>
-            <th className="text-left p-3 border border-slate-200">Purpose</th>
+            <th className="text-left p-3 border border-slate-200">{t('Credential', 'ক্রেডেনশিয়াল')}</th>
+            <th className="text-left p-3 border border-slate-200">{t('Scope', 'স্কোপ')}</th>
+            <th className="text-left p-3 border border-slate-200">{t('Used by', 'ব্যবহারকারী')}</th>
+            <th className="text-left p-3 border border-slate-200">{t('Purpose', 'উদ্দেশ্য')}</th>
           </tr>
         </thead>
         <tbody>
