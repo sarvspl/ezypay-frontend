@@ -197,6 +197,7 @@ function buildSections(t) {
     { id: 'api-verify', label: t('Manual Verify', 'ম্যানুয়াল ভেরিফাই'), group: t('API Reference', 'API রেফারেন্স') },
     { id: 'api-devices', label: t('Devices (APK)', 'ডিভাইস (APK)'), group: t('API Reference', 'API রেফারেন্স') },
     { id: 'errors', label: t('Errors & Status Codes', 'এরর ও স্ট্যাটাস কোড'), group: t('API Reference', 'API রেফারেন্স') },
+    { id: 'rate-limits', label: t('Rate Limits', 'রেট লিমিট'), group: t('API Reference', 'API রেফারেন্স') },
     { id: 'troubleshoot', label: t('Troubleshooting', 'ট্রাবলশুটিং'), group: t('API Reference', 'API রেফারেন্স') },
     { id: 'best', label: t('Best Practices', 'সেরা পদ্ধতি'), group: t('Production', 'প্রোডাকশন') },
     { id: 'webhooks', label: t('Webhooks', 'ওয়েবহুক'), group: t('Production', 'প্রোডাকশন') },
@@ -1012,6 +1013,7 @@ if ($body['session']['status'] === 'success') {
               ['403', t('Forbidden — usually merchant suspended', 'Forbidden — সাধারণত মার্চেন্ট সাসপেন্ডেড')],
               ['404', t('Resource not found (wrong id, or not yours)', 'রিসোর্স পাওয়া যায়নি (ভুল id, বা আপনার নয়)')],
               ['409', t('Conflict — duplicate (TxnID reused, order already paid, session in wrong state)', 'Conflict — ডুপ্লিকেট (TxnID পুনঃব্যবহৃত, অর্ডার ইতিমধ্যে পেইড, সেশন ভুল অবস্থায়)')],
+              ['429', t('Too many requests — back off, see Rate Limits below', 'অনেক বেশি রিকোয়েস্ট — ব্যাক অফ করুন, নিচের Rate Limits দেখুন')],
               ['5xx', t('Server error — retry with exponential backoff', 'সার্ভার এরর — এক্সপোনেনশিয়াল ব্যাকঅফ দিয়ে পুনরায় চেষ্টা করুন')],
             ].map(([c, m]) => (
               <tr key={c}>
@@ -1064,6 +1066,118 @@ if (!r.ok) {
   // Show ONLY the safe text to the customer
   return res.status(503).json({ error: body.error });
 }`}</CodeBlock>
+      </Section>
+
+      <Section
+        id="rate-limits"
+        eyebrow={t('API Reference', 'API রেফারেন্স')}
+        title={t('Rate Limits', 'রেট লিমিট')}
+      >
+        <p>
+          {t(
+            'EzyPay throttles every public endpoint to protect against brute force, TxnID mining, and runaway integrations. When you exceed a limit you get HTTP 429 instead of the normal response — the request did not run.',
+            'EzyPay প্রতিটি পাবলিক এন্ডপয়েন্ট থ্রটল করে — ব্রুট ফোর্স, TxnID মাইনিং এবং অনিয়ন্ত্রিত ইন্টিগ্রেশন থেকে সুরক্ষার জন্য। সীমা ছাড়িয়ে গেলে আপনি স্বাভাবিক রেসপন্সের পরিবর্তে HTTP 429 পান — রিকোয়েস্টটি চালেইনি।'
+          )}
+        </p>
+
+        <h3 className="mt-6 font-semibold text-slate-900">{t('Per-endpoint limits', 'এন্ডপয়েন্ট-ভিত্তিক সীমা')}</h3>
+        <div className="my-4 overflow-x-auto">
+          <table className="w-full text-sm border-collapse min-w-[640px]">
+            <thead>
+              <tr className="bg-slate-50">
+                <th className="text-left p-3 border border-slate-200">{t('Endpoint', 'এন্ডপয়েন্ট')}</th>
+                <th className="text-left p-3 border border-slate-200">{t('Limit', 'সীমা')}</th>
+                <th className="text-left p-3 border border-slate-200">{t('Window', 'উইন্ডো')}</th>
+                <th className="text-left p-3 border border-slate-200">{t('Keyed by', 'কী')}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td className="p-3 border border-slate-200 font-mono text-xs">POST /api/payment/sessions</td>
+                <td className="p-3 border border-slate-200">60</td>
+                <td className="p-3 border border-slate-200">{t('1 min', '১ মিনিট')}</td>
+                <td className="p-3 border border-slate-200">{t('API key', 'API কী')}</td>
+              </tr>
+              <tr>
+                <td className="p-3 border border-slate-200 font-mono text-xs">POST /api/checkout/:id/submit</td>
+                <td className="p-3 border border-slate-200">6</td>
+                <td className="p-3 border border-slate-200">{t('1 min', '১ মিনিট')}</td>
+                <td className="p-3 border border-slate-200">{t('IP + session', 'IP + সেশন')}</td>
+              </tr>
+              <tr>
+                <td className="p-3 border border-slate-200 font-mono text-xs">POST /api/merchant/login</td>
+                <td className="p-3 border border-slate-200">8</td>
+                <td className="p-3 border border-slate-200">{t('15 min', '১৫ মিনিট')}</td>
+                <td className="p-3 border border-slate-200">IP</td>
+              </tr>
+              <tr>
+                <td className="p-3 border border-slate-200 font-mono text-xs">POST /api/merchant/verify</td>
+                <td className="p-3 border border-slate-200">20</td>
+                <td className="p-3 border border-slate-200">{t('1 min', '১ মিনিট')}</td>
+                <td className="p-3 border border-slate-200">IP</td>
+              </tr>
+              <tr>
+                <td className="p-3 border border-slate-200 font-mono text-xs">POST /api/device/sms</td>
+                <td className="p-3 border border-slate-200">120</td>
+                <td className="p-3 border border-slate-200">{t('1 min', '১ মিনিট')}</td>
+                <td className="p-3 border border-slate-200">device_auth_key</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 className="mt-8 font-semibold text-slate-900">{t('429 response shape', '429 রেসপন্স গঠন')}</h3>
+        <p className="mt-2 text-sm text-slate-700">
+          {t(
+            'Every throttled response carries a body explaining the retry window and headers a polite client can read.',
+            'প্রতিটি থ্রটল রেসপন্সে রিট্রাই উইন্ডো ব্যাখ্যাকারী বডি এবং বন্ধুসুলভ ক্লায়েন্ট পড়তে পারে এমন হেডার থাকে।'
+          )}
+        </p>
+        <CodeBlock language="http" copyLabel={t('Copy', 'কপি')} copiedLabel={t('✓ Copied', '✓ কপি হয়েছে')}>{`HTTP/1.1 429 Too Many Requests
+X-RateLimit-Limit:     60
+X-RateLimit-Remaining: 0
+X-RateLimit-Reset:     1716210000
+Retry-After:           37
+
+{
+  "error":               "API rate limit exceeded. Slow down session creation.",
+  "retry_after_seconds": 37
+}`}</CodeBlock>
+        <ul className="mt-2 text-sm text-slate-700 list-disc pl-5 space-y-1">
+          <li><code className="text-xs">X-RateLimit-Limit</code> — {t('the cap for this endpoint.', 'এই এন্ডপয়েন্টের সীমা।')}</li>
+          <li><code className="text-xs">X-RateLimit-Remaining</code> — {t('how many calls you have left in the current window.', 'বর্তমান উইন্ডোতে আপনার আর কত কল বাকি।')}</li>
+          <li><code className="text-xs">X-RateLimit-Reset</code> — {t('Unix timestamp when the counter resets.', 'কাউন্টার রিসেট হওয়ার ইউনিক্স টাইমস্ট্যাম্প।')}</li>
+          <li><code className="text-xs">Retry-After</code> — {t('seconds to wait before retrying (also in the body as retry_after_seconds).', 'পুনরায় চেষ্টার আগে অপেক্ষার সেকেন্ড (বডিতে retry_after_seconds হিসেবেও আছে)।')}</li>
+        </ul>
+
+        <Callout tone="amber" title={t('429 does NOT mean the action failed', '429 মানে অ্যাকশন ব্যর্থ হয়েছে এমন নয়')}>
+          {t(
+            'A 429 means the request did not run at all. It is safe to retry after waiting Retry-After seconds. For /sessions, slow your integration. For /submit, ask the customer to wait a moment and try again — don\'t auto-retry on their behalf or you\'ll just hit the limit harder.',
+            'একটি 429 মানে রিকোয়েস্ট মোটেও চালেইনি। Retry-After সেকেন্ড অপেক্ষা করার পর পুনরায় চেষ্টা করা নিরাপদ। /sessions এর জন্য আপনার ইন্টিগ্রেশন ধীর করুন। /submit এর জন্য গ্রাহককে এক মুহূর্ত অপেক্ষা করতে বলুন — তাদের পক্ষে অটো-রিট্রাই করবেন না, তা না হলে সীমায় আরও জোরে আঘাত করবেন।'
+          )}
+        </Callout>
+
+        <h3 className="mt-8 font-semibold text-slate-900">{t('Polite retry pattern (Node)', 'বন্ধুসুলভ রিট্রাই প্যাটার্ন (Node)')}</h3>
+        <CodeBlock language="js" copyLabel={t('Copy', 'কপি')} copiedLabel={t('✓ Copied', '✓ কপি হয়েছে')}>{`async function callWithBackoff(url, init, maxAttempts = 3) {
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    const r = await fetch(url, init);
+    if (r.status !== 429) return r;
+
+    // Server told us how long to wait; honour it (cap at 60s).
+    const ra = Number(r.headers.get('Retry-After')) ||
+               (await r.clone().json().then(b => b.retry_after_seconds).catch(() => 1));
+    const waitMs = Math.min(60, Math.max(1, ra)) * 1000;
+    if (attempt === maxAttempts) return r; // give up after last attempt
+    await new Promise((res) => setTimeout(res, waitMs));
+  }
+}`}</CodeBlock>
+
+        <Callout tone="slate" title={t('Need a higher limit?', 'আরও বেশি সীমা প্রয়োজন?')}>
+          {t(
+            'These caps fit normal merchant traffic with plenty of headroom. If you have a legitimate burst use case (bulk reconciliation, migration, etc.) email support before you launch — raising your limit ahead of time is easier than recovering from blocked traffic.',
+            'এই সীমাগুলি যথেষ্ট হেডরুমসহ স্বাভাবিক মার্চেন্ট ট্রাফিকের সাথে মানানসই। আপনার যদি বৈধ বার্স্ট ব্যবহারের ক্ষেত্র থাকে (বাল্ক রিকনসিলিয়েশন, মাইগ্রেশন ইত্যাদি) লঞ্চের আগে সাপোর্টে ইমেইল করুন — আগে থেকে সীমা বাড়ানো ব্লকড ট্রাফিক থেকে পুনরুদ্ধার করার চেয়ে সহজ।'
+          )}
+        </Callout>
       </Section>
 
       <Section
