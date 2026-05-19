@@ -118,12 +118,12 @@ export default function TransactionsPage() {
           />
         </div>
 
-        <div className="flex gap-1 bg-slate-100 rounded-lg p-1 flex-wrap">
+        <div className="grid grid-cols-4 gap-1 bg-slate-100 rounded-lg p-1 sm:flex sm:flex-wrap">
           {TABS.map((t) => {
             const active = tab === t.key;
             return (
               <button key={t.key} onClick={() => setTab(t.key)}
-                className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition ${
+                className={`flex items-center justify-center gap-1.5 rounded-md px-2 sm:px-3 py-1.5 text-xs sm:text-sm font-medium transition whitespace-nowrap ${
                   active ? 'bg-white shadow-sm text-slate-900' : 'text-slate-600 hover:text-slate-900'
                 }`}>
                 {t.label}
@@ -140,7 +140,8 @@ export default function TransactionsPage() {
         <div className="card p-4 text-sm text-rose-600 bg-rose-50 border-rose-200">{error}</div>
       )}
 
-      <div className="card overflow-hidden">
+      {/* Desktop table (md+) */}
+      <div className="card overflow-hidden hidden md:block">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-slate-50 text-slate-500 text-left text-xs uppercase tracking-wider">
@@ -157,10 +158,10 @@ export default function TransactionsPage() {
             </thead>
             <tbody className="divide-y divide-slate-200">
               {!txs && (
-                <tr><td colSpan={7} className="py-10 text-center text-slate-400">Loading…</td></tr>
+                <tr><td colSpan={8} className="py-10 text-center text-slate-400">Loading…</td></tr>
               )}
               {txs && txs.length === 0 && (
-                <tr><td colSpan={7} className="py-16">
+                <tr><td colSpan={8} className="py-16">
                   <EmptyState filtered={!!(q || tab !== 'all')} onClear={() => { setQ(''); setTab('all'); }} />
                 </td></tr>
               )}
@@ -201,8 +202,6 @@ export default function TransactionsPage() {
                           {t.order_id || <span className="text-slate-400 italic">—</span>}
                         </div>
                         {(() => {
-                          // Prefer redirect_url hostname (actual site customer paid from);
-                          // fall back to brand_domain.
                           let src = t.brand_domain || '';
                           try {
                             const u = new URL(t.redirect_url);
@@ -245,6 +244,83 @@ export default function TransactionsPage() {
             </tbody>
           </table>
         </div>
+      </div>
+
+      {/* Mobile cards (< md) */}
+      <div className="md:hidden space-y-3">
+        {!txs && (
+          <div className="card p-10 text-center text-slate-400">Loading…</div>
+        )}
+        {txs && txs.length === 0 && (
+          <div className="card p-12">
+            <EmptyState filtered={!!(q || tab !== 'all')} onClear={() => { setQ(''); setTab('all'); }} />
+          </div>
+        )}
+        {txs && txs.map((t) => {
+          const p = getProvider(t.provider);
+          let src = t.brand_domain || '';
+          try {
+            const u = new URL(t.redirect_url);
+            const port = (u.port && u.port !== '80' && u.port !== '443') ? ':' + u.port : '';
+            src = u.hostname + port;
+          } catch {}
+          return (
+            <div key={t.id} className="card p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <span className={`w-9 h-9 rounded-md ${p.bg} text-white text-xs font-bold flex items-center justify-center shrink-0`}>{p.initials}</span>
+                  <div className="min-w-0">
+                    <div className="text-slate-900 font-medium flex items-center gap-1.5 flex-wrap">
+                      <span>{p.name}</span>
+                      <span className="text-[10px] font-semibold uppercase tracking-wider rounded bg-slate-100 text-slate-600 px-1.5 py-0.5">{labelVariant(t.variant)}</span>
+                    </div>
+                    <div className="text-xs text-slate-500 mt-0.5 truncate">{t.account_number}</div>
+                  </div>
+                </div>
+                <div className="text-right shrink-0">
+                  <div className="font-semibold text-slate-900 whitespace-nowrap">{formatMoney(t.amount, currency)}</div>
+                  <div className="mt-1"><StatusBadge status={t.status} source={t.result_source} /></div>
+                </div>
+              </div>
+
+              <dl className="mt-3 grid grid-cols-3 gap-y-1.5 gap-x-2 text-xs">
+                <dt className="text-slate-500">TxnID</dt>
+                <dd className="col-span-2 font-mono text-slate-800 truncate">{t.txnid_submitted}</dd>
+                <dt className="text-slate-500">Order</dt>
+                <dd className="col-span-2 text-slate-800 truncate">
+                  {t.order_id || <span className="text-slate-400 italic">—</span>}
+                  {src && <span className="text-slate-400"> · {src}</span>}
+                </dd>
+                {(t.payer_name || t.payer_phone) && (
+                  <>
+                    <dt className="text-slate-500">From</dt>
+                    <dd className="col-span-2 text-slate-800 truncate">
+                      {t.payer_name || ''}{t.payer_name && t.payer_phone ? ' · ' : ''}
+                      {t.payer_phone && <span className="font-mono">{t.payer_phone}</span>}
+                    </dd>
+                  </>
+                )}
+                <dt className="text-slate-500">Date</dt>
+                <dd className="col-span-2 text-slate-700">
+                  {new Date(t.created_at).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
+                </dd>
+              </dl>
+
+              {t.status === 'pending' && (
+                <div className="mt-3 pt-3 border-t border-slate-100 flex items-center gap-2">
+                  <button onClick={() => onResolve(t, 'success')}
+                    className="flex-1 rounded-md bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-semibold px-3 py-2">
+                    Mark Paid
+                  </button>
+                  <button onClick={() => onResolve(t, 'failed')}
+                    className="flex-1 rounded-md bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-semibold px-3 py-2">
+                    Mark Failed
+                  </button>
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
 
       {resolveTarget && (
