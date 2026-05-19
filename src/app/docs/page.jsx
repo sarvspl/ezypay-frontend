@@ -626,6 +626,13 @@ return redirect(r.json()['checkout_url'])`}</CodeBlock>
           )}
         </Callout>
 
+        <Callout tone="amber" title={t('Heads up — pending returns are normal', 'মনে রাখুন — pending রিটার্ন স্বাভাবিক')}>
+          {t(
+            <>The checkout waits ~15 s for the APK to confirm, then redirects the customer back to you <em>regardless</em>. So <code className="text-xs">?status=pending</code> simply means &quot;not resolved yet&quot; — <strong>not</strong> &quot;failed&quot;. Render a &quot;we&apos;re confirming your payment&quot; page and poll <code className="text-xs">GET /sessions/:id</code> server-side until it flips to <code className="text-xs">success</code> / <code className="text-xs">failed</code> / <code className="text-xs">expired</code> (within the 30-min session window). Treating pending as failure will reject paying customers.</>,
+            <>চেকআউট APK-এর কনফার্মেশনের জন্য ~১৫ সেকেন্ড অপেক্ষা করে, তারপর গ্রাহককে আপনার কাছে ফেরত পাঠায় — <em>ফলাফল যাই হোক</em>। তাই <code className="text-xs">?status=pending</code> মানে শুধু &quot;এখনো রেজলভ হয়নি&quot; — <strong>&quot;failed&quot; নয়</strong>। একটি &quot;আমরা আপনার পেমেন্ট নিশ্চিত করছি&quot; পেজ দেখান এবং সার্ভার-সাইডে <code className="text-xs">GET /sessions/:id</code> পোল করুন যতক্ষণ না এটি <code className="text-xs">success</code> / <code className="text-xs">failed</code> / <code className="text-xs">expired</code>-এ পরিণত হয় (৩০-মিনিট সেশন উইন্ডোর মধ্যে)। pending-কে failure হিসেবে গণ্য করলে যেসব গ্রাহক পেমেন্ট করেছেন তাদের বাতিল করে দেবেন।</>
+          )}
+        </Callout>
+
         <TabGroup tabs={['Node.js', 'PHP', 'cURL']}>
           <CodeBlock language="js" copyLabel={t('Copy', 'কপি')} copiedLabel={t('✓ Copied', '✓ কপি হয়েছে')}>{`app.get('/payment/result', async (req, res) => {
   const r = await fetch(
