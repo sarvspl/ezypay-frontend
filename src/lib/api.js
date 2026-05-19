@@ -102,12 +102,25 @@ export const api = {
 
   // Admin
   adminLogin:        (body) => request('/api/admin/login', { method: 'POST', body }),
-  adminListMerchants:(token) => request('/api/admin/merchants', { token }),
+  adminListMerchants:(token, params = {}) => {
+    const qs = new URLSearchParams(params).toString();
+    return request(`/api/admin/merchants${qs ? '?' + qs : ''}`, { token });
+  },
   adminGetMerchant:  (token, id) => request(`/api/admin/merchants/${id}`, { token }),
   adminCreateMerchant:(token, body) => request('/api/admin/merchants', { method: 'POST', body, token }),
   adminSuspendMerchant:   (token, id, body) => request(`/api/admin/merchants/${id}/suspend`, { method: 'POST', body: body || {}, token }),
   adminUnsuspendMerchant: (token, id) => request(`/api/admin/merchants/${id}/unsuspend`, { method: 'POST', token }),
   adminAdjustWallet:      (token, id, body) => request(`/api/admin/merchants/${id}/wallet`, { method: 'POST', body, token }),
+  adminGetMerchantLedger:    (token, id, params = {}) => {
+    const qs = new URLSearchParams(params).toString();
+    return request(`/api/admin/merchants/${id}/wallet/ledger${qs ? '?' + qs : ''}`, { token });
+  },
+  adminGetMerchantRecharges: (token, id, params = {}) => {
+    const qs = new URLSearchParams(params).toString();
+    return request(`/api/admin/merchants/${id}/wallet/recharges${qs ? '?' + qs : ''}`, { token });
+  },
+  adminResetMerchantPassword: (token, id, body) =>
+    request(`/api/admin/merchants/${id}/reset-password`, { method: 'POST', body: body || {}, token }),
 
   // Providers (public for merchant catalog, admin CRUD for console)
   listProviders:         () => request('/api/providers'),

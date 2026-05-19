@@ -13,51 +13,47 @@ export default function ConsoleMerchantsPage() {
   const ready = useGuard('admin');
 
   const [merchants, setMerchants] = useState(null);
+  const [stats, setStats]         = useState(null);   // server-computed stats over the filter
+  const [total, setTotal]         = useState(0);
   const [error, setError]         = useState(null);
   const [query, setQuery]         = useState('');
   const [filter, setFilter]       = useState('all'); // all | active | suspended
+  const [page, setPage]           = useState(0);     // 0-indexed
+  const LIMIT = 20;
   const [suspendTarget, setSuspendTarget]   = useState(null);
   const [activateTarget, setActivateTarget] = useState(null);
   const [walletTarget, setWalletTarget]     = useState(null);
   const [working, setWorking]               = useState(false);
   const [actionError, setActionError]       = useState(null);
 
+  // Debounce search input so we don't hammer the API on every keystroke.
+  const [debouncedQuery, setDebouncedQuery] = useState('');
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedQuery(query.trim()), 300);
+    return () => clearTimeout(t);
+  }, [query]);
+
+  // Reset to first page whenever filter / search changes.
+  useEffect(() => { setPage(0); }, [filter, debouncedQuery]);
+
   const reload = () => {
     const token = adminAuth.get();
-    return api.adminListMerchants(token)
-      .then((r) => setMerchants(r.merchants))
+    const params = { limit: LIMIT, offset: page * LIMIT };
+    if (debouncedQuery) params.q = debouncedQuery;
+    if (filter !== 'all') params.filter = filter;
+    return api.adminListMerchants(token, params)
+      .then((r) => { setMerchants(r.merchants); setStats(r.stats); setTotal(r.total); })
       .catch((e) => {
         if (e.status === 401) { adminAuth.clear(); router.replace('/console/login'); }
         else setError(e.message);
       });
   };
 
-  useEffect(() => { if (ready) reload(); /* eslint-disable-next-line */ }, [ready]);
+  useEffect(() => { if (ready) reload(); /* eslint-disable-next-line */ }, [ready, debouncedQuery, filter, page]);
 
-  const stats = useMemo(() => {
-    if (!merchants) return null;
-    const active    = merchants.filter((m) => !m.is_suspended).length;
-    const suspended = merchants.length - active;
-    const walletSum = merchants.reduce((acc, m) => acc + Number(m.wallet_balance || 0), 0);
-    return { total: merchants.length, active, suspended, walletSum };
-  }, [merchants]);
-
-  const filtered = useMemo(() => {
-    if (!merchants) return [];
-    const q = query.trim().toLowerCase();
-    return merchants.filter((m) => {
-      if (filter === 'active'    && m.is_suspended) return false;
-      if (filter === 'suspended' && !m.is_suspended) return false;
-      if (!q) return true;
-      return (
-        (m.name || '').toLowerCase().includes(q) ||
-        (m.username || '').toLowerCase().includes(q) ||
-        (m.email || '').toLowerCase().includes(q) ||
-        (m.domain || '').toLowerCase().includes(q) ||
-        (m.mobile || '').toLowerCase().includes(q)
-      );
-    });
-  }, [merchants, query, filter]);
+  // The list rendering uses `merchants` directly now — server-side pagination,
+  // filter, and search are applied by the backend.
+  const filtered = merchants || [];
 
   const doSuspend = async (reason, forceUnbind) => {
     setWorking(true); setActionError(null);
@@ -125,7 +121,7 @@ export default function ConsoleMerchantsPage() {
           <StatCard label="Total merchants" value={stats.total}     tone="slate"   />
           <StatCard label="Active"          value={stats.active}    tone="emerald" />
           <StatCard label="Suspended"       value={stats.suspended} tone="rose"    />
-          <StatCard label="Wallet balance"  value={`₹${stats.walletSum.toFixed(2)}`} tone="brand" subdued />
+          <StatCard label="Wallet balance"  value={`₹${Number(stats.wallet_sum || 0).toFixed(2)}`} tone="brand" subdued />
         </div>
       )}
 
@@ -240,6 +236,30 @@ export default function ConsoleMerchantsPage() {
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {/* Pagination footer — only when we actually have more than one page */}
+      {merchants && total > LIMIT && (
+        <div className="mt-4 flex items-center justify-between text-sm">
+          <div className="text-slate-500">
+            Showing <strong>{page * LIMIT + 1}</strong>–<strong>{Math.min(total, (page + 1) * LIMIT)}</strong> of <strong>{total}</strong>
+          </div>
+          <div className="inline-flex items-center gap-1">
+            <button
+              disabled={page === 0}
+              onClick={() => setPage((p) => Math.max(0, p - 1))}
+              className="px-3 py-1.5 rounded-md border border-slate-200 bg-white disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50"
+            >← Prev</button>
+            <span className="px-3 py-1.5 text-slate-700">
+              Page {page + 1} of {Math.max(1, Math.ceil(total / LIMIT))}
+            </span>
+            <button
+              disabled={(page + 1) * LIMIT >= total}
+              onClick={() => setPage((p) => p + 1)}
+              className="px-3 py-1.5 rounded-md border border-slate-200 bg-white disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50"
+            >Next →</button>
+          </div>
         </div>
       )}
 
