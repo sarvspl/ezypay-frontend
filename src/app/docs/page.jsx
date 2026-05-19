@@ -635,10 +635,14 @@ return redirect(r.json()['checkout_url'])`}</CodeBlock>
   const { session } = await r.json();
   if (session.status === 'success') {
     await markOrderPaid(session.order_id);
-    res.render('order-confirmed', { session });
-  } else {
-    res.render('payment-failed', { reason: session.status });
+    return res.render('order-confirmed', { session });
   }
+  if (session.status === 'pending') {
+    // Verification didn't finish before redirect. Show a "processing" page;
+    // keep polling GET /sessions/:id server-side until it resolves or expires.
+    return res.render('payment-processing', { session });
+  }
+  res.render('payment-failed', { reason: session.status });
 });`}</CodeBlock>
 
           <CodeBlock language="php" copyLabel={t('Copy', 'কপি')} copiedLabel={t('✓ Copied', '✓ কপি হয়েছে')}>{`<?php
@@ -1352,8 +1356,8 @@ header('Location: ' . $body['checkout_url']);`}</CodeBlock>
         </ul>
         <p className="mt-2 text-sm text-slate-700">
           {t(
-            "As a fallback, the merchant can resolve any pending row from Dashboard → Transactions (Mark Paid / Mark Failed). The customer's checkout polls and reflects the decision within a few seconds.",
-            'ব্যাকআপ হিসেবে, মার্চেন্ট Dashboard → Transactions (Mark Paid / Mark Failed) থেকে যেকোনো পেন্ডিং রো রেজলভ করতে পারেন। গ্রাহকের চেকআউট পোল করে এবং কয়েক সেকেন্ডের মধ্যে সিদ্ধান্ত প্রতিফলিত হয়।'
+            "As a fallback, the merchant can resolve any pending row from Dashboard → Transactions (Mark Paid / Mark Failed). Customers still on the checkout page (within ~15s of submitting) see the decision and are redirected; customers who've already returned to your site with status=pending pick up the new state through your backend's polling of GET /sessions/:id.",
+            'ব্যাকআপ হিসেবে, মার্চেন্ট Dashboard → Transactions (Mark Paid / Mark Failed) থেকে যেকোনো পেন্ডিং রো রেজলভ করতে পারেন। যেসব গ্রাহক এখনো চেকআউট পেজে আছেন (সাবমিটের ~১৫ সেকেন্ডের মধ্যে) তারা সিদ্ধান্তটি দেখে রিডিরেক্ট হবেন; যেসব গ্রাহক ইতিমধ্যে status=pending নিয়ে আপনার সাইটে ফিরে গেছেন তারা আপনার ব্যাকএন্ডের GET /sessions/:id পোলিং-এর মাধ্যমে নতুন অবস্থা পাবেন।'
           )}
         </p>
       </Section>

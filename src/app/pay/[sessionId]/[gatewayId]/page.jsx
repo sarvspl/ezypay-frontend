@@ -7,8 +7,7 @@ import { getProvider, labelVariant } from '@/lib/providers';
 import { formatMoney } from '@/lib/money';
 
 const POLL_MS         = 2000;
-const POLL_MAX_MS     = 90_000;   // total time we keep polling
-const PATIENT_AFTER_MS = 20_000;  // switch to reassuring "we'll notify you" copy after this
+const POLL_MAX_MS     = 15_000;   // hold for 15s, then show status on /result (which redirects in 5s)
 
 export default function PayWithGatewayPage() {
   const { sessionId, gatewayId } = useParams();
@@ -20,34 +19,27 @@ export default function PayWithGatewayPage() {
   const [txnid, setTxnid] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [verifying, setVerifying] = useState(false);
-  const [verifyPhase, setVerifyPhase] = useState('fast'); // 'fast' | 'patient'
   const [showHow, setShowHow] = useState(false);
   const [copied, setCopied] = useState(false);
-
-  // After PATIENT_AFTER_MS of verifying, swap the spinner text to a calmer
-  // "we'll update you when it's done — no need to wait here" message so the
-  // customer doesn't think the page is stuck or suspect fraud.
-  useEffect(() => {
-    if (!verifying) {
-      setVerifyPhase('fast');
-      return;
-    }
-    const t = setTimeout(() => setVerifyPhase('patient'), PATIENT_AFTER_MS);
-    return () => clearTimeout(t);
-  }, [verifying]);
 
   useEffect(() => {
     (async () => {
       try {
-        const [s, g] = await Promise.all([
+        const [s, g, st] = await Promise.all([
           api.checkoutSession(sessionId),
           api.checkoutGateways(sessionId),
+          api.checkoutStatus(sessionId),
         ]);
         setSession(s.session);
         const found = g.gateways.find((x) => x.id === gatewayId);
         if (!found) throw new Error('Gateway not available for this checkout');
         setGateway(found);
-        if (s.session.status !== 'pending') router.replace(`/pay/${sessionId}/result`);
+        // Once a TxnID has been submitted, the method is locked — send the
+        // customer to the result screen instead of letting them re-submit or
+        // navigate back to the gateway picker.
+        if (s.session.status !== 'pending' || st.transaction) {
+          router.replace(`/pay/${sessionId}/result`);
+        }
       } catch (e) {
         setError(e.message);
       }
@@ -91,9 +83,8 @@ export default function PayWithGatewayPage() {
       if (Date.now() - start < POLL_MAX_MS) {
         setTimeout(tick, POLL_MS);
       } else {
-        // Stop polling but leave the session visible; merchant can resolve manually later.
-        setVerifying(false);
-        setError('Verification is taking longer than expected. You can close this page — your order will be updated once verified.');
+        // 15s held — let the result page show the current status and redirect to merchant in 5s.
+        router.replace(`/pay/${sessionId}/result`);
       }
     };
     setTimeout(tick, POLL_MS);
@@ -183,20 +174,9 @@ export default function PayWithGatewayPage() {
         {error && (
           <div className="mt-3 text-sm text-rose-600 bg-rose-50 border border-rose-200 rounded p-3">{error}</div>
         )}
-        {verifying && !error && verifyPhase === 'fast' && (
+        {verifying && !error && (
           <div className="mt-3 text-sm text-brand-700 bg-brand-50 border border-brand-200 rounded p-3 flex items-center gap-2">
-            <Spinner /> Matching your TxnID against the SMS — this usually takes 2–10 seconds…
-          </div>
-        )}
-        {verifying && !error && verifyPhase === 'patient' && (
-          <div className="mt-3 text-sm text-amber-900 bg-amber-50 border border-amber-200 rounded p-3 flex items-start gap-2">
-            <span className="mt-0.5"><HourglassIcon /></span>
-            <div>
-              <div className="font-semibold">Your payment is being verified — nothing to worry about.</div>
-              <div className="mt-0.5 text-amber-800">
-                You can safely close this page. Once it's verified, your order status will update automatically and the merchant will be notified.
-              </div>
-            </div>
+            <Spinner /> Verifying your request…
           </div>
         )}
       </form>
@@ -322,13 +302,6 @@ function Spinner() {
     <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none">
       <circle cx="12" cy="12" r="10" stroke="currentColor" strokeOpacity=".3" strokeWidth="3"/>
       <path d="M22 12a10 10 0 0 1-10 10" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/>
-    </svg>
-  );
-}
-function HourglassIcon() {
-  return (
-    <svg className="w-5 h-5 text-amber-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M6 2h12M6 22h12M6 2v6a6 6 0 0 0 12 0V2M6 22v-6a6 6 0 0 1 12 0v6"/>
     </svg>
   );
 }

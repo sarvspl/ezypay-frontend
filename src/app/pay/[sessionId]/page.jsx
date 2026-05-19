@@ -17,14 +17,16 @@ export default function CheckoutSessionPage() {
   useEffect(() => {
     (async () => {
       try {
-        const [s, g] = await Promise.all([
+        const [s, g, st] = await Promise.all([
           api.checkoutSession(sessionId),
           api.checkoutGateways(sessionId),
+          api.checkoutStatus(sessionId),
         ]);
         setSession(s.session);
         setGateways(g.gateways);
-        // If session is already finalised, jump to result.
-        if (s.session.status !== 'pending') {
+        // Block re-picking a method once a TxnID has been submitted (any tx exists),
+        // and jump to the result screen if the session is already finalised.
+        if (s.session.status !== 'pending' || st.transaction) {
           router.replace(`/pay/${sessionId}/result`);
         }
       } catch (e) {

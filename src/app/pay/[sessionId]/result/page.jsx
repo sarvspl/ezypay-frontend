@@ -71,16 +71,16 @@ export default function CheckoutResultPage() {
 
   const effectiveStatus = data ? deriveStatus(data.status, data.transaction?.status) : 'pending';
 
-  // Redirect countdown — only when effective status has resolved
+  // Redirect countdown — fires for any status (incl. pending) so the customer
+  // is always sent back to the merchant within REDIRECT_SECONDS of landing here.
   useEffect(() => {
     if (!data || !data.redirect_url) return;
-    if (effectiveStatus === 'pending') return;
     const t = setInterval(() => setSeconds((s) => Math.max(0, s - 1)), 1000);
     return () => clearInterval(t);
-  }, [data, effectiveStatus]);
+  }, [data]);
 
   useEffect(() => {
-    if (seconds === 0 && data?.redirect_url && effectiveStatus !== 'pending') {
+    if (seconds === 0 && data?.redirect_url) {
       window.location.href = withParams(data.redirect_url, { session_id: sessionId, status: effectiveStatus });
     }
   }, [seconds, data, effectiveStatus, sessionId]);
@@ -109,7 +109,7 @@ export default function CheckoutResultPage() {
           {transaction?.failure_reason && <Row k="Reason" v={transaction.failure_reason} />}
         </div>
 
-        {redirect_url && status !== 'pending' && (
+        {redirect_url && (
           <div className="mt-6 text-sm text-slate-500">
             Redirecting you back to <span className="font-semibold text-slate-700">{safeHost(redirect_url)}</span> in {seconds}s…
           </div>
