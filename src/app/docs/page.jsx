@@ -37,57 +37,144 @@ export default function DocsPage() {
 
 /* ────────────────────────────────────────── Header + Lang Toggle */
 function Header({ lang, onLangChange, t }) {
+  const [mobileOpen, setMobileOpen] = useState(false);
+
   return (
-    <header className="sticky top-0 z-40 bg-white/80 backdrop-blur border-b border-slate-200/70">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
-        <Logo size="md" />
-        <nav className="hidden md:flex items-center gap-1 text-sm">
-          <Link href="/" className="px-3 py-2 rounded-md text-slate-600 hover:text-slate-900 transition-colors">
+    <header className="sticky top-0 z-40">
+      <div className="bg-white/80 backdrop-blur border-b border-slate-200/70">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-2 sm:gap-4">
+        <Logo size="xl" />
+
+        <nav className="hidden md:flex items-center h-11 gap-1 text-sm rounded-full bg-gradient-to-r from-grad-start to-grad-end px-1.5 shadow-md shadow-grad-start/25">
+          <Link
+            href="/"
+            className="flex items-center px-4 py-1.5 rounded-full font-medium text-white/85 hover:text-white hover:bg-white/10 transition-colors"
+          >
             {t('Home', 'হোম')}
           </Link>
-          <Link href="/docs" className="px-3 py-2 rounded-md text-brand-600 font-semibold">
+          <Link
+            href="/docs"
+            className="flex items-center px-4 py-1.5 rounded-full font-semibold bg-white/20 text-white"
+          >
             {t('Docs', 'ডকুমেন্টেশন')}
           </Link>
         </nav>
-        <div className="flex items-center gap-2">
+
+        <div className="flex items-center gap-2 sm:gap-3">
           <LangToggle lang={lang} onChange={onLangChange} />
-          <Link href="/login" className="hidden sm:inline-flex btn-secondary !py-1.5 !px-3 text-sm">
-            {t('Merchant Login', 'মার্চেন্ট লগইন')}
+          <div className="hidden sm:block h-11 rounded-full bg-gradient-to-r from-grad-start to-grad-end p-[2px]">
+            <Link
+              href="/login"
+              className="flex items-center h-full rounded-full bg-white text-grad-start hover:text-grad-end transition-colors px-5 text-sm font-semibold"
+            >
+              {t('Merchant Login', 'মার্চেন্ট লগইন')}
+            </Link>
+          </div>
+          <Link
+            href="/register"
+            className="hidden sm:flex items-center h-11 rounded-full bg-gradient-to-r from-grad-start to-grad-end text-white px-5 text-sm font-semibold whitespace-nowrap shadow-md shadow-grad-start/25 hover:shadow-lg transition-shadow"
+          >
+            {t('Get Started', 'শুরু করুন')}
           </Link>
-          <Link href="/register" className="btn-primary !py-1.5 !px-3 text-sm">
-            {t('Get started', 'শুরু করুন')}
-          </Link>
+          <button
+            type="button"
+            onClick={() => setMobileOpen((v) => !v)}
+            className="md:hidden flex items-center justify-center w-11 h-11 rounded-full text-grad-start hover:bg-slate-100"
+            aria-label="Toggle menu"
+            aria-expanded={mobileOpen}
+          >
+            {mobileOpen ? <DocsCloseIcon /> : <DocsMenuIcon />}
+          </button>
         </div>
       </div>
+      </div>
+
+      {/* Backdrop */}
+      <div
+        className={[
+          'fixed inset-0 bg-black/40 z-40 md:hidden transition-opacity duration-300',
+          mobileOpen ? 'opacity-100' : 'opacity-0 pointer-events-none',
+        ].join(' ')}
+        onClick={() => setMobileOpen(false)}
+        aria-hidden="true"
+      />
+
+      {/* Side Drawer */}
+      <aside
+        className={[
+          'fixed top-0 right-0 bottom-0 w-80 max-w-[85vw] bg-white z-50 md:hidden shadow-2xl transform transition-transform duration-300 overflow-y-auto',
+          mobileOpen ? 'translate-x-0' : 'translate-x-full',
+        ].join(' ')}
+      >
+        <div className="p-4 border-b border-slate-200 flex items-center justify-end">
+          <button
+            type="button"
+            onClick={() => setMobileOpen(false)}
+            className="w-10 h-10 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-700"
+            aria-label="Close menu"
+          >
+            <DocsCloseIcon />
+          </button>
+        </div>
+        <nav className="p-4 space-y-1">
+          <Link href="/" onClick={() => setMobileOpen(false)} className="block px-4 py-3 rounded-lg text-slate-700 hover:bg-slate-50 font-medium">
+            {t('Home', 'হোম')}
+          </Link>
+          <Link href="/docs" onClick={() => setMobileOpen(false)} className="block px-4 py-3 rounded-lg bg-grad-start/10 text-grad-start font-semibold">
+            {t('Docs', 'ডকুমেন্টেশন')}
+          </Link>
+          <div className="pt-4 mt-3 border-t border-slate-100 flex flex-col gap-2">
+            <Link href="/login" onClick={() => setMobileOpen(false)} className="flex items-center justify-center h-11 rounded-full border-2 border-grad-start text-grad-start text-sm font-semibold">
+              {t('Merchant Login', 'মার্চেন্ট লগইন')}
+            </Link>
+            <Link href="/register" onClick={() => setMobileOpen(false)} className="flex items-center justify-center h-11 rounded-full bg-gradient-to-r from-grad-start to-grad-end text-white text-sm font-semibold shadow-md shadow-grad-start/25">
+              {t('Get Started', 'শুরু করুন')}
+            </Link>
+          </div>
+        </nav>
+      </aside>
     </header>
   );
 }
 
+function DocsMenuIcon() {
+  return <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>;
+}
+function DocsCloseIcon() {
+  return <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>;
+}
+
 function LangToggle({ lang, onChange }) {
   return (
-    <div className="inline-flex items-center rounded-md border border-slate-200 bg-white p-0.5 text-xs font-semibold shadow-sm">
-      <button
-        type="button"
-        onClick={() => onChange('en')}
-        className={[
-          'px-2.5 py-1 rounded transition-colors',
-          lang === 'en' ? 'bg-brand-600 text-white' : 'text-slate-600 hover:text-slate-900',
-        ].join(' ')}
-        aria-pressed={lang === 'en'}
-      >
-        EN
-      </button>
-      <button
-        type="button"
-        onClick={() => onChange('bn')}
-        className={[
-          'px-2.5 py-1 rounded transition-colors',
-          lang === 'bn' ? 'bg-brand-600 text-white' : 'text-slate-600 hover:text-slate-900',
-        ].join(' ')}
-        aria-pressed={lang === 'bn'}
-      >
-        বাংলা
-      </button>
+    <div className="h-11 rounded-full bg-gradient-to-r from-grad-start to-grad-end p-[2px] shadow-sm">
+      <div className="flex items-stretch h-full rounded-full bg-white text-xs font-bold">
+        <button
+          type="button"
+          onClick={() => onChange('en')}
+          className={[
+            'flex items-center px-4 rounded-full transition-colors',
+            lang === 'en'
+              ? 'bg-gradient-to-r from-grad-start to-grad-end text-white shadow-sm'
+              : 'text-grad-start hover:bg-slate-50',
+          ].join(' ')}
+          aria-pressed={lang === 'en'}
+        >
+          ENG
+        </button>
+        <button
+          type="button"
+          onClick={() => onChange('bn')}
+          className={[
+            'flex items-center px-4 rounded-full transition-colors',
+            lang === 'bn'
+              ? 'bg-gradient-to-r from-grad-start to-grad-end text-white shadow-sm'
+              : 'text-grad-start hover:bg-slate-50',
+          ].join(' ')}
+          aria-pressed={lang === 'bn'}
+        >
+          BEN
+        </button>
+      </div>
     </div>
   );
 }

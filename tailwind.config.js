@@ -11,6 +11,11 @@ module.exports = {
           600: '#1862b8',
           700: '#124d92',
         },
+        grad: {
+          start: '#2F2097',  // deep indigo
+          mid:   '#3B3AB0',  // midpoint
+          end:   '#54CEFF',  // light cyan
+        },
       },
     },
   },

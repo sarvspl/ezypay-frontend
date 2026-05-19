@@ -33,9 +33,10 @@ export function Wordmark({ className = 'text-lg' }) {
  * Uses the brand logo PNG from /public/logo-ezypay.png. */
 export default function Logo({ size = 'md', href = '/', className = '' }) {
   const sizes = {
-    sm: 'h-7',   // ~28px tall
-    md: 'h-9',   // ~36px tall
-    lg: 'h-12',  // ~48px tall
+    sm: 'h-7',                       // ~28px tall
+    md: 'h-9',                       // ~36px tall
+    lg: 'h-14',                      // ~56px tall
+    xl: 'h-12 sm:h-16 md:h-20',      // scales down on mobile
   };
   const heightClass = sizes[size] || sizes.md;
 

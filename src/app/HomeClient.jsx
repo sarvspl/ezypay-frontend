@@ -7,13 +7,13 @@ import Logo, { LogoMark } from '@/components/Logo';
 /* ───────────────────────────────────────────────────────── TRANSLATIONS */
 const T = {
   en: {
-    nav_how: 'How it works',
+    nav_how: 'How it Works',
     nav_features: 'Features',
-    nav_compare: 'Why us',
-    nav_faq: 'FAQ',
+    nav_compare: 'Why Us',
+    nav_faq: 'FAQs',
     nav_docs: 'Docs',
     nav_merchant_login: 'Merchant Login',
-    nav_get_started: 'Get started',
+    nav_get_started: 'Get Started',
 
     hero_badge: 'Live verification in under 2 seconds',
     hero_title_pre: 'Stop losing money to',
@@ -352,6 +352,7 @@ export default function HomeClient() {
 /* ───────────────────────────────────────────────────────── HEADER + LANG TOGGLE */
 function Header({ lang, onLangChange, t }) {
   const [active, setActive] = useState(null);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   const LINKS = [
     { id: 'how',      label: t('nav_how') },
@@ -388,11 +389,12 @@ function Header({ lang, onLangChange, t }) {
   }, []);
 
   return (
-    <header className="sticky top-0 z-40 bg-white/80 backdrop-blur border-b border-slate-200/70">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
-        <Logo size="md" />
+    <header className="sticky top-0 z-40">
+      <div className="bg-white/80 backdrop-blur border-b border-slate-200/70">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-2 sm:gap-4">
+        <Logo size="xl" />
 
-        <nav className="hidden md:flex items-center gap-1 text-sm">
+        <nav className="hidden md:flex items-center h-11 gap-1 text-sm rounded-full bg-gradient-to-r from-grad-start to-grad-end px-1.5 shadow-md shadow-grad-start/25">
           {LINKS.map((l) => {
             const isActive = active === l.id;
             return (
@@ -401,64 +403,156 @@ function Header({ lang, onLangChange, t }) {
                 href={`#${l.id}`}
                 aria-current={isActive ? 'true' : undefined}
                 className={[
-                  'relative px-3 py-2 rounded-md transition-colors',
-                  isActive ? 'text-brand-600 font-semibold' : 'text-slate-600 hover:text-slate-900',
+                  'flex items-center px-4 py-1.5 rounded-full transition-colors font-medium',
+                  isActive ? 'bg-white/20 text-white font-semibold' : 'text-white/85 hover:text-white hover:bg-white/10',
                 ].join(' ')}
               >
                 {l.label}
-                <span
-                  className={[
-                    'pointer-events-none absolute left-3 right-3 -bottom-[1px] h-0.5 rounded-full bg-brand-600 transition-all duration-200',
-                    isActive ? 'opacity-100 scale-x-100' : 'opacity-0 scale-x-50',
-                  ].join(' ')}
-                />
               </a>
             );
           })}
-          <Link href="/docs" className="px-3 py-2 rounded-md text-slate-600 hover:text-slate-900 transition-colors">
+          <Link
+            href="/docs"
+            className="flex items-center px-4 py-1.5 rounded-full font-medium text-white/85 hover:text-white hover:bg-white/10 transition-colors"
+          >
             {t('nav_docs')}
           </Link>
         </nav>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 sm:gap-3">
           <LangToggle lang={lang} onChange={onLangChange} />
-          <Link href="/login" className="hidden sm:inline-flex btn-secondary !py-1.5 !px-3 text-sm">
-            {t('nav_merchant_login')}
-          </Link>
-          <Link href="/register" className="btn-primary !py-1.5 !px-3 text-sm">
+          <div className="hidden sm:block h-11 rounded-full bg-gradient-to-r from-grad-start to-grad-end p-[2px]">
+            <Link
+              href="/login"
+              className="flex items-center h-full rounded-full bg-white text-grad-start hover:text-grad-end transition-colors px-5 text-sm font-semibold"
+            >
+              {t('nav_merchant_login')}
+            </Link>
+          </div>
+          <Link
+            href="/register"
+            className="hidden sm:flex items-center h-11 rounded-full bg-gradient-to-r from-grad-start to-grad-end text-white px-5 text-sm font-semibold whitespace-nowrap shadow-md shadow-grad-start/25 hover:shadow-lg transition-shadow"
+          >
             {t('nav_get_started')}
           </Link>
+          <button
+            type="button"
+            onClick={() => setMobileOpen((v) => !v)}
+            className="md:hidden flex items-center justify-center w-11 h-11 rounded-full text-grad-start hover:bg-slate-100"
+            aria-label="Toggle menu"
+            aria-expanded={mobileOpen}
+          >
+            {mobileOpen ? <CloseIcon /> : <MenuIcon />}
+          </button>
         </div>
       </div>
+      </div>
+
+      {/* Backdrop */}
+      <div
+        className={[
+          'fixed inset-0 bg-black/40 z-40 md:hidden transition-opacity duration-300',
+          mobileOpen ? 'opacity-100' : 'opacity-0 pointer-events-none',
+        ].join(' ')}
+        onClick={() => setMobileOpen(false)}
+        aria-hidden="true"
+      />
+
+      {/* Side Drawer */}
+      <aside
+        className={[
+          'fixed top-0 right-0 bottom-0 w-80 max-w-[85vw] bg-white z-50 md:hidden shadow-2xl transform transition-transform duration-300 overflow-y-auto',
+          mobileOpen ? 'translate-x-0' : 'translate-x-full',
+        ].join(' ')}
+      >
+        <div className="p-4 border-b border-slate-200 flex items-center justify-end">
+          <button
+            type="button"
+            onClick={() => setMobileOpen(false)}
+            className="w-10 h-10 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-700"
+            aria-label="Close menu"
+          >
+            <CloseIcon />
+          </button>
+        </div>
+        <nav className="p-4 space-y-1">
+          {LINKS.map((l) => (
+            <a
+              key={l.id}
+              href={`#${l.id}`}
+              onClick={() => setMobileOpen(false)}
+              className="block px-4 py-3 rounded-lg text-slate-700 hover:bg-slate-50 font-medium"
+            >
+              {l.label}
+            </a>
+          ))}
+          <Link
+            href="/docs"
+            onClick={() => setMobileOpen(false)}
+            className="block px-4 py-3 rounded-lg text-slate-700 hover:bg-slate-50 font-medium"
+          >
+            {t('nav_docs')}
+          </Link>
+          <div className="pt-4 mt-3 border-t border-slate-100 flex flex-col gap-2">
+            <Link
+              href="/login"
+              onClick={() => setMobileOpen(false)}
+              className="flex items-center justify-center h-11 rounded-full border-2 border-grad-start text-grad-start text-sm font-semibold"
+            >
+              {t('nav_merchant_login')}
+            </Link>
+            <Link
+              href="/register"
+              onClick={() => setMobileOpen(false)}
+              className="flex items-center justify-center h-11 rounded-full bg-gradient-to-r from-grad-start to-grad-end text-white text-sm font-semibold shadow-md shadow-grad-start/25"
+            >
+              {t('nav_get_started')}
+            </Link>
+          </div>
+        </nav>
+      </aside>
     </header>
   );
 }
 
+function MenuIcon() {
+  return <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>;
+}
+function CloseIcon() {
+  return <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>;
+}
+
 function LangToggle({ lang, onChange }) {
   return (
-    <div className="inline-flex items-center rounded-md border border-slate-200 bg-white p-0.5 text-xs font-semibold shadow-sm">
-      <button
-        type="button"
-        onClick={() => onChange('en')}
-        className={[
-          'px-2.5 py-1 rounded transition-colors',
-          lang === 'en' ? 'bg-brand-600 text-white' : 'text-slate-600 hover:text-slate-900',
-        ].join(' ')}
-        aria-pressed={lang === 'en'}
-      >
-        EN
-      </button>
-      <button
-        type="button"
-        onClick={() => onChange('bn')}
-        className={[
-          'px-2.5 py-1 rounded transition-colors',
-          lang === 'bn' ? 'bg-brand-600 text-white' : 'text-slate-600 hover:text-slate-900',
-        ].join(' ')}
-        aria-pressed={lang === 'bn'}
-      >
-        বাংলা
-      </button>
+    <div className="h-11 rounded-full bg-gradient-to-r from-grad-start to-grad-end p-[2px] shadow-sm">
+      <div className="flex items-stretch h-full rounded-full bg-white text-xs font-bold">
+        <button
+          type="button"
+          onClick={() => onChange('en')}
+          className={[
+            'flex items-center px-4 rounded-full transition-colors',
+            lang === 'en'
+              ? 'bg-gradient-to-r from-grad-start to-grad-end text-white shadow-sm'
+              : 'text-grad-start hover:bg-slate-50',
+          ].join(' ')}
+          aria-pressed={lang === 'en'}
+        >
+          ENG
+        </button>
+        <button
+          type="button"
+          onClick={() => onChange('bn')}
+          className={[
+            'flex items-center px-4 rounded-full transition-colors',
+            lang === 'bn'
+              ? 'bg-gradient-to-r from-grad-start to-grad-end text-white shadow-sm'
+              : 'text-grad-start hover:bg-slate-50',
+          ].join(' ')}
+          aria-pressed={lang === 'bn'}
+        >
+          BEN
+        </button>
+      </div>
     </div>
   );
 }
