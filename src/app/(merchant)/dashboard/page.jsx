@@ -412,12 +412,12 @@ function ChartAndLastVerification() {
             <p className="text-sm mt-2">No recent verifications</p>
           </div>
         )}
-        <button
-          onClick={() => alert('Transactions page coming soon.')}
-          className="mt-5 w-full text-sm text-brand-600 hover:underline font-medium"
+        <Link
+          href="/dashboard/transactions"
+          className="mt-5 block w-full text-center text-sm text-brand-600 hover:underline font-medium"
         >
           View All Transactions →
-        </button>
+        </Link>
       </div>
     </section>
   );
@@ -430,7 +430,7 @@ function RecentAndActivity() {
       <div className="lg:col-span-2 card overflow-hidden">
         <div className="px-5 sm:px-6 py-4 flex items-center justify-between border-b border-slate-200/70">
           <h3 className="font-semibold text-slate-900">Recent Transactions</h3>
-          <button onClick={() => alert('Transactions page coming soon.')} className="text-sm text-brand-600 hover:underline">View All →</button>
+          <Link href="/dashboard/transactions" className="text-sm text-brand-600 hover:underline">View All →</Link>
         </div>
 
         {RECENT_VERIFICATIONS.length === 0 ? (
