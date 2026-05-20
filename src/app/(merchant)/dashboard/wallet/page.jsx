@@ -209,7 +209,7 @@ function WalletPageBody() {
                 <tbody className="divide-y divide-slate-100">
                   {recharges.map((r) => (
                     <tr key={r.session_id}>
-                      <td className="py-3 text-slate-600">{new Date(r.created_at).toLocaleString()}</td>
+                      <td className="py-3 text-slate-600">{new Date(r.created_at).toLocaleString(undefined, { timeZone: 'Asia/Dhaka' })}</td>
                       <td className="py-3 font-semibold">{formatMoney(r.amount, r.currency)}</td>
                       <td className="py-3 text-slate-700">{r.provider ? `${r.provider}${r.variant ? ' · ' + r.variant : ''}` : <span className="text-slate-400">—</span>}</td>
                       <td className="py-3 font-mono text-xs text-slate-700">{r.txnid_submitted || <span className="text-slate-400">—</span>}</td>
@@ -227,7 +227,7 @@ function WalletPageBody() {
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <div className="font-semibold text-slate-900">{formatMoney(r.amount, r.currency)}</div>
-                      <div className="text-xs text-slate-500 mt-0.5">{new Date(r.created_at).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}</div>
+                      <div className="text-xs text-slate-500 mt-0.5">{new Date(r.created_at).toLocaleString([], { timeZone: 'Asia/Dhaka', dateStyle: 'short', timeStyle: 'short' })}</div>
                     </div>
                     <StatusPill tx={r.tx_status} session={r.session_status} />
                   </div>
@@ -263,7 +263,7 @@ function WalletPageBody() {
                   <div className="min-w-0 flex-1">
                     <div className="text-sm font-medium text-slate-900">{prettyKind(row.kind)}</div>
                     <div className="text-xs text-slate-500 mt-0.5">
-                      {new Date(row.created_at).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
+                      {new Date(row.created_at).toLocaleString([], { timeZone: 'Asia/Dhaka', dateStyle: 'short', timeStyle: 'short' })}
                       {row.note ? <span className="block sm:inline sm:before:content-['_·_']">{row.note}</span> : null}
                     </div>
                   </div>

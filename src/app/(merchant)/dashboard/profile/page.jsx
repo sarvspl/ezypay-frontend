@@ -284,7 +284,7 @@ function PasswordField({ label, value, onChange, show, onToggleShow, placeholder
 /* ─── helpers ─── */
 function formatDate(iso) {
   if (!iso) return '—';
-  return new Date(iso).toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: 'numeric' });
+  return new Date(iso).toLocaleDateString(undefined, { timeZone: 'Asia/Dhaka', day: '2-digit', month: 'short', year: 'numeric' });
 }
 
 /* ─── icons ─── */

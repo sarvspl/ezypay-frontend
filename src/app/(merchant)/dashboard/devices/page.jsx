@@ -238,7 +238,7 @@ function DeviceCard({ device, onDelete }) {
       </div>
 
       <div className="mt-3 text-xs text-slate-400">
-        Bound {new Date(device.created_at).toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: 'numeric' })}
+        Bound {new Date(device.created_at).toLocaleDateString(undefined, { timeZone: 'Asia/Dhaka', day: '2-digit', month: 'short', year: 'numeric' })}
       </div>
     </div>
   );
@@ -342,7 +342,7 @@ function timeAgo(iso) {
   if (h < 24)     return `${h}h ago`;
   const d = Math.floor(h / 24);
   if (d < 30)     return `${d}d ago`;
-  return new Date(iso).toLocaleDateString();
+  return new Date(iso).toLocaleDateString(undefined, { timeZone: 'Asia/Dhaka' });
 }
 
 /* ─── icons ─── */

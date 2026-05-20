@@ -241,8 +241,8 @@ export default function ConsolePlatformAccountPage() {
                   {devices.map((d) => (
                     <tr key={d.id} className="hover:bg-slate-50">
                       <td className="px-4 py-3 text-slate-900">{d.manufacturer || ''} {d.model || ''} <span className="text-xs text-slate-500 font-mono">({d.device_id})</span></td>
-                      <td className="px-4 py-3 text-slate-600">{new Date(d.created_at).toLocaleDateString()}</td>
-                      <td className="px-4 py-3 text-slate-600">{d.last_seen_at ? new Date(d.last_seen_at).toLocaleString() : '—'}</td>
+                      <td className="px-4 py-3 text-slate-600">{new Date(d.created_at).toLocaleDateString(undefined, { timeZone: 'Asia/Dhaka' })}</td>
+                      <td className="px-4 py-3 text-slate-600">{d.last_seen_at ? new Date(d.last_seen_at).toLocaleString(undefined, { timeZone: 'Asia/Dhaka' }) : '—'}</td>
                       <td className="px-4 py-3">
                         {d.is_online
                           ? <span className="inline-flex rounded-full bg-emerald-100 text-emerald-700 px-2 py-0.5 text-[11px] font-semibold">Online</span>
@@ -278,7 +278,7 @@ export default function ConsolePlatformAccountPage() {
                 <tbody className="divide-y divide-slate-200">
                   {recharges.map((r) => (
                     <tr key={r.session_id} className="hover:bg-slate-50">
-                      <td className="px-4 py-3 text-slate-600">{new Date(r.session_created_at).toLocaleString()}</td>
+                      <td className="px-4 py-3 text-slate-600">{new Date(r.session_created_at).toLocaleString(undefined, { timeZone: 'Asia/Dhaka' })}</td>
                       <td className="px-4 py-3 text-slate-900">{r.merchant_name || <span className="text-slate-400 italic">unknown</span>}</td>
                       <td className="px-4 py-3 font-semibold">{r.currency} {Number(r.amount).toFixed(2)}</td>
                       <td className="px-4 py-3 text-slate-700">{r.provider ? `${r.provider} · ${r.account_number}` : <span className="text-slate-400">—</span>}</td>
@@ -371,7 +371,7 @@ function EarningsSection({ revenue }) {
                 <tbody className="divide-y divide-slate-100">
                   {revenue.recent.map((row) => (
                     <tr key={row.id} className="hover:bg-slate-50/60">
-                      <td className="px-4 py-2.5 text-slate-600">{new Date(row.created_at).toLocaleString()}</td>
+                      <td className="px-4 py-2.5 text-slate-600">{new Date(row.created_at).toLocaleString(undefined, { timeZone: 'Asia/Dhaka' })}</td>
                       <td className="px-4 py-2.5">
                         {row.type === 'topup_fee'
                           ? <span className="inline-flex rounded-full bg-indigo-50 border border-indigo-200 text-indigo-700 px-2 py-0.5 text-[11px] font-semibold">Top-up fee</span>
@@ -696,7 +696,7 @@ function PricingSection({ settings, onSaved, currency: defaultCurrency }) {
 
         <div className="flex items-center justify-between gap-3 pt-3 border-t border-slate-100">
           <div className="text-xs text-slate-500">
-            {settings?.updated_at ? `Last updated ${new Date(settings.updated_at).toLocaleString()}` : 'Not yet saved'}
+            {settings?.updated_at ? `Last updated ${new Date(settings.updated_at).toLocaleString(undefined, { timeZone: 'Asia/Dhaka' })}` : 'Not yet saved'}
           </div>
           <button type="submit" disabled={saving} className="btn-primary !py-2">
             {saving ? 'Saving…' : 'Save pricing'}

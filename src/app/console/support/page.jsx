@@ -121,7 +121,7 @@ export default function ConsoleSupportPage() {
 
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-3 border-t border-slate-100">
               <div className="text-xs text-slate-500 order-2 sm:order-1">
-                {updatedAt ? `Last updated ${new Date(updatedAt).toLocaleString()}` : 'Not yet saved'}
+                {updatedAt ? `Last updated ${new Date(updatedAt).toLocaleString(undefined, { timeZone: 'Asia/Dhaka' })}` : 'Not yet saved'}
               </div>
               <button
                 type="submit"

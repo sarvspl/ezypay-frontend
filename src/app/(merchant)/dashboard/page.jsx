@@ -48,7 +48,7 @@ function computeDashboard(txs, { devices, gateways, smsTotal, currency }) {
     const start = new Date(startToday.getTime() - i * DAY_MS);
     const end = new Date(start.getTime() + DAY_MS);
     last7.push({
-      day: start.toLocaleDateString(undefined, { weekday: 'short' }),
+      day: start.toLocaleDateString(undefined, { timeZone: 'Asia/Dhaka', weekday: 'short' }),
       count: txs.filter((t) => { const c = at(t); return c >= start && c < end; }).length,
     });
   }
@@ -57,7 +57,7 @@ function computeDashboard(txs, { devices, gateways, smsTotal, currency }) {
   const activity = sorted.slice(0, 6).map((t) => ({
     status: t.status,
     title: `Payment ${t.status === 'success' ? 'verified' : t.status === 'failed' ? 'failed' : 'pending'} · ${formatMoney(t.amount, currency)}`,
-    time: at(t).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' }),
+    time: at(t).toLocaleString([], { timeZone: 'Asia/Dhaka', dateStyle: 'short', timeStyle: 'short' }),
   }));
 
   return {
@@ -528,7 +528,7 @@ function RecentAndActivity({ recent, activity, currency }) {
                     <td className="px-5 py-3 font-semibold whitespace-nowrap">{formatMoney(tx.amount, currency)}</td>
                     <td className="px-5 py-3"><StatusBadge value={(tx.status || '').toUpperCase()} /></td>
                     <td className="px-5 py-3 text-slate-500 whitespace-nowrap">
-                      {new Date(tx.created_at).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
+                      {new Date(tx.created_at).toLocaleString([], { timeZone: 'Asia/Dhaka', dateStyle: 'short', timeStyle: 'short' })}
                     </td>
                   </tr>
                 ))}
@@ -633,7 +633,7 @@ function toneClasses(t) {
 
 function formatDate(iso) {
   if (!iso) return '—';
-  return new Date(iso).toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: 'numeric' });
+  return new Date(iso).toLocaleDateString(undefined, { timeZone: 'Asia/Dhaka', day: '2-digit', month: 'short', year: 'numeric' });
 }
 
 /* ─────────────────────────────────────────── ICONS */

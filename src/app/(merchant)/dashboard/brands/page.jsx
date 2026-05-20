@@ -190,7 +190,7 @@ function BrandCard({ brand, onDelete }) {
       </div>
 
       <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
-        <span>Created {new Date(brand.created_at).toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: 'numeric' })}</span>
+        <span>Created {new Date(brand.created_at).toLocaleDateString(undefined, { timeZone: 'Asia/Dhaka', day: '2-digit', month: 'short', year: 'numeric' })}</span>
         <span className="font-mono">id: {brand.id.slice(0, 8)}…</span>
       </div>
     </div>

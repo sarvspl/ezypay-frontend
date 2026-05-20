@@ -122,7 +122,7 @@ export default function ConsoleMerchantsPage() {
           <StatCard label="Total merchants" value={stats.total}     tone="slate"   />
           <StatCard label="Active"          value={stats.active}    tone="emerald" />
           <StatCard label="Suspended"       value={stats.suspended} tone="rose"    />
-          <StatCard label="Wallet balance"  value={`₹${Number(stats.wallet_sum || 0).toFixed(2)}`} tone="brand" subdued />
+          <StatCard label="Wallet balance"  value={`৳${Number(stats.wallet_sum || 0).toFixed(2)}`} tone="brand" subdued />
         </div>
       )}
 
@@ -213,7 +213,7 @@ export default function ConsoleMerchantsPage() {
                     <td className="px-4 py-3 text-right">
                       <div className="inline-flex items-center gap-2">
                         <span className="text-slate-900 font-semibold tabular-nums">
-                          ₹{Number(m.wallet_balance || 0).toFixed(2)}
+                          ৳{Number(m.wallet_balance || 0).toFixed(2)}
                         </span>
                         <button
                           onClick={() => setWalletTarget(m)}
@@ -221,7 +221,7 @@ export default function ConsoleMerchantsPage() {
                         >Top up</button>
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-slate-500 hidden lg:table-cell">{new Date(m.created_at).toLocaleDateString()}</td>
+                    <td className="px-4 py-3 text-slate-500 hidden lg:table-cell">{new Date(m.created_at).toLocaleDateString(undefined, { timeZone: 'Asia/Dhaka' })}</td>
                     <td className="px-4 py-3 text-right">
                       {m.is_suspended ? (
                         <button
@@ -265,10 +265,10 @@ export default function ConsoleMerchantsPage() {
                   <dd className="text-slate-700 font-mono text-right">{m.mobile || '—'}</dd>
                   <dt className="text-slate-500">Wallet</dt>
                   <dd className="text-slate-900 font-semibold tabular-nums text-right">
-                    ₹{Number(m.wallet_balance || 0).toFixed(2)}
+                    ৳{Number(m.wallet_balance || 0).toFixed(2)}
                   </dd>
                   <dt className="text-slate-500">Joined</dt>
-                  <dd className="text-slate-700 text-right">{new Date(m.created_at).toLocaleDateString()}</dd>
+                  <dd className="text-slate-700 text-right">{new Date(m.created_at).toLocaleDateString(undefined, { timeZone: 'Asia/Dhaka' })}</dd>
                 </dl>
 
                 <div className="mt-3 pt-3 border-t border-slate-100 flex items-center gap-2">
@@ -376,12 +376,12 @@ function WalletAdjustModal({ merchant, working, error, onCancel, onConfirm }) {
       >
         <div className="flex items-start gap-3 mb-4">
           <div className="w-10 h-10 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center shrink-0 text-lg font-bold">
-            ₹
+            ৳
           </div>
           <div className="min-w-0">
             <div className="font-semibold text-slate-900 truncate">{merchant.name}</div>
             <div className="text-xs text-slate-500">
-              Current balance: ₹{Number(merchant.wallet_balance || 0).toFixed(2)}
+              Current balance: ৳{Number(merchant.wallet_balance || 0).toFixed(2)}
             </div>
           </div>
         </div>
@@ -425,7 +425,7 @@ function WalletAdjustModal({ merchant, working, error, onCancel, onConfirm }) {
           <div className="mt-3 text-xs text-slate-600">
             New balance will be{' '}
             <span className={`font-semibold tabular-nums ${tooLow ? 'text-rose-700' : 'text-slate-900'}`}>
-              ₹{newBal.toFixed(2)}
+              ৳{newBal.toFixed(2)}
             </span>
             {tooLow && <span className="text-rose-600"> · insufficient for debit</span>}
           </div>

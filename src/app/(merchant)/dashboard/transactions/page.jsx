@@ -241,7 +241,7 @@ export default function TransactionsPage() {
                       )}
                     </td>
                     <td className="px-4 sm:px-6 py-3 text-slate-500 whitespace-nowrap">
-                      {new Date(t.created_at).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
+                      {new Date(t.created_at).toLocaleString([], { timeZone: 'Asia/Dhaka', dateStyle: 'short', timeStyle: 'short' })}
                     </td>
                     <td className="px-4 sm:px-6 py-3 text-right">
                       {t.status === 'pending' ? (
@@ -329,7 +329,7 @@ export default function TransactionsPage() {
                 )}
                 <dt className="text-slate-500">Date</dt>
                 <dd className="col-span-2 text-slate-700">
-                  {new Date(t.created_at).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
+                  {new Date(t.created_at).toLocaleString([], { timeZone: 'Asia/Dhaka', dateStyle: 'short', timeStyle: 'short' })}
                 </dd>
                 {proofUrl(t) && (
                   <>
