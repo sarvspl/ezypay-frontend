@@ -26,13 +26,10 @@ export default function ConsoleShell({ children, action }) {
     <div className="min-h-screen bg-slate-50">
       {/* Top bar */}
       <header className="sticky top-0 z-20 bg-white border-b border-slate-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
-          <Link href="/console/merchants" className="flex items-center gap-2 shrink-0" aria-label="EzyPay Console home">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-20 flex items-center justify-between gap-4">
+          <Link href="/console/merchants" className="flex items-center shrink-0" aria-label="EzyPay Console home">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/logo-ezypay.png" alt="EzyPay" className="h-9 w-auto" />
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 border border-slate-300 rounded px-1.5 py-0.5">
-              Console
-            </span>
+            <img src="/logo-ezypay.png" alt="EzyPay" className="h-12 sm:h-14 w-auto" />
           </Link>
 
           {/* Section pill nav (desktop) */}
