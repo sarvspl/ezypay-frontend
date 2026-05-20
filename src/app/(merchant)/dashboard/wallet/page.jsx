@@ -314,8 +314,26 @@ function WalletPageBody() {
                   required
                   autoFocus
                 />
-                <div className="text-xs text-slate-500 mt-1">Between {formatMoney(10, currency)} and {formatMoney(100000, currency)}.</div>
+                <div className="text-xs text-slate-500 mt-1">Between {formatMoney(10, currency)} and {formatMoney(100000, currency)}. This is the amount credited to your wallet.</div>
               </div>
+
+              {/* Live fee breakdown — the top-up fee is added on top of what you receive. */}
+              {wallet.topup_fee_enabled && Number(wallet.topup_fee_percent) > 0 && Number(amount) > 0 && (
+                <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm space-y-1">
+                  <div className="flex justify-between text-slate-600">
+                    <span>You'll receive</span>
+                    <span className="tabular-nums">{formatMoney(Number(amount), currency)}</span>
+                  </div>
+                  <div className="flex justify-between text-slate-600">
+                    <span>Top-up fee ({Number(wallet.topup_fee_percent)}%)</span>
+                    <span className="tabular-nums">{formatMoney(Math.round(Number(amount) * Number(wallet.topup_fee_percent)) / 100, currency)}</span>
+                  </div>
+                  <div className="flex justify-between font-semibold text-slate-900 pt-1 border-t border-slate-200">
+                    <span>Total to pay</span>
+                    <span className="tabular-nums">{formatMoney(Number(amount) + Math.round(Number(amount) * Number(wallet.topup_fee_percent)) / 100, currency)}</span>
+                  </div>
+                </div>
+              )}
 
               {startError && (
                 <div className="space-y-3">

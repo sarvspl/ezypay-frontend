@@ -20,17 +20,19 @@ export default function ConsolePlatformAccountPage() {
   const [showKey, setShowKey] = useState(false);
   const [showAddGateway, setShowAddGateway] = useState(false);
   const [settings, setSettings] = useState(null);
+  const [revenue, setRevenue] = useState(null);
 
   const reload = async () => {
     const token = adminAuth.get();
     try {
-      const [i, g, d, r, p, s] = await Promise.all([
+      const [i, g, d, r, p, s, rev] = await Promise.all([
         api.adminGetPlatform(token),
         api.adminListPlatformGateways(token),
         api.adminListPlatformDevices(token),
         api.adminListPlatformRecharges(token, { limit: 30 }),
         api.listProviders(),
         api.adminGetPlatformSettings(token),
+        api.adminGetPlatformRevenue(token),
       ]);
       setInfo(i.platform);
       setGateways(g.gateways || []);
@@ -38,6 +40,7 @@ export default function ConsolePlatformAccountPage() {
       setRecharges(r.recharges || []);
       setProviders(p.providers || []);
       setSettings(s.settings || null);
+      setRevenue(rev || null);
     } catch (e) {
       if (e.status === 401) { adminAuth.clear(); router.replace('/console/login'); }
       else setError(e.message);
@@ -75,7 +78,7 @@ export default function ConsolePlatformAccountPage() {
         {info && (
           <div className="card p-6 grid sm:grid-cols-2 gap-5">
             <Field label="Platform merchant ID" value={info.id} mono />
-            <Field label="Wallet balance" value={`₹${Number(info.wallet_balance || 0).toFixed(2)}`} />
+            <Field label="Wallet balance" value={`${currencySymbol(info.currency || 'BDT')}${Number(info.wallet_balance || 0).toFixed(2)}`} />
             <Field label="Active gateways" value={`${info.active_gateway_count}`} />
             <Field label="Bound devices" value={`${info.bound_device_count}`} />
             <div className="sm:col-span-2">
@@ -97,6 +100,9 @@ export default function ConsolePlatformAccountPage() {
             </div>
           </div>
         )}
+
+        {/* Admin wallet / earnings */}
+        <EarningsSection revenue={revenue} />
 
         {/* Pricing */}
         <PricingSection
@@ -319,12 +325,93 @@ function RechargeStatusPill({ tx, session }) {
   return <span className="inline-flex rounded-full bg-amber-100 text-amber-700 px-2.5 py-0.5 text-[11px] font-semibold">Pending</span>;
 }
 
+function EarningsSection({ revenue }) {
+  const cur = revenue?.currency || 'BDT';
+  const money = (n) => `${currencySymbol(cur)}${Number(n || 0).toFixed(2)}`;
+
+  return (
+    <div>
+      <div className="mb-3">
+        <h2 className="font-semibold text-slate-900">Admin wallet — earnings</h2>
+        <p className="text-xs text-slate-500 mt-0.5">
+          Platform income from verification fees and wallet top-up fees, and where it came from.
+        </p>
+      </div>
+
+      {!revenue ? (
+        <div className="card p-6 text-slate-500 text-sm">Loading earnings…</div>
+      ) : (
+        <div className="space-y-4">
+          {/* Summary tiles */}
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            <StatTile label="Total earned" value={money(revenue.total)} accent />
+            <StatTile label="Verification fees" value={money(revenue.verify_fee_total)} />
+            <StatTile label="Top-up fees" value={money(revenue.topup_fee_total)} />
+            <StatTile label="This month" value={money(revenue.this_month)} sub={`Today ${money(revenue.today)}`} />
+          </div>
+
+          {/* Recent income */}
+          <div className="card overflow-hidden">
+            <div className="px-4 py-3 border-b border-slate-100 text-xs uppercase tracking-wider text-slate-500 font-medium">
+              Recent income
+            </div>
+            {(!revenue.recent || revenue.recent.length === 0) ? (
+              <div className="p-8 text-center text-slate-500 text-sm">No earnings yet.</div>
+            ) : (
+              <table className="w-full text-sm">
+                <thead className="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider">
+                  <tr>
+                    <th className="px-4 py-2.5 text-left font-medium">When</th>
+                    <th className="px-4 py-2.5 text-left font-medium">Source</th>
+                    <th className="px-4 py-2.5 text-left font-medium">From merchant</th>
+                    <th className="px-4 py-2.5 text-right font-medium">Amount</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {revenue.recent.map((row) => (
+                    <tr key={row.id} className="hover:bg-slate-50/60">
+                      <td className="px-4 py-2.5 text-slate-600">{new Date(row.created_at).toLocaleString()}</td>
+                      <td className="px-4 py-2.5">
+                        {row.type === 'topup_fee'
+                          ? <span className="inline-flex rounded-full bg-indigo-50 border border-indigo-200 text-indigo-700 px-2 py-0.5 text-[11px] font-semibold">Top-up fee</span>
+                          : <span className="inline-flex rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 px-2 py-0.5 text-[11px] font-semibold">Verification fee</span>}
+                      </td>
+                      <td className="px-4 py-2.5 text-slate-700">{row.merchant_name || <span className="text-slate-400 italic">unknown</span>}</td>
+                      <td className="px-4 py-2.5 text-right font-semibold text-emerald-700 tabular-nums">
+                        +{currencySymbol(row.currency || cur)}{Number(row.amount).toFixed(2)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function StatTile({ label, value, sub, accent }) {
+  return (
+    <div className={`card p-4 ${accent ? 'bg-brand-50 border-brand-200' : ''}`}>
+      <div className="text-xs text-slate-500 font-medium">{label}</div>
+      <div className={`mt-1 text-xl font-bold tabular-nums ${accent ? 'text-brand-900' : 'text-slate-900'}`}>{value}</div>
+      {sub && <div className="text-[11px] text-slate-500 mt-0.5">{sub}</div>}
+    </div>
+  );
+}
+
 function PricingSection({ settings, onSaved, currency: defaultCurrency }) {
   const [form, setForm] = useState({
     verify_charge_enabled: false,
+    verify_charge_type: 'fixed',
     verify_charge_amount: '',
+    verify_charge_percent: '',
     verify_charge_currency: defaultCurrency || 'BDT',
     low_balance_threshold: '',
+    topup_fee_enabled: false,
+    topup_fee_percent: '',
   });
   const [saving, setSaving] = useState(false);
   const [savedAt, setSavedAt] = useState(null);
@@ -334,9 +421,13 @@ function PricingSection({ settings, onSaved, currency: defaultCurrency }) {
     if (!settings) return;
     setForm({
       verify_charge_enabled: !!settings.verify_charge_enabled,
+      verify_charge_type: settings.verify_charge_type === 'percent' ? 'percent' : 'fixed',
       verify_charge_amount: settings.verify_charge_amount != null ? String(settings.verify_charge_amount) : '',
+      verify_charge_percent: settings.verify_charge_percent != null ? String(settings.verify_charge_percent) : '',
       verify_charge_currency: settings.verify_charge_currency || defaultCurrency || 'BDT',
       low_balance_threshold: settings.low_balance_threshold != null ? String(settings.low_balance_threshold) : '',
+      topup_fee_enabled: !!settings.topup_fee_enabled,
+      topup_fee_percent: settings.topup_fee_percent != null ? String(settings.topup_fee_percent) : '',
     });
   }, [settings, defaultCurrency]);
 
@@ -349,9 +440,13 @@ function PricingSection({ settings, onSaved, currency: defaultCurrency }) {
       const token = adminAuth.get();
       const r = await api.adminUpdatePlatformSettings(token, {
         verify_charge_enabled: form.verify_charge_enabled,
+        verify_charge_type: form.verify_charge_type,
         verify_charge_amount: Number(form.verify_charge_amount) || 0,
+        verify_charge_percent: Number(form.verify_charge_percent) || 0,
         verify_charge_currency: form.verify_charge_currency,
         low_balance_threshold: Number(form.low_balance_threshold) || 0,
+        topup_fee_enabled: form.topup_fee_enabled,
+        topup_fee_percent: Number(form.topup_fee_percent) || 0,
       });
       onSaved?.(r.settings);
       setSavedAt(new Date());
@@ -394,26 +489,80 @@ function PricingSection({ settings, onSaved, currency: defaultCurrency }) {
           </span>
         </label>
 
+        {/* Charge type — flat amount vs % of the payment */}
+        <div>
+          <label className="label">Charge type</label>
+          <div className="inline-flex rounded-lg border border-slate-300 p-0.5 bg-slate-50">
+            {[
+              { v: 'fixed',   label: 'Fixed amount' },
+              { v: 'percent', label: 'Percentage of payment' },
+            ].map((opt) => (
+              <button
+                key={opt.v}
+                type="button"
+                onClick={() => setForm({ ...form, verify_charge_type: opt.v })}
+                disabled={!form.verify_charge_enabled}
+                className={`px-4 py-1.5 text-sm font-medium rounded-md transition ${
+                  form.verify_charge_type === opt.v
+                    ? 'bg-white text-brand-700 shadow-sm'
+                    : 'text-slate-600 hover:text-slate-900'
+                } disabled:opacity-50 disabled:cursor-not-allowed`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+          <p className="text-xs text-slate-500 mt-1">
+            {form.verify_charge_type === 'percent'
+              ? 'Debit a percentage of each verified payment amount.'
+              : 'Debit the same flat fee on every verification, regardless of payment size.'}
+          </p>
+        </div>
+
         <div className="grid sm:grid-cols-3 gap-4">
           <div className="sm:col-span-1">
-            <label className="label">Fee per verification</label>
-            <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">
-                {currencySymbol(form.verify_charge_currency)}
-              </span>
-              <input
-                type="number"
-                inputMode="decimal"
-                step="0.01"
-                min="0"
-                value={form.verify_charge_amount}
-                onChange={(e) => setForm({ ...form, verify_charge_amount: e.target.value })}
-                placeholder="0.50"
-                className="input !pl-8"
-                disabled={!form.verify_charge_enabled}
-              />
-            </div>
-            <p className="text-xs text-slate-500 mt-1">0 means free — same as leaving it disabled.</p>
+            {form.verify_charge_type === 'percent' ? (
+              <>
+                <label className="label">Fee percentage</label>
+                <div className="relative">
+                  <input
+                    type="number"
+                    inputMode="decimal"
+                    step="0.01"
+                    min="0"
+                    max="100"
+                    value={form.verify_charge_percent}
+                    onChange={(e) => setForm({ ...form, verify_charge_percent: e.target.value })}
+                    placeholder="1.50"
+                    className="input !pr-8"
+                    disabled={!form.verify_charge_enabled}
+                  />
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">%</span>
+                </div>
+                <p className="text-xs text-slate-500 mt-1">0 means free — same as leaving it disabled.</p>
+              </>
+            ) : (
+              <>
+                <label className="label">Fee per verification</label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">
+                    {currencySymbol(form.verify_charge_currency)}
+                  </span>
+                  <input
+                    type="number"
+                    inputMode="decimal"
+                    step="0.01"
+                    min="0"
+                    value={form.verify_charge_amount}
+                    onChange={(e) => setForm({ ...form, verify_charge_amount: e.target.value })}
+                    placeholder="0.50"
+                    className="input !pl-8"
+                    disabled={!form.verify_charge_enabled}
+                  />
+                </div>
+                <p className="text-xs text-slate-500 mt-1">0 means free — same as leaving it disabled.</p>
+              </>
+            )}
           </div>
 
           <div className="sm:col-span-1">
@@ -454,7 +603,7 @@ function PricingSection({ settings, onSaved, currency: defaultCurrency }) {
         </div>
 
         {/* Preview */}
-        {form.verify_charge_enabled && Number(form.verify_charge_amount) > 0 && (
+        {form.verify_charge_enabled && form.verify_charge_type === 'fixed' && Number(form.verify_charge_amount) > 0 && (
           <div className="rounded-lg bg-brand-50 border border-brand-200 p-3 text-sm">
             <span className="font-semibold text-brand-900">Preview: </span>
             <span className="text-brand-800">
@@ -465,6 +614,69 @@ function PricingSection({ settings, onSaved, currency: defaultCurrency }) {
             </span>
           </div>
         )}
+        {form.verify_charge_enabled && form.verify_charge_type === 'percent' && Number(form.verify_charge_percent) > 0 && (
+          <div className="rounded-lg bg-brand-50 border border-brand-200 p-3 text-sm">
+            <span className="font-semibold text-brand-900">Preview: </span>
+            <span className="text-brand-800">
+              Each verification will deduct{' '}
+              <strong>{Number(form.verify_charge_percent)}%</strong>{' '}
+              of the payment amount. A{' '}
+              <strong>{form.verify_charge_currency} 10,000.00</strong> payment costs{' '}
+              <strong>{form.verify_charge_currency} {(Number(form.verify_charge_percent) * 10000 / 100).toFixed(2)}</strong>;
+              a <strong>{form.verify_charge_currency} 500.00</strong> payment costs{' '}
+              <strong>{form.verify_charge_currency} {(Number(form.verify_charge_percent) * 500 / 100).toFixed(2)}</strong>.
+            </span>
+          </div>
+        )}
+
+        {/* ─── Wallet top-up fee ─── */}
+        <div className="pt-5 border-t border-slate-100 space-y-4">
+          <label className="flex items-start gap-3 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={form.topup_fee_enabled}
+              onChange={(e) => setForm({ ...form, topup_fee_enabled: e.target.checked })}
+              className="mt-1"
+            />
+            <span>
+              <span className="font-semibold text-slate-900">Charge a wallet top-up fee</span>
+              <span className="block text-xs text-slate-500 mt-0.5">
+                A percentage added on top of every recharge. The merchant pays the amount they want credited plus this fee; you keep the fee.
+              </span>
+            </span>
+          </label>
+
+          <div className="sm:max-w-xs">
+            <label className="label">Top-up fee percentage</label>
+            <div className="relative">
+              <input
+                type="number"
+                inputMode="decimal"
+                step="0.01"
+                min="0"
+                max="100"
+                value={form.topup_fee_percent}
+                onChange={(e) => setForm({ ...form, topup_fee_percent: e.target.value })}
+                placeholder="1.00"
+                className="input !pr-8"
+                disabled={!form.topup_fee_enabled}
+              />
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">%</span>
+            </div>
+            <p className="text-xs text-slate-500 mt-1">0 means free top-ups — same as leaving it disabled.</p>
+          </div>
+
+          {form.topup_fee_enabled && Number(form.topup_fee_percent) > 0 && (
+            <div className="rounded-lg bg-brand-50 border border-brand-200 p-3 text-sm">
+              <span className="font-semibold text-brand-900">Preview: </span>
+              <span className="text-brand-800">
+                To get <strong>{form.verify_charge_currency} 1,000.00</strong> credited, the merchant pays{' '}
+                <strong>{form.verify_charge_currency} {(1000 + Number(form.topup_fee_percent) * 1000 / 100).toFixed(2)}</strong>{' '}
+                (fee <strong>{form.verify_charge_currency} {(Number(form.topup_fee_percent) * 1000 / 100).toFixed(2)}</strong>). You earn the fee.
+              </span>
+            </div>
+          )}
+        </div>
 
         {error && <div className="text-sm text-rose-600 bg-rose-50 border border-rose-200 rounded p-3">{error}</div>}
         {savedAt && !error && <div className="text-sm text-emerald-700 bg-emerald-50 border border-emerald-200 rounded p-3">Saved.</div>}

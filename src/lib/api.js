@@ -148,6 +148,7 @@ export const api = {
     const qs = new URLSearchParams(params).toString();
     return request(`/api/admin/platform/recharges${qs ? '?' + qs : ''}`, { token });
   },
+  adminGetPlatformRevenue:    (token) => request('/api/admin/platform/revenue', { token }),
   adminListPlatformGateways:   (token) => request('/api/admin/platform/gateways', { token }),
   adminCreatePlatformGateway:  (token, body) => request('/api/admin/platform/gateways', { method: 'POST', body, token }),
   adminUpdatePlatformGateway:  (token, id, body) => request(`/api/admin/platform/gateways/${id}`, { method: 'PATCH', body, token }),
