@@ -3,7 +3,6 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { adminAuth } from '@/lib/auth';
-import { LogoMark } from '@/components/Logo';
 
 const NAV = [
   { href: '/console/merchants',        label: 'Merchants', icon: <UsersIcon /> },
@@ -28,12 +27,10 @@ export default function ConsoleShell({ children, action }) {
       {/* Top bar */}
       <header className="sticky top-0 z-20 bg-white border-b border-slate-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
-          <Link href="/console/merchants" className="flex items-center gap-2 shrink-0">
-            <span className="text-brand-600"><LogoMark className="w-10 h-10" /></span>
-            <span className="text-xl font-bold tracking-tight text-slate-900 hidden sm:inline">
-              Ezy<span className="text-brand-600">Pay</span>
-            </span>
-            <span className="ml-1 text-[10px] font-bold uppercase tracking-wider text-slate-400 border border-slate-300 rounded px-1.5 py-0.5">
+          <Link href="/console/merchants" className="flex items-center gap-2 shrink-0" aria-label="EzyPay Console home">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo-ezypay.png" alt="EzyPay" className="h-9 w-auto" />
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 border border-slate-300 rounded px-1.5 py-0.5">
               Console
             </span>
           </Link>
