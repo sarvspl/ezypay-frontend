@@ -84,15 +84,15 @@ export default function ConsolePlatformAccountPage() {
             <div className="sm:col-span-2">
               <label className="label">Device Auth Key (paste into APK to bind your phone)</label>
               <div className="flex items-center gap-2">
-                <code className="flex-1 font-mono text-sm bg-slate-50 border border-slate-200 rounded px-3 py-2">
+                <code className="flex-1 min-w-0 break-all font-mono text-sm bg-slate-50 border border-slate-200 rounded px-3 py-2">
                   {showKey ? info.device_auth_key : '••••••' + (info.device_auth_key || '').slice(-4)}
                 </code>
-                <button onClick={() => setShowKey((s) => !s)} className="btn-secondary !py-1.5 text-xs">
+                <button onClick={() => setShowKey((s) => !s)} className="btn-secondary !py-1.5 text-xs shrink-0">
                   {showKey ? 'Hide' : 'Show'}
                 </button>
                 <button
                   onClick={() => navigator.clipboard?.writeText(info.device_auth_key || '')}
-                  className="btn-secondary !py-1.5 text-xs"
+                  className="btn-secondary !py-1.5 text-xs shrink-0"
                 >
                   Copy
                 </button>
@@ -153,8 +153,8 @@ export default function ConsolePlatformAccountPage() {
               </div>
             )
           ) : (
-            <div className="card overflow-hidden">
-              <table className="w-full text-sm">
+            <div className="card overflow-x-auto">
+              <table className="w-full text-sm min-w-[640px]">
                 <thead className="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider">
                   <tr>
                     <th className="px-4 py-3 text-left font-medium">Provider</th>
@@ -207,7 +207,7 @@ export default function ConsolePlatformAccountPage() {
         {/* Devices */}
         <div>
           <h2 className="font-semibold text-slate-900 mb-3">Bound APK devices</h2>
-          <div className="card overflow-hidden">
+          <div className="card overflow-x-auto">
             {!devices || devices.length === 0 ? (
               <div className="p-8 text-center">
                 <p className="text-slate-500 text-sm">
@@ -225,10 +225,10 @@ export default function ConsolePlatformAccountPage() {
                   </svg>
                   Download APK
                 </a>
-                <div className="text-[11px] text-slate-400 mt-1.5">Android only · ~12&nbsp;MB</div>
+                <div className="text-[11px] text-slate-400 mt-1.5">Android only · ~50&nbsp;MB</div>
               </div>
             ) : (
-              <table className="w-full text-sm">
+              <table className="w-full text-sm min-w-[640px]">
                 <thead className="bg-slate-50 text-slate-600 text-left">
                   <tr>
                     <th className="px-4 py-3 font-medium">Device</th>
@@ -308,7 +308,7 @@ function Field({ label, value, mono }) {
   return (
     <div>
       <div className="label">{label}</div>
-      <div className={`text-slate-900 ${mono ? 'font-mono text-sm' : 'font-semibold'}`}>{value}</div>
+      <div className={`text-slate-900 ${mono ? 'font-mono text-sm break-all' : 'font-semibold'}`}>{value}</div>
     </div>
   );
 }
@@ -358,7 +358,8 @@ function EarningsSection({ revenue }) {
             {(!revenue.recent || revenue.recent.length === 0) ? (
               <div className="p-8 text-center text-slate-500 text-sm">No earnings yet.</div>
             ) : (
-              <table className="w-full text-sm">
+              <div className="overflow-x-auto">
+              <table className="w-full text-sm min-w-[560px]">
                 <thead className="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider">
                   <tr>
                     <th className="px-4 py-2.5 text-left font-medium">When</th>
@@ -384,6 +385,7 @@ function EarningsSection({ revenue }) {
                   ))}
                 </tbody>
               </table>
+              </div>
             )}
           </div>
         </div>
@@ -423,11 +425,11 @@ function PricingSection({ settings, onSaved, currency: defaultCurrency }) {
       verify_charge_enabled: !!settings.verify_charge_enabled,
       verify_charge_type: settings.verify_charge_type === 'percent' ? 'percent' : 'fixed',
       verify_charge_amount: settings.verify_charge_amount != null ? String(settings.verify_charge_amount) : '',
-      verify_charge_percent: settings.verify_charge_percent != null ? String(settings.verify_charge_percent) : '',
+      verify_charge_percent: trimNum(settings.verify_charge_percent),
       verify_charge_currency: settings.verify_charge_currency || defaultCurrency || 'BDT',
       low_balance_threshold: settings.low_balance_threshold != null ? String(settings.low_balance_threshold) : '',
       topup_fee_enabled: !!settings.topup_fee_enabled,
-      topup_fee_percent: settings.topup_fee_percent != null ? String(settings.topup_fee_percent) : '',
+      topup_fee_percent: trimNum(settings.topup_fee_percent),
     });
   }, [settings, defaultCurrency]);
 
@@ -608,9 +610,9 @@ function PricingSection({ settings, onSaved, currency: defaultCurrency }) {
             <span className="font-semibold text-brand-900">Preview: </span>
             <span className="text-brand-800">
               Each verification will deduct{' '}
-              <strong>{form.verify_charge_currency} {Number(form.verify_charge_amount).toFixed(2)}</strong>{' '}
+              <strong>{fmtMoney(form.verify_charge_amount, form.verify_charge_currency)}</strong>{' '}
               from the merchant's wallet. So 1,000 successful verifications cost{' '}
-              <strong>{form.verify_charge_currency} {(Number(form.verify_charge_amount) * 1000).toFixed(2)}</strong>.
+              <strong>{fmtMoney(Number(form.verify_charge_amount) * 1000, form.verify_charge_currency)}</strong>.
             </span>
           </div>
         )}
@@ -619,12 +621,12 @@ function PricingSection({ settings, onSaved, currency: defaultCurrency }) {
             <span className="font-semibold text-brand-900">Preview: </span>
             <span className="text-brand-800">
               Each verification will deduct{' '}
-              <strong>{Number(form.verify_charge_percent)}%</strong>{' '}
+              <strong>{trimNum(form.verify_charge_percent)}%</strong>{' '}
               of the payment amount. A{' '}
-              <strong>{form.verify_charge_currency} 10,000.00</strong> payment costs{' '}
-              <strong>{form.verify_charge_currency} {(Number(form.verify_charge_percent) * 10000 / 100).toFixed(2)}</strong>;
-              a <strong>{form.verify_charge_currency} 500.00</strong> payment costs{' '}
-              <strong>{form.verify_charge_currency} {(Number(form.verify_charge_percent) * 500 / 100).toFixed(2)}</strong>.
+              <strong>{fmtMoney(10000, form.verify_charge_currency)}</strong> payment costs{' '}
+              <strong>{fmtMoney(Number(form.verify_charge_percent) * 10000 / 100, form.verify_charge_currency)}</strong>;
+              a <strong>{fmtMoney(500, form.verify_charge_currency)}</strong> payment costs{' '}
+              <strong>{fmtMoney(Number(form.verify_charge_percent) * 500 / 100, form.verify_charge_currency)}</strong>.
             </span>
           </div>
         )}
@@ -667,13 +669,24 @@ function PricingSection({ settings, onSaved, currency: defaultCurrency }) {
           </div>
 
           {form.topup_fee_enabled && Number(form.topup_fee_percent) > 0 && (
-            <div className="rounded-lg bg-brand-50 border border-brand-200 p-3 text-sm">
-              <span className="font-semibold text-brand-900">Preview: </span>
-              <span className="text-brand-800">
-                To get <strong>{form.verify_charge_currency} 1,000.00</strong> credited, the merchant pays{' '}
-                <strong>{form.verify_charge_currency} {(1000 + Number(form.topup_fee_percent) * 1000 / 100).toFixed(2)}</strong>{' '}
-                (fee <strong>{form.verify_charge_currency} {(Number(form.topup_fee_percent) * 1000 / 100).toFixed(2)}</strong>). You earn the fee.
-              </span>
+            <div className="rounded-lg bg-brand-50 border border-brand-200 p-3.5">
+              <div className="text-xs font-semibold uppercase tracking-wider text-brand-700 mb-2">
+                Preview · on a {fmtMoney(1000, form.verify_charge_currency)} recharge
+              </div>
+              <dl className="space-y-1 text-sm">
+                <div className="flex justify-between text-brand-800">
+                  <dt>Merchant receives</dt>
+                  <dd className="tabular-nums font-medium">{fmtMoney(1000, form.verify_charge_currency)}</dd>
+                </div>
+                <div className="flex justify-between text-brand-800">
+                  <dt>Top-up fee ({trimNum(form.topup_fee_percent)}%) — you earn</dt>
+                  <dd className="tabular-nums font-medium">{fmtMoney(Number(form.topup_fee_percent) * 1000 / 100, form.verify_charge_currency)}</dd>
+                </div>
+                <div className="flex justify-between font-semibold text-brand-900 pt-1.5 border-t border-brand-200">
+                  <dt>Merchant pays</dt>
+                  <dd className="tabular-nums">{fmtMoney(1000 + Number(form.topup_fee_percent) * 1000 / 100, form.verify_charge_currency)}</dd>
+                </div>
+              </dl>
             </div>
           )}
         </div>
@@ -696,6 +709,16 @@ function PricingSection({ settings, onSaved, currency: defaultCurrency }) {
 
 function currencySymbol(code) {
   return ({ BDT: '৳', INR: '₹', USD: '$', EUR: '€', GBP: '£' })[code] || code + ' ';
+}
+
+// Money with thousands separators + 2 decimals, e.g. ৳1,010.00
+function fmtMoney(n, code) {
+  return `${currencySymbol(code)}${Number(n || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
+// Trim trailing zeros off a stored numeric so 1.0000 shows as "1", 1.5000 as "1.5".
+function trimNum(v) {
+  return v == null ? '' : String(Number(v));
 }
 
 function prettyVariant(v) {

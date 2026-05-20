@@ -87,7 +87,7 @@ export default function ConsoleTicketsPage() {
             className="input pl-10"
           />
         </div>
-        <div className="flex gap-1 bg-slate-100 rounded-lg p-1 overflow-x-auto sm:overflow-visible">
+        <div className="flex flex-wrap gap-1 bg-slate-100 rounded-lg p-1">
           {TABS.map((t) => {
             const active = filter === t.key;
             return (

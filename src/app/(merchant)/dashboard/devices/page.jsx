@@ -294,7 +294,7 @@ function EmptyState({ merchant }) {
         >
           <DownloadIcon /> Download APK
         </a>
-        <div className="text-[11px] text-slate-400 mt-1.5">Android only · ~12&nbsp;MB</div>
+        <div className="text-[11px] text-slate-400 mt-1.5">Android only · ~50&nbsp;MB</div>
 
         {authKey && (
           <div className="mt-5 inline-flex items-center gap-2 rounded-md bg-slate-100 px-3 py-2">

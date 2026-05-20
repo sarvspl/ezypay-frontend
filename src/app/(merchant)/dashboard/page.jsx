@@ -246,26 +246,27 @@ function CredentialsAndApk({ merchant }) {
         </div>
       </div>
 
-      <div className="card p-5 sm:p-6 flex flex-col">
-        <div className="flex items-center justify-between">
-          <h3 className="font-semibold text-slate-900">EzyPay APK</h3>
-          <PhoneIcon className="text-slate-300" />
+      <a
+        href="/ezypay.apk"
+        download="ezypay.apk"
+        className="group card p-5 sm:p-6 flex flex-col text-center items-center cursor-pointer transition hover:border-brand-300 hover:shadow-md"
+      >
+        {/* Phone logo */}
+        <div className="w-16 h-16 rounded-2xl bg-brand-50 ring-1 ring-brand-100 flex items-center justify-center group-hover:bg-brand-100 transition">
+          <PhoneIcon className="w-8 h-8 text-brand-600" />
         </div>
-        <p className="text-sm text-slate-600 mt-2">
+        <h3 className="font-semibold text-slate-900 mt-3">EzyPay APK</h3>
+        <p className="text-sm text-slate-600 mt-1">
           Install on the Android phone receiving your wallet SMS. Open the app and paste your Device Auth Key to bind it.
         </p>
-        <div className="mt-auto pt-4 space-y-2">
-          <a
-            href="/ezypay.apk"
-            download="ezypay.apk"
-            className="btn-primary w-full inline-flex items-center justify-center"
-          >
+        <div className="mt-auto pt-4 w-full space-y-2">
+          <span className="btn-primary w-full inline-flex items-center justify-center group-hover:bg-brand-700">
             <DownloadIcon className="w-4 h-4 mr-2" />
             Download APK
-          </a>
-          <p className="text-xs text-slate-400 text-center">Android · ARM64 / ARM32 / x86_64 (universal)</p>
+          </span>
+          <p className="text-xs text-slate-400">Android · ARM64 / ARM32 / x86_64 (universal)</p>
         </div>
-      </div>
+      </a>
     </section>
   );
 }
