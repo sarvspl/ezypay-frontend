@@ -2,11 +2,13 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { api } from '@/lib/api';
+import { api, API_BASE } from '@/lib/api';
 import { merchantAuth } from '@/lib/auth';
 import { getProvider, labelVariant } from '@/lib/providers';
 import { formatMoney } from '@/lib/money';
 import { useMerchant } from '../layout';
+
+const proofUrl = (t) => (t.proof_image_url ? `${API_BASE}${t.proof_image_url}` : null);
 
 export default function TransactionsPage() {
   const router = useRouter();
@@ -61,6 +63,9 @@ export default function TransactionsPage() {
   const [resolveReason, setResolveReason] = useState('');
   const [resolveBusy, setResolveBusy]     = useState(false);
   const [resolveError, setResolveError]   = useState(null);
+
+  // Full-screen view of a payment screenshot.
+  const [lightbox, setLightbox] = useState(null); // image URL
 
   const onResolve = (tx, result) => {
     setResolveTarget({ tx, result });
@@ -152,16 +157,17 @@ export default function TransactionsPage() {
                 <th className="px-4 sm:px-6 py-3 font-medium">From</th>
                 <th className="px-4 sm:px-6 py-3 font-medium">Order</th>
                 <th className="px-4 sm:px-6 py-3 font-medium">Status</th>
+                <th className="px-4 sm:px-6 py-3 font-medium">Proof</th>
                 <th className="px-4 sm:px-6 py-3 font-medium">Date</th>
                 <th className="px-4 sm:px-6 py-3 font-medium text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200">
               {!txs && (
-                <tr><td colSpan={8} className="py-10 text-center text-slate-400">Loading…</td></tr>
+                <tr><td colSpan={9} className="py-10 text-center text-slate-400">Loading…</td></tr>
               )}
               {txs && txs.length === 0 && (
-                <tr><td colSpan={8} className="py-16">
+                <tr><td colSpan={9} className="py-16">
                   <EmptyState filtered={!!(q || tab !== 'all')} onClear={() => { setQ(''); setTab('all'); }} />
                 </td></tr>
               )}
@@ -187,10 +193,15 @@ export default function TransactionsPage() {
                     </td>
                     <td className="px-4 sm:px-6 py-3 font-semibold whitespace-nowrap">{formatMoney(t.amount, currency)}</td>
                     <td className="px-4 sm:px-6 py-3">
-                      {t.payer_name || t.payer_phone ? (
+                      {t.payer_name || t.payer_phone || t.sender_account ? (
                         <div className="min-w-0">
                           {t.payer_name && <div className="text-slate-900 truncate max-w-[180px]" title={t.payer_name}>{t.payer_name}</div>}
                           {t.payer_phone && <div className="text-xs text-slate-500 font-mono">{t.payer_phone}</div>}
+                          {t.sender_account && (
+                            <div className="text-xs text-slate-500 font-mono" title="Sender number entered by customer">
+                              <span className="text-slate-400">paid from </span>{t.sender_account}
+                            </div>
+                          )}
                         </div>
                       ) : (
                         <span className="text-slate-400 italic">—</span>
@@ -218,6 +229,16 @@ export default function TransactionsPage() {
                     </td>
                     <td className="px-4 sm:px-6 py-3">
                       <StatusBadge status={t.status} source={t.result_source} />
+                    </td>
+                    <td className="px-4 sm:px-6 py-3">
+                      {proofUrl(t) ? (
+                        <button type="button" onClick={() => setLightbox(proofUrl(t))} className="block" title="View payment screenshot">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={proofUrl(t)} alt="proof" className="w-10 h-10 rounded object-cover border border-slate-200 hover:ring-2 hover:ring-brand-400 transition" />
+                        </button>
+                      ) : (
+                        <span className="text-slate-400 text-xs">—</span>
+                      )}
                     </td>
                     <td className="px-4 sm:px-6 py-3 text-slate-500 whitespace-nowrap">
                       {new Date(t.created_at).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
@@ -300,10 +321,27 @@ export default function TransactionsPage() {
                     </dd>
                   </>
                 )}
+                {t.sender_account && (
+                  <>
+                    <dt className="text-slate-500">Paid from</dt>
+                    <dd className="col-span-2 font-mono text-slate-800 truncate">{t.sender_account}</dd>
+                  </>
+                )}
                 <dt className="text-slate-500">Date</dt>
                 <dd className="col-span-2 text-slate-700">
                   {new Date(t.created_at).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
                 </dd>
+                {proofUrl(t) && (
+                  <>
+                    <dt className="text-slate-500">Screenshot</dt>
+                    <dd className="col-span-2">
+                      <button type="button" onClick={() => setLightbox(proofUrl(t))}>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={proofUrl(t)} alt="proof" className="w-16 h-16 rounded object-cover border border-slate-200" />
+                      </button>
+                    </dd>
+                  </>
+                )}
               </dl>
 
               {t.status === 'pending' && (
@@ -322,6 +360,29 @@ export default function TransactionsPage() {
           );
         })}
       </div>
+
+      {lightbox && (
+        <div
+          className="fixed inset-0 z-40 flex items-center justify-center p-4 bg-slate-900/80"
+          onClick={() => setLightbox(null)}
+        >
+          <button
+            type="button"
+            onClick={() => setLightbox(null)}
+            className="absolute top-4 right-4 text-white/80 hover:text-white p-2"
+            aria-label="Close"
+          >
+            <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={lightbox}
+            alt="Payment screenshot"
+            onClick={(e) => e.stopPropagation()}
+            className="max-w-full max-h-[85vh] rounded-lg shadow-2xl object-contain"
+          />
+        </div>
+      )}
 
       {resolveTarget && (
         <ResolveModal

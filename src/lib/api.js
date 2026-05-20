@@ -1,5 +1,9 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 
+// Base origin for building absolute URLs to backend-served files (e.g. payment
+// proof screenshots stored under /uploads/proofs/...).
+export const API_BASE = API_URL;
+
 async function request(path, { method = 'GET', body, token } = {}) {
   const headers = { 'Content-Type': 'application/json' };
   if (token) headers.Authorization = `Bearer ${token}`;

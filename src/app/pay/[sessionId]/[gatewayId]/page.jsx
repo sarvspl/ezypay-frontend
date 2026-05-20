@@ -17,6 +17,10 @@ export default function PayWithGatewayPage() {
   const [gateway, setGateway] = useState(null);
   const [error, setError] = useState(null);
   const [txnid, setTxnid] = useState('');
+  const [senderNo, setSenderNo] = useState('');
+  const [proof, setProof] = useState(null);       // compressed data URL
+  const [proofName, setProofName] = useState(''); // original filename, for display
+  const [proofBusy, setProofBusy] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [verifying, setVerifying] = useState(false);
   const [showHow, setShowHow] = useState(false);
@@ -46,6 +50,26 @@ export default function PayWithGatewayPage() {
     })();
   }, [sessionId, gatewayId, router]);
 
+  const onPickFile = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setError(null);
+    if (!file.type.startsWith('image/')) {
+      setError('Please choose an image file (a screenshot of your payment).');
+      return;
+    }
+    setProofBusy(true);
+    try {
+      const dataUrl = await compressImage(file);
+      setProof(dataUrl);
+      setProofName(file.name);
+    } catch {
+      setError('Could not read that image. Please try a different screenshot.');
+    } finally {
+      setProofBusy(false);
+    }
+  };
+
   const submit = async (e) => {
     e.preventDefault();
     setError(null);
@@ -53,9 +77,22 @@ export default function PayWithGatewayPage() {
       setError('Please enter the Transaction ID from your wallet SMS.');
       return;
     }
+    if (!senderNo.trim()) {
+      setError('Please enter the mobile/account number you paid from.');
+      return;
+    }
+    if (!proof) {
+      setError('Please attach a screenshot of your payment confirmation.');
+      return;
+    }
     setSubmitting(true);
     try {
-      await api.checkoutSubmit(sessionId, { gateway_id: gatewayId, txnid: txnid.trim() });
+      await api.checkoutSubmit(sessionId, {
+        gateway_id: gatewayId,
+        txnid: txnid.trim(),
+        sender_account: senderNo.trim(),
+        proof_image: proof,
+      });
       setVerifying(true);
       pollUntilResolved();
     } catch (err) {
@@ -151,9 +188,12 @@ export default function PayWithGatewayPage() {
         )}
       </div>
 
-      <form onSubmit={submit} className="card p-5">
-        <label className="block text-sm font-semibold text-slate-900 mb-2">Transaction ID</label>
-        <div className="flex gap-2">
+      <form onSubmit={submit} className="card p-5 space-y-4">
+        <div className="font-semibold text-slate-900">Confirm your payment</div>
+
+        {/* Transaction ID */}
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1.5">Transaction ID</label>
           <input
             value={txnid}
             onChange={(e) => setTxnid(e.target.value.toUpperCase())}
@@ -161,21 +201,73 @@ export default function PayWithGatewayPage() {
             className="input font-mono"
             placeholder="e.g. ABC12XY34Z"
           />
-          <button
-            type="submit"
-            disabled={submitting || verifying || !txnid.trim()}
-            className="btn-primary !px-5 whitespace-nowrap"
-          >
-            {submitting ? 'Submitting…' : verifying ? <><Spinner /> <span className="ml-2">Verifying…</span></> : 'Verify'}
-          </button>
+          <p className="text-xs text-slate-500 mt-1">From your {p.name} confirmation SMS</p>
         </div>
-        <p className="text-xs text-slate-500 mt-2">From your {p.name} confirmation SMS</p>
+
+        {/* Sender number */}
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1.5">Your {p.name} number</label>
+          <input
+            value={senderNo}
+            onChange={(e) => setSenderNo(e.target.value)}
+            disabled={submitting || verifying}
+            inputMode="numeric"
+            className="input font-mono"
+            placeholder="e.g. 01XXXXXXXXX"
+          />
+          <p className="text-xs text-slate-500 mt-1">The number/account you paid from.</p>
+        </div>
+
+        {/* Payment screenshot */}
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1.5">Payment screenshot</label>
+          {proof ? (
+            <div className="flex items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 p-2.5">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={proof} alt="Payment screenshot preview" className="w-14 h-14 rounded object-cover border border-slate-200 shrink-0" />
+              <div className="min-w-0 flex-1">
+                <div className="text-sm text-slate-800 truncate">{proofName || 'Screenshot attached'}</div>
+                <div className="text-xs text-emerald-600">Ready to submit</div>
+              </div>
+              <button
+                type="button"
+                onClick={() => { setProof(null); setProofName(''); }}
+                disabled={submitting || verifying}
+                className="text-xs font-semibold text-rose-600 hover:text-rose-700 px-2 py-1 rounded hover:bg-rose-50 shrink-0"
+              >
+                Remove
+              </button>
+            </div>
+          ) : (
+            <label className={`flex flex-col items-center justify-center gap-1.5 rounded-lg border-2 border-dashed border-slate-300 px-4 py-6 text-center cursor-pointer hover:border-brand-400 hover:bg-brand-50/40 transition ${proofBusy ? 'opacity-60 pointer-events-none' : ''}`}>
+              <UploadIcon />
+              <span className="text-sm font-medium text-slate-700">{proofBusy ? 'Processing…' : 'Tap to upload / take a photo'}</span>
+              <span className="text-xs text-slate-500">A screenshot of your confirmation SMS or app receipt</span>
+              <input
+                type="file"
+                accept="image/*"
+                capture="environment"
+                onChange={onPickFile}
+                disabled={submitting || verifying || proofBusy}
+                className="hidden"
+              />
+            </label>
+          )}
+        </div>
+
+        <button
+          type="submit"
+          disabled={submitting || verifying || proofBusy || !txnid.trim() || !senderNo.trim() || !proof}
+          className="btn-primary w-full !py-2.5"
+        >
+          {submitting ? 'Submitting…' : verifying ? <><Spinner /> <span className="ml-2">Verifying…</span></> : 'Verify'}
+        </button>
 
         {error && (
-          <div className="mt-3 text-sm text-rose-600 bg-rose-50 border border-rose-200 rounded p-3">{error}</div>
+          <div className="text-sm text-rose-600 bg-rose-50 border border-rose-200 rounded p-3">{error}</div>
         )}
         {verifying && !error && (
-          <div className="mt-3 text-sm text-brand-700 bg-brand-50 border border-brand-200 rounded p-3 flex items-center gap-2">
+          <div className="text-sm text-brand-700 bg-brand-50 border border-brand-200 rounded p-3 flex items-center gap-2">
             <Spinner /> Verifying your request…
           </div>
         )}
@@ -270,6 +362,33 @@ function Row({ label, value }) {
   );
 }
 
+// Downscale + re-encode a chosen image to a small JPEG data URL so the upload
+// payload stays light (~150–300 KB) regardless of the original photo size.
+async function compressImage(file, maxDim = 1280, quality = 0.7) {
+  const readUrl = await new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(r.result);
+    r.onerror = reject;
+    r.readAsDataURL(file);
+  });
+  const img = await new Promise((resolve, reject) => {
+    const i = new Image();
+    i.onload = () => resolve(i);
+    i.onerror = reject;
+    i.src = readUrl;
+  });
+  let width = img.width || 1;
+  let height = img.height || 1;
+  const scale = Math.min(1, maxDim / Math.max(width, height));
+  width = Math.round(width * scale);
+  height = Math.round(height * scale);
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+  return canvas.toDataURL('image/jpeg', quality);
+}
+
 // Mirror of computeFee in backend/payment.controller.js — keep in sync.
 function computeFee(base, value, type) {
   const v = Number(value || 0);
@@ -296,6 +415,9 @@ function ChevronIcon({ className = '' }) {
 }
 function CopyIcon() {
   return <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>;
+}
+function UploadIcon() {
+  return <svg className="w-6 h-6 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>;
 }
 function Spinner() {
   return (
