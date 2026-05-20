@@ -156,6 +156,7 @@ export default function TransactionsPage() {
                 <th className="px-4 sm:px-6 py-3 font-medium">Amount</th>
                 <th className="px-4 sm:px-6 py-3 font-medium">From</th>
                 <th className="px-4 sm:px-6 py-3 font-medium">Order</th>
+                <th className="px-4 sm:px-6 py-3 font-medium">Session ID</th>
                 <th className="px-4 sm:px-6 py-3 font-medium">Status</th>
                 <th className="px-4 sm:px-6 py-3 font-medium">Proof</th>
                 <th className="px-4 sm:px-6 py-3 font-medium">Date</th>
@@ -164,10 +165,10 @@ export default function TransactionsPage() {
             </thead>
             <tbody className="divide-y divide-slate-200">
               {!txs && (
-                <tr><td colSpan={9} className="py-10 text-center text-slate-400">Loading…</td></tr>
+                <tr><td colSpan={10} className="py-10 text-center text-slate-400">Loading…</td></tr>
               )}
               {txs && txs.length === 0 && (
-                <tr><td colSpan={9} className="py-16">
+                <tr><td colSpan={10} className="py-16">
                   <EmptyState filtered={!!(q || tab !== 'all')} onClear={() => { setQ(''); setTab('all'); }} />
                 </td></tr>
               )}
@@ -226,6 +227,13 @@ export default function TransactionsPage() {
                           ) : null;
                         })()}
                       </div>
+                    </td>
+                    <td className="px-4 sm:px-6 py-3">
+                      {t.session_id ? (
+                        <span className="font-mono text-xs text-slate-600" title={t.session_id}>{t.session_id}</span>
+                      ) : (
+                        <span className="text-slate-400 text-xs">—</span>
+                      )}
                     </td>
                     <td className="px-4 sm:px-6 py-3">
                       <StatusBadge status={t.status} source={t.result_source} />
@@ -311,6 +319,10 @@ export default function TransactionsPage() {
                 <dd className="col-span-2 text-slate-800 truncate">
                   {t.order_id || <span className="text-slate-400 italic">—</span>}
                   {src && <span className="text-slate-400"> · {src}</span>}
+                </dd>
+                <dt className="text-slate-500">Session</dt>
+                <dd className="col-span-2 font-mono text-slate-700 truncate" title={t.session_id || ''}>
+                  {t.session_id || <span className="text-slate-400 italic">—</span>}
                 </dd>
                 {(t.payer_name || t.payer_phone) && (
                   <>
