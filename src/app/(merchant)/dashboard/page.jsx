@@ -4,12 +4,11 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useMerchant } from './layout';
 import { formatMoney, currencySymbol } from '@/lib/money';
+import { getProvider } from '@/lib/providers';
 import { api } from '@/lib/api';
 import { merchantAuth } from '@/lib/auth';
 
-/* ─────────────────────────────────────────────────────────────────
-   Static configuration. Replace with API-driven data in Phase 2.
-   ───────────────────────────────────────────────────────────────── */
+/* ─── Plan is still static (no plan API yet); everything else is live. ─── */
 const PLAN = {
   name: 'Starter',
   status: 'ACTIVE',
@@ -17,55 +16,117 @@ const PLAN = {
   limits: { devices: 1, verifications: 100 },
 };
 
-const USAGE = {
-  devices: 0,
-  verifications: 0,
+const EMPTY_STATS = {
+  today: 0, pending: 0, successRate: null, totalVerifications: 0,
+  successCount: 0, failedCount: 0, smsRead: 0, avgTime: null,
+  walletsMonitored: 0, refunds: 0,
 };
+const EMPTY_USAGE = { devices: 0, verifications: 0 };
+const EMPTY_7 = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map((day) => ({ day, count: 0 }));
 
-const STATS = {
-  today: 0,
-  pending: 0,
-  successRate: null,
-  totalVerifications: 0,
-  successCount: 0,
-  failedCount: 0,
-  smsRead: 0,
-  avgTime: null,
-  walletsMonitored: 0,
-  refunds: 0,
-};
+const DAY_MS = 24 * 60 * 60 * 1000;
 
-const LAST_7_DAYS = [
-  { day: 'Mon', count: 0 },
-  { day: 'Tue', count: 0 },
-  { day: 'Wed', count: 0 },
-  { day: 'Thu', count: 0 },
-  { day: 'Fri', count: 0 },
-  { day: 'Sat', count: 0 },
-  { day: 'Sun', count: 0 },
-];
+/* Derive every Overview number from the merchant's real transactions plus a
+   few side counts (devices, gateways, SMS). Pure function — easy to reason
+   about and re-run on the polling interval. */
+function computeDashboard(txs, { devices, gateways, smsTotal, currency }) {
+  const now = new Date();
+  const startToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const startMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const since30 = new Date(now.getTime() - 30 * DAY_MS);
 
-const RECENT_VERIFICATIONS = []; // empty until APK is wired
-const ACTIVITY = [];             // empty until events are logged
-const LAST_VERIFICATION = null;  // null shows empty state
+  const at = (t) => new Date(t.created_at);
+  const byStatus = (s) => txs.filter((t) => t.status === s);
 
-/* ─────────────────────────────────────────────────────────────── */
+  const last30 = txs.filter((t) => at(t) >= since30);
+  const s30 = last30.filter((t) => t.status === 'success').length;
+  const f30 = last30.filter((t) => t.status === 'failed').length;
+
+  // 7-day volume buckets (oldest → today).
+  const last7 = [];
+  for (let i = 6; i >= 0; i--) {
+    const start = new Date(startToday.getTime() - i * DAY_MS);
+    const end = new Date(start.getTime() + DAY_MS);
+    last7.push({
+      day: start.toLocaleDateString(undefined, { weekday: 'short' }),
+      count: txs.filter((t) => { const c = at(t); return c >= start && c < end; }).length,
+    });
+  }
+
+  const sorted = [...txs].sort((a, b) => at(b) - at(a));
+  const activity = sorted.slice(0, 6).map((t) => ({
+    status: t.status,
+    title: `Payment ${t.status === 'success' ? 'verified' : t.status === 'failed' ? 'failed' : 'pending'} · ${formatMoney(t.amount, currency)}`,
+    time: at(t).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' }),
+  }));
+
+  return {
+    currency,
+    stats: {
+      today: txs.filter((t) => at(t) >= startToday).length,
+      pending: byStatus('pending').length,
+      successRate: (s30 + f30) > 0 ? Math.round((s30 / (s30 + f30)) * 100) : null,
+      totalVerifications: txs.length,
+      successCount: byStatus('success').length,
+      failedCount: byStatus('failed').length,
+      smsRead: smsTotal,
+      avgTime: null,
+      walletsMonitored: gateways,
+      refunds: 0,
+    },
+    usage: {
+      devices,
+      verifications: txs.filter((t) => at(t) >= startMonth).length,
+    },
+    last7,
+    lastVerification: sorted[0] || null,
+    recent: sorted.slice(0, 5),
+    activity,
+  };
+}
 
 export default function DashboardPage() {
   const { merchant, error } = useMerchant();
+  const [data, setData] = useState(null);
+  const currency = merchant?.currency || 'BDT';
+
+  useEffect(() => {
+    let alive = true;
+    const token = merchantAuth.get();
+    if (!token) return;
+    const load = async () => {
+      const [txR, devR, gwR, smsR] = await Promise.all([
+        api.merchantListTransactions(token).catch(() => ({ transactions: [] })),
+        api.merchantListDevices(token).catch(() => ({ devices: [] })),
+        api.merchantListGateways(token).catch(() => ({ gateways: [] })),
+        api.merchantListSms(token).catch(() => ({ stats: {} })),
+      ]);
+      if (!alive) return;
+      const devices  = (devR.devices || []).length;
+      const gateways = (gwR.gateways || []).filter((g) => g.is_enabled !== false).length;
+      const smsTotal = Number(smsR.stats?.total || 0);
+      setData(computeDashboard(txR.transactions || [], { devices, gateways, smsTotal, currency }));
+    };
+    load();
+    const t = setInterval(load, 10000); // keep the overview live
+    return () => { alive = false; clearInterval(t); };
+  }, [currency]);
 
   if (!merchant && !error) return <FullPageMessage>Loading…</FullPageMessage>;
   if (error) return <FullPageMessage tone="error">{error}</FullPageMessage>;
 
+  const stats = data?.stats || EMPTY_STATS;
+  const usage = data?.usage || EMPTY_USAGE;
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
       <BalanceWarning merchant={merchant} />
-      <PlanSection merchant={merchant} />
+      <PlanSection merchant={merchant} usage={usage} />
       <CredentialsAndApk merchant={merchant} />
-      <KeyStatsRow />
-      <MiniStatsRow />
-      <ChartAndLastVerification />
-      <RecentAndActivity />
+      <KeyStatsRow stats={stats} />
+      <MiniStatsRow stats={stats} usage={usage} />
+      <ChartAndLastVerification last7={data?.last7 || EMPTY_7} lastVerification={data?.lastVerification} currency={currency} />
+      <RecentAndActivity recent={data?.recent || []} activity={data?.activity || []} currency={currency} />
       <AccountDetails merchant={merchant} />
     </div>
   );
@@ -135,7 +196,7 @@ function BalanceWarning({ merchant }) {
 }
 
 /* ─────────────────────────────────────────── PLAN HERO + USAGE */
-function PlanSection({ merchant }) {
+function PlanSection({ merchant, usage }) {
   const plan = PLAN;
   const balance = Number(merchant.wallet_balance || 0);
 
@@ -189,12 +250,12 @@ function PlanSection({ merchant }) {
 
         <div className="mt-4 space-y-4">
           <UsageBar
-            label="Devices" used={USAGE.devices} limit={plan.limits.devices}
-            pct={usagePct(USAGE.devices, plan.limits.devices)}
+            label="Devices" used={usage.devices} limit={plan.limits.devices}
+            pct={usagePct(usage.devices, plan.limits.devices)}
           />
           <UsageBar
-            label="Verifications / mo" used={USAGE.verifications} limit={plan.limits.verifications}
-            pct={usagePct(USAGE.verifications, plan.limits.verifications)}
+            label="Verifications / mo" used={usage.verifications} limit={plan.limits.verifications}
+            pct={usagePct(usage.verifications, plan.limits.verifications)}
           />
         </div>
 
@@ -294,25 +355,25 @@ function CopyField({ label, value }) {
 }
 
 /* ─────────────────────────────────────────── 3 KEY STATS ROW */
-function KeyStatsRow() {
+function KeyStatsRow({ stats }) {
   const items = [
     {
       title: 'Today',
-      value: STATS.today,
+      value: stats.today,
       sub: 'Verifications',
       icon: <SunIcon />,
       tone: 'amber',
     },
     {
       title: 'Success Rate',
-      value: STATS.successRate == null ? '—' : `${STATS.successRate}%`,
+      value: stats.successRate == null ? '—' : `${stats.successRate}%`,
       sub: 'Last 30 days',
       icon: <TrendIcon />,
       tone: 'emerald',
     },
     {
       title: 'Pending',
-      value: STATS.pending,
+      value: stats.pending,
       sub: 'Awaiting SMS match',
       icon: <ClockIcon />,
       tone: 'brand',
@@ -337,16 +398,16 @@ function KeyStatsRow() {
 }
 
 /* ─────────────────────────────────────────── MINI STATS GRID */
-function MiniStatsRow() {
+function MiniStatsRow({ stats, usage }) {
   const items = [
-    { label: 'Total',     value: STATS.totalVerifications, icon: <ListIcon /> },
-    { label: 'Success',   value: STATS.successCount,       icon: <CheckIcon /> },
-    { label: 'Failed',    value: STATS.failedCount,        icon: <XIcon /> },
-    { label: 'SMS Read',  value: STATS.smsRead,            icon: <MessageIcon /> },
-    { label: 'Devices',   value: USAGE.devices,            icon: <PhoneIcon className="w-4 h-4" /> },
-    { label: 'Wallets',   value: STATS.walletsMonitored,   icon: <WalletIcon /> },
-    { label: 'Avg Time',  value: STATS.avgTime == null ? '—' : `${STATS.avgTime}s`, icon: <TimerIcon /> },
-    { label: 'Refunds',   value: STATS.refunds,            icon: <ReturnIcon /> },
+    { label: 'Total',     value: stats.totalVerifications, icon: <ListIcon /> },
+    { label: 'Success',   value: stats.successCount,       icon: <CheckIcon /> },
+    { label: 'Failed',    value: stats.failedCount,        icon: <XIcon /> },
+    { label: 'SMS Read',  value: stats.smsRead,            icon: <MessageIcon /> },
+    { label: 'Devices',   value: usage.devices,            icon: <PhoneIcon className="w-4 h-4" /> },
+    { label: 'Wallets',   value: stats.walletsMonitored,   icon: <WalletIcon /> },
+    { label: 'Avg Time',  value: stats.avgTime == null ? '—' : `${stats.avgTime}s`, icon: <TimerIcon /> },
+    { label: 'Refunds',   value: stats.refunds,            icon: <ReturnIcon /> },
   ];
   return (
     <section className="card p-4">
@@ -366,9 +427,17 @@ function MiniStatsRow() {
 }
 
 /* ─────────────────────────────────────────── 7-DAY CHART + LAST VERIFICATION */
-function ChartAndLastVerification() {
-  const max = Math.max(...LAST_7_DAYS.map((d) => d.count), 1);
-  const allZero = LAST_7_DAYS.every((d) => d.count === 0);
+function ChartAndLastVerification({ last7, lastVerification, currency }) {
+  const max = Math.max(...last7.map((d) => d.count), 1);
+  const allZero = last7.every((d) => d.count === 0);
+  const lv = lastVerification
+    ? {
+        amount: formatMoney(lastVerification.amount, currency),
+        wallet: getProvider(lastVerification.provider).name,
+        txnid:  lastVerification.txnid_submitted,
+        status: (lastVerification.status || '').toUpperCase(),
+      }
+    : null;
 
   return (
     <section className="grid lg:grid-cols-3 gap-5">
@@ -386,7 +455,7 @@ function ChartAndLastVerification() {
           </div>
         ) : (
           <div className="mt-6 grid grid-cols-7 gap-3 items-end h-44">
-            {LAST_7_DAYS.map((d) => (
+            {last7.map((d) => (
               <div key={d.day} className="flex flex-col items-center justify-end h-full">
                 <div className="w-full rounded-t-md bg-gradient-to-t from-brand-500 to-brand-400 transition-all"
                      style={{ height: `${(d.count / max) * 100}%` }} />
@@ -399,12 +468,12 @@ function ChartAndLastVerification() {
 
       <div className="card p-5 sm:p-6">
         <h3 className="font-semibold text-slate-900">Last Verification</h3>
-        {LAST_VERIFICATION ? (
+        {lv ? (
           <dl className="mt-4 space-y-2.5 text-sm">
-            <DetailRow k="Amount"  v={LAST_VERIFICATION.amount} />
-            <DetailRow k="Wallet"  v={LAST_VERIFICATION.wallet} />
-            <DetailRow k="TxnID"   v={LAST_VERIFICATION.txnid} mono />
-            <DetailRow k="Status"  v={<StatusBadge value={LAST_VERIFICATION.status} />} />
+            <DetailRow k="Amount"  v={lv.amount} />
+            <DetailRow k="Wallet"  v={lv.wallet} />
+            <DetailRow k="TxnID"   v={lv.txnid} mono />
+            <DetailRow k="Status"  v={<StatusBadge value={lv.status} />} />
           </dl>
         ) : (
           <div className="mt-6 text-center text-slate-400 py-8">
@@ -424,7 +493,7 @@ function ChartAndLastVerification() {
 }
 
 /* ─────────────────────────────────────────── RECENT TX + ACTIVITY */
-function RecentAndActivity() {
+function RecentAndActivity({ recent, activity, currency }) {
   return (
     <section className="grid lg:grid-cols-3 gap-5">
       <div className="lg:col-span-2 card overflow-hidden">
@@ -433,53 +502,59 @@ function RecentAndActivity() {
           <Link href="/dashboard/transactions" className="text-sm text-brand-600 hover:underline">View All →</Link>
         </div>
 
-        {RECENT_VERIFICATIONS.length === 0 ? (
+        {recent.length === 0 ? (
           <div className="px-5 sm:px-6 py-10 text-center text-slate-400">
             <InboxIcon className="w-8 h-8 mx-auto opacity-40" />
             <p className="text-sm mt-2">No transactions to show yet</p>
             <p className="text-xs mt-1">Integrate the API and they&apos;ll appear here in real time.</p>
           </div>
         ) : (
-          <table className="w-full text-sm">
-            <thead className="bg-slate-50 text-slate-500 text-left text-xs uppercase tracking-wider">
-              <tr>
-                <th className="px-5 py-3 font-medium">TxnID</th>
-                <th className="px-5 py-3 font-medium">Wallet</th>
-                <th className="px-5 py-3 font-medium">Amount</th>
-                <th className="px-5 py-3 font-medium">Status</th>
-                <th className="px-5 py-3 font-medium">Date</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-200">
-              {RECENT_VERIFICATIONS.map((tx) => (
-                <tr key={tx.id} className="hover:bg-slate-50">
-                  <td className="px-5 py-3 font-mono text-xs">{tx.txnid}</td>
-                  <td className="px-5 py-3 text-slate-700">{tx.wallet}</td>
-                  <td className="px-5 py-3 font-semibold">{tx.amount}</td>
-                  <td className="px-5 py-3"><StatusBadge value={tx.status} /></td>
-                  <td className="px-5 py-3 text-slate-500">{tx.date}</td>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm min-w-[520px]">
+              <thead className="bg-slate-50 text-slate-500 text-left text-xs uppercase tracking-wider">
+                <tr>
+                  <th className="px-5 py-3 font-medium">TxnID</th>
+                  <th className="px-5 py-3 font-medium">Wallet</th>
+                  <th className="px-5 py-3 font-medium">Amount</th>
+                  <th className="px-5 py-3 font-medium">Status</th>
+                  <th className="px-5 py-3 font-medium">Date</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-slate-200">
+                {recent.map((tx) => (
+                  <tr key={tx.id} className="hover:bg-slate-50">
+                    <td className="px-5 py-3 font-mono text-xs">{tx.txnid_submitted}</td>
+                    <td className="px-5 py-3 text-slate-700">{getProvider(tx.provider).name}</td>
+                    <td className="px-5 py-3 font-semibold whitespace-nowrap">{formatMoney(tx.amount, currency)}</td>
+                    <td className="px-5 py-3"><StatusBadge value={(tx.status || '').toUpperCase()} /></td>
+                    <td className="px-5 py-3 text-slate-500 whitespace-nowrap">
+                      {new Date(tx.created_at).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
 
       <div className="card p-5 sm:p-6">
         <div className="flex items-center justify-between">
           <h3 className="font-semibold text-slate-900">Activity</h3>
-          <button onClick={() => alert('Activity page coming soon.')} className="text-sm text-brand-600 hover:underline">View All →</button>
+          <Link href="/dashboard/transactions" className="text-sm text-brand-600 hover:underline">View All →</Link>
         </div>
-        {ACTIVITY.length === 0 ? (
+        {activity.length === 0 ? (
           <div className="mt-6 text-center text-slate-400 py-8">
             <PulseIcon className="w-7 h-7 mx-auto opacity-40" />
             <p className="text-sm mt-2">No activity yet</p>
           </div>
         ) : (
           <ul className="mt-4 space-y-3 text-sm">
-            {ACTIVITY.map((a, i) => (
+            {activity.map((a, i) => (
               <li key={i} className="flex gap-3">
-                <span className="w-1.5 h-1.5 rounded-full bg-brand-500 mt-2 shrink-0" />
+                <span className={`w-1.5 h-1.5 rounded-full mt-2 shrink-0 ${
+                  a.status === 'success' ? 'bg-emerald-500' : a.status === 'failed' ? 'bg-rose-500' : 'bg-amber-500'
+                }`} />
                 <div>
                   <div className="text-slate-900">{a.title}</div>
                   <div className="text-xs text-slate-500">{a.time}</div>
