@@ -421,13 +421,17 @@ function WalletAdjustModal({ merchant, working, error, onCancel, onConfirm }) {
           className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/25 focus:border-brand-500"
         />
 
-        {valid && (
+        {valid && !tooLow && (
           <div className="mt-3 text-xs text-slate-600">
             New balance will be{' '}
-            <span className={`font-semibold tabular-nums ${tooLow ? 'text-rose-700' : 'text-slate-900'}`}>
-              ৳{newBal.toFixed(2)}
-            </span>
-            {tooLow && <span className="text-rose-600"> · insufficient for debit</span>}
+            <span className="font-semibold tabular-nums text-slate-900">৳{newBal.toFixed(2)}</span>
+          </div>
+        )}
+        {tooLow && (
+          <div className="mt-3 text-sm text-rose-700 bg-rose-50 border border-rose-200 rounded-lg p-2.5">
+            Balance not available — this wallet only has{' '}
+            <strong className="tabular-nums">৳{Number(merchant.wallet_balance || 0).toFixed(2)}</strong>.
+            You can debit at most that much.
           </div>
         )}
 

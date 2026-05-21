@@ -56,14 +56,17 @@ export default function PayWithGatewayPage() {
     setError(null);
     if (!file.type.startsWith('image/')) {
       setError('Please choose an image file (a screenshot of your payment).');
+      e.target.value = '';
       return;
     }
+    setProof(null);
+    setProofName(file.name);   // show the name immediately while it processes
     setProofBusy(true);
     try {
       const dataUrl = await compressImage(file);
       setProof(dataUrl);
-      setProofName(file.name);
     } catch {
+      setProofName('');
       setError('Could not read that image. Please try a different screenshot.');
     } finally {
       setProofBusy(false);
@@ -221,22 +224,36 @@ export default function PayWithGatewayPage() {
         {/* Payment screenshot */}
         <div>
           <label className="block text-sm font-medium text-slate-700 mb-1.5">Payment screenshot</label>
-          {proof ? (
+          {(proof || proofBusy) ? (
             <div className="flex items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 p-2.5">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={proof} alt="Payment screenshot preview" className="w-14 h-14 rounded object-cover border border-slate-200 shrink-0" />
+              {proof ? (
+                /* eslint-disable-next-line @next/next/no-img-element */
+                <img src={proof} alt="Payment screenshot preview" className="w-14 h-14 rounded object-cover border border-slate-200 shrink-0" />
+              ) : (
+                <div className="w-14 h-14 rounded border border-slate-200 bg-white flex items-center justify-center shrink-0 text-brand-500">
+                  <Spinner />
+                </div>
+              )}
               <div className="min-w-0 flex-1">
-                <div className="text-sm text-slate-800 truncate">{proofName || 'Screenshot attached'}</div>
-                <div className="text-xs text-emerald-600">Ready to submit</div>
+                <div className="text-sm text-slate-800 truncate">{proofName || 'Screenshot'}</div>
+                <div className={`text-xs ${proofBusy ? 'text-slate-500' : 'text-emerald-600'}`}>
+                  {proofBusy ? 'Uploading…' : 'Ready to submit'}
+                </div>
               </div>
-              <button
-                type="button"
-                onClick={() => { setProof(null); setProofName(''); }}
-                disabled={submitting || verifying}
-                className="text-xs font-semibold text-rose-600 hover:text-rose-700 px-2 py-1 rounded hover:bg-rose-50 shrink-0"
-              >
-                Remove
-              </button>
+              {/* No Remove while uploading — only once the screenshot is ready. */}
+              {!proofBusy && proof && !submitting && !verifying && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (submitting || verifying) return; // never drop proof mid-submit
+                    setProof(null);
+                    setProofName('');
+                  }}
+                  className="text-xs font-semibold text-rose-600 hover:text-rose-700 px-2 py-1 rounded hover:bg-rose-50 shrink-0"
+                >
+                  Remove
+                </button>
+              )}
             </div>
           ) : (
             <label className={`flex flex-col items-center justify-center gap-1.5 rounded-lg border-2 border-dashed border-slate-300 px-4 py-6 text-center cursor-pointer hover:border-brand-400 hover:bg-brand-50/40 transition ${proofBusy ? 'opacity-60 pointer-events-none' : ''}`}>
