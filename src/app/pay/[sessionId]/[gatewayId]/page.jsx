@@ -263,7 +263,6 @@ export default function PayWithGatewayPage() {
               <input
                 type="file"
                 accept="image/*"
-                capture="environment"
                 onChange={onPickFile}
                 disabled={submitting || verifying || proofBusy}
                 className="hidden"
