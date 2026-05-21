@@ -600,8 +600,8 @@ return redirect(r.json()['checkout_url'])`}</CodeBlock>
 
         <Callout tone="slate" title={t('Session lifecycle', 'সেশন লাইফসাইকেল')}>
           {t(
-            <>Sessions expire <strong>30 minutes</strong> after creation. Once a customer submits a TxnID and we verify it, the session flips to <code className="text-xs">success</code>. If they cancel, it flips to <code className="text-xs">cancelled</code>. Beyond 30 min, it auto-expires.</>,
-            <>সেশন তৈরির <strong>৩০ মিনিট</strong> পর মেয়াদ শেষ হয়। গ্রাহক TxnID জমা দিয়ে আমরা ভেরিফাই করার পর সেশন <code className="text-xs">success</code>-এ পরিণত হয়। তারা ক্যান্সেল করলে <code className="text-xs">cancelled</code>-এ পরিণত হয়। ৩০ মিনিট পর স্বয়ংক্রিয়ভাবে মেয়াদ শেষ হয়।</>
+            <>Sessions stay live for <strong>24 hours</strong> after creation. Once a customer submits a TxnID and we verify it, the session flips to <code className="text-xs">success</code>. If they cancel, it flips to <code className="text-xs">cancelled</code>. Beyond 24 hours, a still-pending session auto-expires.</>,
+            <>সেশন তৈরির পর <strong>২৪ ঘণ্টা</strong> সক্রিয় থাকে। গ্রাহক TxnID জমা দিয়ে আমরা ভেরিফাই করার পর সেশন <code className="text-xs">success</code>-এ পরিণত হয়। তারা ক্যান্সেল করলে <code className="text-xs">cancelled</code>-এ পরিণত হয়। ২৪ ঘণ্টা পর pending সেশন স্বয়ংক্রিয়ভাবে মেয়াদ শেষ হয়।</>
           )}
         </Callout>
       </Section>
@@ -628,8 +628,8 @@ return redirect(r.json()['checkout_url'])`}</CodeBlock>
 
         <Callout tone="amber" title={t('Heads up — pending returns are normal', 'মনে রাখুন — pending রিটার্ন স্বাভাবিক')}>
           {t(
-            <>The checkout waits ~15 s for the APK to confirm, then redirects the customer back to you <em>regardless</em>. So <code className="text-xs">?status=pending</code> simply means &quot;not resolved yet&quot; — <strong>not</strong> &quot;failed&quot;. Render a &quot;we&apos;re confirming your payment&quot; page and poll <code className="text-xs">GET /sessions/:id</code> server-side until it flips to <code className="text-xs">success</code> / <code className="text-xs">failed</code> / <code className="text-xs">expired</code> (within the 30-min session window). Treating pending as failure will reject paying customers.</>,
-            <>চেকআউট APK-এর কনফার্মেশনের জন্য ~১৫ সেকেন্ড অপেক্ষা করে, তারপর গ্রাহককে আপনার কাছে ফেরত পাঠায় — <em>ফলাফল যাই হোক</em>। তাই <code className="text-xs">?status=pending</code> মানে শুধু &quot;এখনো রেজলভ হয়নি&quot; — <strong>&quot;failed&quot; নয়</strong>। একটি &quot;আমরা আপনার পেমেন্ট নিশ্চিত করছি&quot; পেজ দেখান এবং সার্ভার-সাইডে <code className="text-xs">GET /sessions/:id</code> পোল করুন যতক্ষণ না এটি <code className="text-xs">success</code> / <code className="text-xs">failed</code> / <code className="text-xs">expired</code>-এ পরিণত হয় (৩০-মিনিট সেশন উইন্ডোর মধ্যে)। pending-কে failure হিসেবে গণ্য করলে যেসব গ্রাহক পেমেন্ট করেছেন তাদের বাতিল করে দেবেন।</>
+            <>The checkout waits ~15 s for the APK to confirm, then redirects the customer back to you <em>regardless</em>. So <code className="text-xs">?status=pending</code> simply means &quot;not resolved yet&quot; — <strong>not</strong> &quot;failed&quot;. Render a &quot;we&apos;re confirming your payment&quot; page and poll <code className="text-xs">GET /sessions/:id</code> server-side until it flips to <code className="text-xs">success</code> / <code className="text-xs">failed</code> / <code className="text-xs">expired</code> (within the 24-hour session window). Treating pending as failure will reject paying customers.</>,
+            <>চেকআউট APK-এর কনফার্মেশনের জন্য ~১৫ সেকেন্ড অপেক্ষা করে, তারপর গ্রাহককে আপনার কাছে ফেরত পাঠায় — <em>ফলাফল যাই হোক</em>। তাই <code className="text-xs">?status=pending</code> মানে শুধু &quot;এখনো রেজলভ হয়নি&quot; — <strong>&quot;failed&quot; নয়</strong>। একটি &quot;আমরা আপনার পেমেন্ট নিশ্চিত করছি&quot; পেজ দেখান এবং সার্ভার-সাইডে <code className="text-xs">GET /sessions/:id</code> পোল করুন যতক্ষণ না এটি <code className="text-xs">success</code> / <code className="text-xs">failed</code> / <code className="text-xs">expired</code>-এ পরিণত হয় (২৪-ঘণ্টা সেশন উইন্ডোর মধ্যে)। pending-কে failure হিসেবে গণ্য করলে যেসব গ্রাহক পেমেন্ট করেছেন তাদের বাতিল করে দেবেন।</>
           )}
         </Callout>
 
@@ -730,26 +730,101 @@ if ($body['session']['status'] === 'success') {
           path="/api/payment/sessions/:id"
           auth="X-API-Key"
           description={t(
-            'Fetch the current status of a session. Use this after the customer returns.',
-            'একটি সেশনের বর্তমান স্ট্যাটাস আনুন। গ্রাহক ফেরত আসার পর এটি ব্যবহার করুন।'
+            'Fetch the current status of a session. Use this after the customer returns (and poll it while pending). Always includes latest_transaction — the most recent attempt of ANY status, carrying the UTR, payment method, and the customer’s sender account. successful_transaction is only present once a payment succeeds.',
+            'একটি সেশনের বর্তমান স্ট্যাটাস আনুন। গ্রাহক ফেরত আসার পর (এবং pending থাকাকালীন পোল করার সময়) এটি ব্যবহার করুন। সর্বদা latest_transaction থাকে — যেকোনো স্ট্যাটাসের সর্বশেষ অ্যাটেম্পট, যাতে UTR, পেমেন্ট মেথড এবং গ্রাহকের sender account থাকে। successful_transaction শুধু পেমেন্ট সফল হলে থাকে।'
           )}
-          response={`{
+          response={`// ── PENDING — submitted, waiting for the SMS/APK to confirm ──
+{
   "session": {
-    "id":          "eNOuUpsg2IGX4ko4HbFL",
-    "order_id":    "ORD-1001",
-    "amount":      "500.00",
-    "currency":    "USD",
-    "status":      "success",
-    "expires_at":  "2026-05-12T12:00:00Z",
-    "created_at":  "2026-05-12T11:30:00Z",
+    "id":         "eNOuUpsg2IGX4ko4HbFL",
+    "order_id":   "ORD-1001",
+    "amount":     "500.00",
+    "currency":   "BDT",
+    "status":     "pending",
+    "expires_at": "2026-05-13T11:30:00Z",   // 24h after creation
+    "created_at": "2026-05-12T11:30:00Z",
+    "successful_transaction": null,
+    "latest_transaction": {
+      "txnid_submitted": "BKX92H1",          // UTR the customer entered
+      "method":          "nagad",            // gateway provider (bkash/nagad/rocket/upay)
+      "variant":         "personal",
+      "account_number":  "01711111111",      // your receiving wallet
+      "sender_account":  "01822222222",      // number the customer paid FROM
+      "amount":          "500.00",
+      "status":          "pending",
+      "result_source":   null,
+      "failure_reason":  null,
+      "verified_at":     null
+    }
+  }
+}
+
+// ── SUCCESS (auto) — matched against the bound APK's SMS ──
+{
+  "session": {
+    "id": "eNOuUpsg2IGX4ko4HbFL", "order_id": "ORD-1001",
+    "amount": "500.00", "currency": "BDT", "status": "success",
     "successful_transaction": {
       "txnid_submitted": "BKX92H1",
       "verified_at":     "2026-05-12T11:34:10Z",
-      "result_source":   "apk"
+      "result_source":   "apk"               // or "sms_inbound" / "sms_late_match"
+    },
+    "latest_transaction": {
+      "txnid_submitted": "BKX92H1", "method": "nagad", "variant": "personal",
+      "account_number": "01711111111", "sender_account": "01822222222",
+      "amount": "500.00", "status": "success",
+      "result_source": "apk", "failure_reason": null,
+      "verified_at": "2026-05-12T11:34:10Z"
     }
   }
-}`}
+}
+
+// ── SUCCESS (manually approved) — merchant clicked "Mark Paid" ──
+//    Identical to above, except result_source is "manual".
+{
+  "session": {
+    "status": "success",
+    "successful_transaction": { "txnid_submitted": "BKX92H1", "result_source": "manual",
+                                "verified_at": "2026-05-12T11:40:00Z" },
+    "latest_transaction": { "txnid_submitted": "BKX92H1", "method": "nagad",
+                            "sender_account": "01822222222", "amount": "500.00",
+                            "status": "success", "result_source": "manual",
+                            "failure_reason": null, "verified_at": "2026-05-12T11:40:00Z" }
+  }
+}
+
+// ── FAILED (manually rejected) — merchant clicked "Mark Failed" + reason ──
+//    NOTE: the transaction is failed, but session.status stays "pending"
+//    so the customer can still retry with a fresh TxnID.
+{
+  "session": {
+    "id": "eNOuUpsg2IGX4ko4HbFL", "order_id": "ORD-1001",
+    "status": "pending",
+    "successful_transaction": null,
+    "latest_transaction": {
+      "txnid_submitted": "BKX92H1", "method": "nagad",
+      "sender_account": "01822222222", "amount": "500.00",
+      "status":         "failed",
+      "result_source":  "manual",            // "apk" if rejected from the phone
+      "failure_reason": "TxnID not found in our wallet SMS",
+      "verified_at":    "2026-05-12T11:40:00Z"
+    }
+  }
+}
+
+// ── EXPIRED — no resolution within the 24h window ──
+{ "session": { "status": "expired", "successful_transaction": null, "latest_transaction": null } }
+
+// ── CANCELLED — customer abandoned the checkout ──
+{ "session": { "status": "cancelled", "successful_transaction": null } }`}
         />
+
+        <Callout tone="slate" title={t('Reading the states', 'স্ট্যাটাস পড়া')}>
+          {t(
+            <>Two status fields matter. <code className="text-xs">session.status</code> is the order-level state: <code className="text-xs">pending</code> · <code className="text-xs">success</code> · <code className="text-xs">expired</code> · <code className="text-xs">cancelled</code>. <code className="text-xs">latest_transaction.status</code> is the attempt-level verdict: <code className="text-xs">pending</code> · <code className="text-xs">success</code> · <code className="text-xs">failed</code>. A <strong>manual rejection fails the transaction but keeps the session pending</strong> (so the customer can retry) — so to detect a rejection, read <code className="text-xs">latest_transaction.status === &quot;failed&quot;</code> plus its <code className="text-xs">failure_reason</code>. <code className="text-xs">result_source</code> tells you how it resolved: <code className="text-xs">apk</code> (phone confirmed), <code className="text-xs">sms_inbound</code> / <code className="text-xs">sms_late_match</code> (auto-matched SMS), or <code className="text-xs">manual</code> (merchant Mark Paid/Failed).</>,
+            <>দুটি স্ট্যাটাস ফিল্ড গুরুত্বপূর্ণ। <code className="text-xs">session.status</code> হলো অর্ডার-লেভেল অবস্থা: <code className="text-xs">pending</code> · <code className="text-xs">success</code> · <code className="text-xs">expired</code> · <code className="text-xs">cancelled</code>। <code className="text-xs">latest_transaction.status</code> হলো অ্যাটেম্পট-লেভেল রায়: <code className="text-xs">pending</code> · <code className="text-xs">success</code> · <code className="text-xs">failed</code>। একটি <strong>ম্যানুয়াল রিজেকশন ট্রানজেকশনকে failed করে কিন্তু সেশন pending রাখে</strong> (যাতে গ্রাহক আবার চেষ্টা করতে পারে) — তাই রিজেকশন বুঝতে <code className="text-xs">latest_transaction.status === &quot;failed&quot;</code> এবং তার <code className="text-xs">failure_reason</code> পড়ুন। <code className="text-xs">result_source</code> বলে কীভাবে রেজলভ হলো: <code className="text-xs">apk</code> (ফোন কনফার্ম করেছে), <code className="text-xs">sms_inbound</code> / <code className="text-xs">sms_late_match</code> (অটো-ম্যাচড SMS), অথবা <code className="text-xs">manual</code> (মার্চেন্ট Mark Paid/Failed)।</>
+          )}
+        </Callout>
       </Section>
 
       <Section
