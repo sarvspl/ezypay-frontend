@@ -60,6 +60,7 @@ export const api = {
   merchantChangePassword:(token, body) => request('/api/merchant/me/password', { method: 'POST', body, token }),
 
   // Brands
+  merchantUnlockKeys:   (token) => request('/api/merchant/keys/unlock', { method: 'POST', token }),
   merchantListBrands:   (token) => request('/api/merchant/brands', { token }),
   merchantCreateBrand:  (token, body) => request('/api/merchant/brands', { method: 'POST', body, token }),
   merchantDeleteBrand:  (token, id) => request(`/api/merchant/brands/${id}`, { method: 'DELETE', token }),

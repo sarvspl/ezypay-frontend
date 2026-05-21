@@ -18,6 +18,14 @@ export default function DashboardLayout({ children }) {
   const [error, setError] = useState(null);
   const [mobileSidebar, setMobileSidebar] = useState(false);
 
+  const refreshMerchant = async () => {
+    const token = merchantAuth.get();
+    if (!token) return null;
+    const r = await api.merchantMe(token);
+    setMerchant(r.merchant);
+    return r.merchant;
+  };
+
   useEffect(() => {
     if (!ready) return;
     const token = merchantAuth.get();
@@ -36,7 +44,7 @@ export default function DashboardLayout({ children }) {
   if (!ready) return null;
 
   return (
-    <MerchantContext.Provider value={{ merchant, error }}>
+    <MerchantContext.Provider value={{ merchant, error, refreshMerchant }}>
       <div className="min-h-screen flex bg-slate-50">
         {/* Desktop sidebar */}
         <div className="hidden md:block">

@@ -414,6 +414,7 @@ function PricingSection({ settings, onSaved, currency: defaultCurrency }) {
     low_balance_threshold: '',
     topup_fee_enabled: false,
     topup_fee_percent: '',
+    key_unlock_fee: '',
   });
   const [saving, setSaving] = useState(false);
   const [savedAt, setSavedAt] = useState(null);
@@ -430,6 +431,7 @@ function PricingSection({ settings, onSaved, currency: defaultCurrency }) {
       low_balance_threshold: settings.low_balance_threshold != null ? String(settings.low_balance_threshold) : '',
       topup_fee_enabled: !!settings.topup_fee_enabled,
       topup_fee_percent: trimNum(settings.topup_fee_percent),
+      key_unlock_fee: settings.key_unlock_fee != null ? String(settings.key_unlock_fee) : '',
     });
   }, [settings, defaultCurrency]);
 
@@ -449,6 +451,7 @@ function PricingSection({ settings, onSaved, currency: defaultCurrency }) {
         low_balance_threshold: Number(form.low_balance_threshold) || 0,
         topup_fee_enabled: form.topup_fee_enabled,
         topup_fee_percent: Number(form.topup_fee_percent) || 0,
+        key_unlock_fee: Number(form.key_unlock_fee) || 0,
       });
       onSaved?.(r.settings);
       setSavedAt(new Date());
@@ -689,6 +692,35 @@ function PricingSection({ settings, onSaved, currency: defaultCurrency }) {
               </dl>
             </div>
           )}
+        </div>
+
+        {/* ─── Integration key unlock fee ─── */}
+        <div className="pt-5 border-t border-slate-100 space-y-3">
+          <div>
+            <span className="font-semibold text-slate-900">Integration key unlock fee</span>
+            <span className="block text-xs text-slate-500 mt-0.5">
+              One-time charge debited from a merchant's wallet before their API key / device auth key can be revealed. 0 = keys are free to view.
+            </span>
+          </div>
+          <div className="sm:max-w-xs">
+            <label className="label">Unlock fee</label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">
+                {currencySymbol(form.verify_charge_currency)}
+              </span>
+              <input
+                type="number"
+                inputMode="decimal"
+                step="0.01"
+                min="0"
+                value={form.key_unlock_fee}
+                onChange={(e) => setForm({ ...form, key_unlock_fee: e.target.value })}
+                placeholder="100000.00"
+                className="input !pl-8"
+              />
+            </div>
+            <p className="text-xs text-slate-500 mt-1">Charged once per merchant; afterward their keys stay unlocked.</p>
+          </div>
         </div>
 
         {error && <div className="text-sm text-rose-600 bg-rose-50 border border-rose-200 rounded p-3">{error}</div>}

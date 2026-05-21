@@ -4,12 +4,17 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 import { merchantAuth } from '@/lib/auth';
+import { useMerchant } from '../layout';
+import UnlockKeysModal from '@/components/dashboard/UnlockKeysModal';
 
 export default function BrandsPage() {
   const router = useRouter();
+  const { merchant, refreshMerchant } = useMerchant();
   const [brands, setBrands] = useState(null);
   const [error, setError] = useState(null);
   const [showAdd, setShowAdd] = useState(false);
+  const [unlockOpen, setUnlockOpen] = useState(false);
+  const locked = merchant && !merchant.keys_unlocked;
 
   const load = async () => {
     setError(null);
@@ -82,10 +87,17 @@ export default function BrandsPage() {
       {brands && brands.length > 0 && (
         <div className="grid gap-4">
           {brands.map((b) => (
-            <BrandCard key={b.id} brand={b} onDelete={() => onDelete(b)} />
+            <BrandCard key={b.id} brand={b} locked={locked} onUnlock={() => setUnlockOpen(true)} onDelete={() => onDelete(b)} />
           ))}
         </div>
       )}
+
+      <UnlockKeysModal
+        open={unlockOpen}
+        onClose={() => setUnlockOpen(false)}
+        merchant={merchant}
+        onUnlocked={async () => { await refreshMerchant?.(); await load(); }}
+      />
     </div>
   );
 }
@@ -157,7 +169,7 @@ function AddBrandForm({ onCancel, onCreated }) {
 }
 
 /* ─── Brand card ─── */
-function BrandCard({ brand, onDelete }) {
+function BrandCard({ brand, onDelete, locked, onUnlock }) {
   return (
     <div className="card p-5 sm:p-6">
       <div className="flex items-start justify-between flex-wrap gap-3">
@@ -185,8 +197,20 @@ function BrandCard({ brand, onDelete }) {
       </div>
 
       <div className="mt-5 space-y-3">
-        <SecretField label="API Key" value={brand.api_key} />
-        <SecretField label="Secret Key" value={brand.secret_key} muted />
+        {locked || !brand.api_key ? (
+          <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-4 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2 text-sm text-slate-600">
+              <svg className="w-4 h-4 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              API key & secret are locked
+            </div>
+            <button onClick={onUnlock} className="btn-secondary !py-1.5 text-xs shrink-0">Unlock</button>
+          </div>
+        ) : (
+          <>
+            <SecretField label="API Key" value={brand.api_key} />
+            <SecretField label="Secret Key" value={brand.secret_key} muted />
+          </>
+        )}
       </div>
 
       <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
@@ -209,7 +233,8 @@ function SecretField({ label, value, muted }) {
     } catch {}
   };
 
-  const display = show ? value : '•'.repeat(Math.max(8, value.length - 4)) + value.slice(-4);
+  const safe = value || '';
+  const display = show ? safe : '•'.repeat(Math.max(8, safe.length - 4)) + safe.slice(-4);
 
   return (
     <div>
