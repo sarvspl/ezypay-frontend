@@ -242,6 +242,11 @@ export default function TransactionsPage() {
                     </td>
                     <td className="px-4 sm:px-6 py-3">
                       <StatusBadge status={t.status} source={t.result_source} />
+                      {t.status === 'failed' && t.failure_reason && (
+                        <div className="text-xs text-rose-600 mt-1 max-w-[220px] whitespace-normal" title={t.failure_reason}>
+                          {t.failure_reason}
+                        </div>
+                      )}
                     </td>
                     <td className="px-4 sm:px-6 py-3">
                       {proofUrl(t) ? (
@@ -348,6 +353,12 @@ export default function TransactionsPage() {
                 <dd className="col-span-2 text-slate-700">
                   {new Date(t.created_at).toLocaleString([], { timeZone: 'Asia/Dhaka', dateStyle: 'short', timeStyle: 'short' })}
                 </dd>
+                {t.status === 'failed' && t.failure_reason && (
+                  <>
+                    <dt className="text-slate-500">Reason</dt>
+                    <dd className="col-span-2 text-rose-600">{t.failure_reason}</dd>
+                  </>
+                )}
                 {proofUrl(t) && (
                   <>
                     <dt className="text-slate-500">Screenshot</dt>
