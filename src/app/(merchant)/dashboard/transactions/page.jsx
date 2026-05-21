@@ -9,6 +9,8 @@ import { formatMoney } from '@/lib/money';
 import { useMerchant } from '../layout';
 
 const proofUrl = (t) => (t.proof_image_url ? `${API_BASE}${t.proof_image_url}` : null);
+// SMS is viewable only for transactions auto-approved by the bound app.
+const canViewSms = (t) => t.result_source === 'apk' && !!t.matched_sms;
 
 export default function TransactionsPage() {
   const router = useRouter();
@@ -66,6 +68,8 @@ export default function TransactionsPage() {
 
   // Full-screen view of a payment screenshot.
   const [lightbox, setLightbox] = useState(null); // image URL
+  // The matched SMS text shown in a popup (app auto-approvals only).
+  const [smsView, setSmsView] = useState(null); // { txnid, sms }
 
   const onResolve = (tx, result) => {
     setResolveTarget({ tx, result });
@@ -273,6 +277,13 @@ export default function TransactionsPage() {
                             Mark Failed
                           </button>
                         </div>
+                      ) : canViewSms(t) ? (
+                        <button
+                          onClick={() => setSmsView({ txnid: t.txnid_submitted, sms: t.matched_sms })}
+                          className="rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold px-2.5 py-1.5 whitespace-nowrap"
+                        >
+                          View SMS
+                        </button>
                       ) : (
                         <span className="text-xs text-slate-400">—</span>
                       )}
@@ -384,10 +395,42 @@ export default function TransactionsPage() {
                   </button>
                 </div>
               )}
+              {t.status !== 'pending' && canViewSms(t) && (
+                <div className="mt-3 pt-3 border-t border-slate-100">
+                  <button
+                    onClick={() => setSmsView({ txnid: t.txnid_submitted, sms: t.matched_sms })}
+                    className="w-full rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold px-3 py-2"
+                  >
+                    View SMS
+                  </button>
+                </div>
+              )}
             </div>
           );
         })}
       </div>
+
+      {smsView && (
+        <div className="fixed inset-0 z-40 flex items-center justify-center p-4 bg-slate-900/50" onClick={() => setSmsView(null)}>
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-md p-6" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h2 className="text-lg font-bold text-slate-900">Matched SMS</h2>
+                <p className="mt-0.5 text-sm text-slate-600">
+                  Forwarded by your bound app for TxnID <code className="text-xs font-mono">{smsView.txnid}</code>
+                </p>
+              </div>
+              <button onClick={() => setSmsView(null)} className="text-slate-400 hover:text-slate-700 p-1 -mr-1" aria-label="Close">
+                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+            <pre className="mt-4 whitespace-pre-wrap break-words font-mono text-sm text-slate-800 bg-slate-50 border border-slate-200 rounded-lg p-3 max-h-[50vh] overflow-y-auto">{smsView.sms}</pre>
+            <div className="mt-4 flex justify-end">
+              <button onClick={() => setSmsView(null)} className="btn-secondary !py-2">Close</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {lightbox && (
         <div
