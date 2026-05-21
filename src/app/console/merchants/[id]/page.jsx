@@ -225,8 +225,15 @@ function WalletSection({ merchantId }) {
                       <div className="text-sm font-medium text-slate-900">{prettyKind(row.kind)}</div>
                       <div className="text-xs text-slate-500">{new Date(row.created_at).toLocaleString(undefined, { timeZone: 'Asia/Dhaka' })}{row.note ? ` · ${row.note}` : ''}</div>
                     </div>
-                    <div className={`font-semibold tabular-nums ${credit ? 'text-emerald-700' : 'text-rose-700'}`}>
-                      {credit ? '+' : ''}{currency} {Math.abs(Number(row.amount)).toFixed(2)}
+                    <div className="text-right shrink-0">
+                      <div className={`font-semibold tabular-nums ${credit ? 'text-emerald-700' : 'text-rose-700'}`}>
+                        {credit ? '+' : '−'}{currency} {Math.abs(Number(row.amount)).toFixed(2)}
+                      </div>
+                      {row.balance_after != null && (
+                        <div className="text-[11px] text-slate-500 tabular-nums mt-0.5">
+                          Balance {currency} {Number(row.balance_after).toFixed(2)}
+                        </div>
+                      )}
                     </div>
                   </div>
                 );
