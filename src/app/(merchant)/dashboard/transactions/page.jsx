@@ -138,10 +138,10 @@ export default function TransactionsPage() {
             return (
               <button key={t.key} onClick={() => setTab(t.key)}
                 className={`flex items-center justify-center gap-1.5 rounded-md px-2 sm:px-3 py-1.5 text-xs sm:text-sm font-medium transition whitespace-nowrap ${
-                  active ? 'bg-white shadow-sm text-slate-900' : 'text-slate-600 hover:text-slate-900'
+                  active ? `bg-white shadow-sm ${toneText(t.tone)}` : `${toneText(t.tone)} opacity-70 hover:opacity-100`
                 }`}>
                 {t.label}
-                <span className={`rounded px-1.5 py-0.5 text-[11px] font-semibold ${active ? toneClasses(t.tone) : 'text-slate-400'}`}>
+                <span className={`rounded px-1.5 py-0.5 text-[11px] font-semibold ${toneClasses(t.tone)}`}>
                   {t.count}
                 </span>
               </button>
@@ -263,7 +263,7 @@ export default function TransactionsPage() {
                       )}
                     </td>
                     <td className="px-4 sm:px-6 py-3 text-slate-500 whitespace-nowrap">
-                      {new Date(t.created_at).toLocaleString([], { timeZone: 'Asia/Dhaka', dateStyle: 'short', timeStyle: 'short' })}
+                      {new Date(t.created_at).toLocaleString('en-US', { timeZone: 'Asia/Dhaka', dateStyle: 'short', timeStyle: 'short' })}
                     </td>
                     <td className="px-4 sm:px-6 py-3 text-right">
                       {t.status === 'pending' ? (
@@ -362,7 +362,7 @@ export default function TransactionsPage() {
                 )}
                 <dt className="text-slate-500">Date</dt>
                 <dd className="col-span-2 text-slate-700">
-                  {new Date(t.created_at).toLocaleString([], { timeZone: 'Asia/Dhaka', dateStyle: 'short', timeStyle: 'short' })}
+                  {new Date(t.created_at).toLocaleString('en-US', { timeZone: 'Asia/Dhaka', dateStyle: 'short', timeStyle: 'short' })}
                 </dd>
                 {t.status === 'failed' && t.failure_reason && (
                   <>
@@ -576,6 +576,15 @@ function toneClasses(tone) {
     case 'amber':   return 'bg-amber-100 text-amber-700';
     case 'rose':    return 'bg-rose-100 text-rose-700';
     default:        return 'bg-slate-100 text-slate-700';
+  }
+}
+
+function toneText(tone) {
+  switch (tone) {
+    case 'emerald': return 'text-emerald-700';
+    case 'amber':   return 'text-amber-700';
+    case 'rose':    return 'text-rose-700';
+    default:        return 'text-slate-700';
   }
 }
 

@@ -58,7 +58,7 @@ function computeDashboard(txs, { devices, gateways, smsTotal, currency }) {
   const activity = sorted.slice(0, 6).map((t) => ({
     status: t.status,
     title: `Payment ${t.status === 'success' ? 'verified' : t.status === 'failed' ? 'failed' : 'pending'} · ${formatMoney(t.amount, currency)}`,
-    time: at(t).toLocaleString([], { timeZone: 'Asia/Dhaka', dateStyle: 'short', timeStyle: 'short' }),
+    time: at(t).toLocaleString('en-US', { timeZone: 'Asia/Dhaka', dateStyle: 'short', timeStyle: 'short' }),
   }));
 
   return {
@@ -360,6 +360,7 @@ function CredentialsAndApk({ merchant }) {
 
 function CopyField({ label, value }) {
   const [copied, setCopied] = useState(false);
+  const [show, setShow] = useState(false);
   const onCopy = async () => {
     try {
       await navigator.clipboard.writeText(value);
@@ -367,11 +368,20 @@ function CopyField({ label, value }) {
       setTimeout(() => setCopied(false), 1500);
     } catch {}
   };
+  const safe = value || '';
+  const masked = '•'.repeat(Math.max(8, safe.length - 4)) + safe.slice(-4);
   return (
     <div>
       <div className="label">{label}</div>
       <div className="flex gap-2">
-        <input readOnly value={value} className="input font-mono text-sm bg-slate-50/70" />
+        <input readOnly value={show ? safe : masked} className="input font-mono text-sm bg-slate-50/70" />
+        <button
+          type="button"
+          onClick={() => setShow((s) => !s)}
+          className="btn-secondary whitespace-nowrap"
+        >
+          {show ? 'Hide' : 'Show'}
+        </button>
         <button onClick={onCopy} className={`btn-secondary whitespace-nowrap ${copied ? '!text-emerald-600 !border-emerald-300' : ''}`}>
           {copied ? '✓ Copied' : 'Copy'}
         </button>
@@ -554,7 +564,7 @@ function RecentAndActivity({ recent, activity, currency }) {
                     <td className="px-5 py-3 font-semibold whitespace-nowrap">{formatMoney(tx.amount, currency)}</td>
                     <td className="px-5 py-3"><StatusBadge value={(tx.status || '').toUpperCase()} /></td>
                     <td className="px-5 py-3 text-slate-500 whitespace-nowrap">
-                      {new Date(tx.created_at).toLocaleString([], { timeZone: 'Asia/Dhaka', dateStyle: 'short', timeStyle: 'short' })}
+                      {new Date(tx.created_at).toLocaleString('en-US', { timeZone: 'Asia/Dhaka', dateStyle: 'short', timeStyle: 'short' })}
                     </td>
                   </tr>
                 ))}

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 import { merchantAuth } from '@/lib/auth';
+import { formatMoney } from '@/lib/money';
 import { useMerchant } from '../layout';
 import UnlockKeysModal from '@/components/dashboard/UnlockKeysModal';
 
@@ -13,8 +14,8 @@ export default function BrandsPage() {
   const [brands, setBrands] = useState(null);
   const [error, setError] = useState(null);
   const [showAdd, setShowAdd] = useState(false);
-  const [unlockOpen, setUnlockOpen] = useState(false);
-  const locked = merchant && !merchant.keys_unlocked;
+  const [unlockTarget, setUnlockTarget] = useState(null);  // brand being unlocked
+  const [fees, setFees] = useState({ full: 0, brand: 0 });
 
   const load = async () => {
     setError(null);
@@ -22,6 +23,7 @@ export default function BrandsPage() {
     try {
       const r = await api.merchantListBrands(token);
       setBrands(r.brands);
+      setFees({ full: Number(r.key_unlock_fee || 0), brand: Number(r.brand_unlock_fee || 0) });
     } catch (e) {
       if (e.status === 401) {
         merchantAuth.clear();
@@ -87,17 +89,30 @@ export default function BrandsPage() {
       {brands && brands.length > 0 && (
         <div className="grid gap-4">
           {brands.map((b) => (
-            <BrandCard key={b.id} brand={b} locked={locked} onUnlock={() => setUnlockOpen(true)} onDelete={() => onDelete(b)} />
+            <BrandCard
+              key={b.id}
+              brand={b}
+              locked={!b.keys_unlocked}
+              unlockFee={b.is_default ? fees.full : fees.brand}
+              currency={merchant?.currency}
+              onUnlock={() => setUnlockTarget(b)}
+              onDelete={() => onDelete(b)}
+            />
           ))}
         </div>
       )}
 
-      <UnlockKeysModal
-        open={unlockOpen}
-        onClose={() => setUnlockOpen(false)}
-        merchant={merchant}
-        onUnlocked={async () => { await refreshMerchant?.(); await load(); }}
-      />
+      {unlockTarget && (
+        <UnlockKeysModal
+          open
+          onClose={() => setUnlockTarget(null)}
+          merchant={merchant}
+          brandId={unlockTarget.is_default ? null : unlockTarget.id}
+          fee={unlockTarget.is_default ? fees.full : fees.brand}
+          title={unlockTarget.is_default ? 'Unlock integration keys' : `Unlock keys — ${unlockTarget.name}`}
+          onUnlocked={async () => { await refreshMerchant?.(); await load(); }}
+        />
+      )}
     </div>
   );
 }
@@ -169,7 +184,7 @@ function AddBrandForm({ onCancel, onCreated }) {
 }
 
 /* ─── Brand card ─── */
-function BrandCard({ brand, onDelete, locked, onUnlock }) {
+function BrandCard({ brand, onDelete, locked, onUnlock, unlockFee, currency }) {
   return (
     <div className="card p-5 sm:p-6">
       <div className="flex items-start justify-between flex-wrap gap-3">
@@ -198,12 +213,15 @@ function BrandCard({ brand, onDelete, locked, onUnlock }) {
 
       <div className="mt-5 space-y-3">
         {locked || !brand.api_key ? (
-          <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-4 flex items-center justify-between gap-3">
+          <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-4 flex items-center justify-between gap-3 flex-wrap">
             <div className="flex items-center gap-2 text-sm text-slate-600">
               <svg className="w-4 h-4 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
               API key & secret are locked
+              {!brand.is_default && <span className="text-xs text-slate-400">· extra brand</span>}
             </div>
-            <button onClick={onUnlock} className="btn-secondary !py-1.5 text-xs shrink-0">Unlock</button>
+            <button onClick={onUnlock} className="btn-secondary !py-1.5 text-xs shrink-0">
+              {Number(unlockFee) > 0 ? `Unlock keys — ${formatMoney(unlockFee, currency)}` : 'Unlock keys'}
+            </button>
           </div>
         ) : (
           <>

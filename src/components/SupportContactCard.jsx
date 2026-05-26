@@ -26,8 +26,15 @@ export default function SupportContactCard({ tone = 'amber', title = 'Need help?
   }, []);
 
   if (!support) return null;
-  const hasAny = support.email || support.phone || support.whatsapp || support.hours;
+  const hasAny = support.email || support.phone || support.whatsapp || support.telegram || support.hours;
   if (!hasAny) return null;
+
+  // Build a t.me link whether the admin entered "@handle", "handle", or a full URL.
+  const tgHandle = (support.telegram || '')
+    .replace(/^https?:\/\/(t\.me|telegram\.me)\//i, '')
+    .replace(/^@/, '')
+    .trim();
+  const tgHref = /^https?:\/\//i.test(support.telegram || '') ? support.telegram : (tgHandle ? `https://t.me/${tgHandle}` : null);
 
   const tones = {
     amber: {
@@ -74,6 +81,11 @@ export default function SupportContactCard({ tone = 'amber', title = 'Need help?
             <ChatIcon /> <a href={`https://wa.me/${support.whatsapp.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" className="font-medium hover:underline">WhatsApp: {support.whatsapp}</a>
           </li>
         )}
+        {tgHref && (
+          <li className="flex items-start gap-2">
+            <TelegramIcon /> <a href={tgHref} target="_blank" rel="noopener noreferrer" className="font-medium hover:underline">Telegram: {tgHandle ? `@${tgHandle}` : support.telegram}</a>
+          </li>
+        )}
         {support.hours && (
           <li className="flex items-start gap-2">
             <ClockIcon /> <span>{support.hours}</span>
@@ -109,6 +121,13 @@ function ClockIcon() {
   return (
     <svg className="w-4 h-4 mt-0.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+    </svg>
+  );
+}
+function TelegramIcon() {
+  return (
+    <svg className="w-4 h-4 mt-0.5 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+      <path d="M21.94 4.66a1.2 1.2 0 0 0-1.27-.18L3.4 11.3c-.86.34-.85 1.57.02 1.9l4.2 1.56 1.62 5.06c.2.62 1 .8 1.45.32l2.3-2.45 4.36 3.2c.55.4 1.34.1 1.49-.56l3.06-14.2a1.2 1.2 0 0 0-.46-1.27ZM9.7 14.13l-.6 3.74-1.27-3.96 8.9-5.6-7.03 5.82Z"/>
     </svg>
   );
 }

@@ -137,7 +137,7 @@ export default function ConsoleTicketsPage() {
                   <div className="text-xs text-slate-400 mt-0.5">
                     {t.message_count} {t.message_count === 1 ? 'message' : 'messages'}
                     {t.last_reply_at && (
-                      <> · Last reply {new Date(t.last_reply_at).toLocaleString([], { timeZone: 'Asia/Dhaka', dateStyle: 'short', timeStyle: 'short' })} by {t.last_reply_by}</>
+                      <> · Last reply {new Date(t.last_reply_at).toLocaleString('en-US', { timeZone: 'Asia/Dhaka', dateStyle: 'short', timeStyle: 'short' })} by {t.last_reply_by}</>
                     )}
                   </div>
                 </div>

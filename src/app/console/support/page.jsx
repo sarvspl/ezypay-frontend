@@ -12,13 +12,14 @@ const FIELDS = [
   { name: 'email',    label: 'Support Email',    placeholder: 'support@yourcompany.com', type: 'email' },
   { name: 'phone',    label: 'Phone',            placeholder: '+91 98765 43210',         type: 'text' },
   { name: 'whatsapp', label: 'WhatsApp',         placeholder: '+91 98765 43210',         type: 'text' },
+  { name: 'telegram', label: 'Telegram',         placeholder: '@yourcompany or t.me/yourcompany', type: 'text' },
   { name: 'hours',    label: 'Support Hours',    placeholder: 'Mon–Fri 9am–6pm IST',     type: 'text' },
 ];
 
 export default function ConsoleSupportPage() {
   const router = useRouter();
   const ready = useGuard('admin');
-  const [form, setForm]       = useState({ email: '', phone: '', whatsapp: '', hours: '', message: '' });
+  const [form, setForm]       = useState({ email: '', phone: '', whatsapp: '', telegram: '', hours: '', message: '' });
   const [loaded, setLoaded]   = useState(false);
   const [saving, setSaving]   = useState(false);
   const [updatedAt, setUpdatedAt] = useState(null);
@@ -35,6 +36,7 @@ export default function ConsoleSupportPage() {
           email:    s.email    || '',
           phone:    s.phone    || '',
           whatsapp: s.whatsapp || '',
+          telegram: s.telegram || '',
           hours:    s.hours    || '',
           message:  s.message  || '',
         });
@@ -121,7 +123,7 @@ export default function ConsoleSupportPage() {
 
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-3 border-t border-slate-100">
               <div className="text-xs text-slate-500 order-2 sm:order-1">
-                {updatedAt ? `Last updated ${new Date(updatedAt).toLocaleString(undefined, { timeZone: 'Asia/Dhaka' })}` : 'Not yet saved'}
+                {updatedAt ? `Last updated ${new Date(updatedAt).toLocaleString('en-US', { timeZone: 'Asia/Dhaka' })}` : 'Not yet saved'}
               </div>
               <button
                 type="submit"

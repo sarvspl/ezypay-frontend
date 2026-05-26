@@ -10,6 +10,8 @@ export default function GatewaysPage() {
   const router = useRouter();
   const [gateways, setGateways] = useState(null);
   const [providers, setProviders] = useState(FALLBACK_PROVIDERS);
+  const [brands, setBrands] = useState([]);
+  const [brandId, setBrandId] = useState('');          // selected brand to view/add under
   const [error, setError] = useState(null);
   const [showAdd, setShowAdd] = useState(false);
   const [adding, setAdding] = useState(null);          // { provider, variant }
@@ -19,18 +21,28 @@ export default function GatewaysPage() {
     setError(null);
     const token = merchantAuth.get();
     try {
-      const [g, p] = await Promise.all([
+      const [g, p, b] = await Promise.all([
         api.merchantListGateways(token),
         api.listProviders(),
+        api.merchantListBrands(token),
       ]);
       setGateways(g.gateways);
       if (p.providers && p.providers.length) setProviders(p.providers);
+      const bl = b.brands || [];
+      setBrands(bl);
+      setBrandId((cur) => cur || bl.find((x) => x.is_default)?.id || bl[0]?.id || '');
     } catch (e) {
       if (e.status === 401) { merchantAuth.clear(); router.replace('/login'); }
       else setError(e.message);
     }
   };
   useEffect(() => { load(); }, []); // eslint-disable-line
+
+  // Gateways belong to a brand; show only the selected brand's.
+  const visibleGateways = gateways && brandId
+    ? gateways.filter((g) => g.brand_id === brandId)
+    : gateways;
+  const usedTypes = new Set((visibleGateways || []).map((g) => `${g.provider}:${g.variant}`));
 
   const onPick = (provider, variant) => {
     setShowAdd(false);
@@ -39,7 +51,7 @@ export default function GatewaysPage() {
 
   const onCreate = async (form) => {
     const token = merchantAuth.get();
-    const body = { provider: adding.provider, variant: adding.variant, ...form };
+    const body = { provider: adding.provider, variant: adding.variant, brand_id: brandId, ...form };
     const r = await api.merchantCreateGateway(token, body);
     setGateways((gs) => [...(gs || []), r.gateway]);
     setAdding(null);
@@ -84,12 +96,26 @@ export default function GatewaysPage() {
           <h2 className="text-xl font-bold text-slate-900">Payment gateways</h2>
           <p className="text-sm text-slate-600 mt-1 max-w-2xl">
             Wallet accounts where your customers send payments. Each gateway is matched against
-            incoming SMS to verify the transaction.
+            incoming SMS to verify the transaction. Up to <strong>8 per brand</strong> — one of each provider type.
           </p>
         </div>
-        <button onClick={() => setShowAdd(true)} className="btn-primary">
-          <PlusIcon /> <span className="ml-2">Add Gateway</span>
-        </button>
+        <div className="flex items-center gap-2">
+          {brands.length > 1 && (
+            <select
+              value={brandId}
+              onChange={(e) => { setBrandId(e.target.value); setAdding(null); setExpandedId(null); }}
+              className="input !py-2 max-w-[220px]"
+              title="Gateways are per brand/domain"
+            >
+              {brands.map((b) => (
+                <option key={b.id} value={b.id}>{b.name} · {b.domain}</option>
+              ))}
+            </select>
+          )}
+          <button onClick={() => setShowAdd(true)} className="btn-primary whitespace-nowrap">
+            <PlusIcon /> <span className="ml-2">Add Gateway</span>
+          </button>
+        </div>
       </div>
 
       {error && (
@@ -111,14 +137,14 @@ export default function GatewaysPage() {
         <div className="card p-10 text-center text-slate-500">Loading gateways…</div>
       )}
 
-      {gateways && gateways.length === 0 && !adding && (
+      {visibleGateways && visibleGateways.length === 0 && !adding && (
         <div className="card p-10 text-center">
           <div className="mx-auto w-12 h-12 rounded-full bg-brand-50 text-brand-600 flex items-center justify-center">
             <CardIcon />
           </div>
           <h3 className="mt-4 font-semibold text-slate-900">No gateways yet</h3>
           <p className="text-sm text-slate-500 mt-1">
-            Add the wallet accounts that receive your customer payments.
+            Add the wallet accounts that receive your customer payments{brands.length > 1 ? ' for this brand' : ''}.
           </p>
           <button onClick={() => setShowAdd(true)} className="btn-primary mt-4">
             <PlusIcon /> <span className="ml-2">Add your first gateway</span>
@@ -126,9 +152,9 @@ export default function GatewaysPage() {
         </div>
       )}
 
-      {gateways && gateways.length > 0 && (
+      {visibleGateways && visibleGateways.length > 0 && (
         <div className="space-y-3">
-          {gateways.map((g) => (
+          {visibleGateways.map((g) => (
             <GatewayCard
               key={g.id}
               gateway={g}
@@ -149,6 +175,7 @@ export default function GatewaysPage() {
       {showAdd && (
         <AddGatewayModal
           providers={providers}
+          usedTypes={usedTypes}
           onClose={() => setShowAdd(false)}
           onPick={onPick}
         />
@@ -158,7 +185,7 @@ export default function GatewaysPage() {
 }
 
 /* ─────────────────────────────────────── Add Gateway Modal */
-function AddGatewayModal({ providers, onClose, onPick }) {
+function AddGatewayModal({ providers, usedTypes, onClose, onPick }) {
   const [q, setQ] = useState('');
 
   const filtered = useMemo(() => {
@@ -198,15 +225,24 @@ function AddGatewayModal({ providers, onClose, onPick }) {
                 <span className="font-semibold text-slate-900">{p.name}</span>
               </div>
               <div className="mt-2 flex flex-wrap gap-2">
-                {(p.variants || []).map((v) => (
-                  <button
-                    key={v}
-                    onClick={() => onPick(p.id, v)}
-                    className="px-4 py-2 text-sm rounded-md border border-slate-200 hover:border-brand-300 hover:bg-brand-50 hover:text-brand-700 transition font-medium text-slate-700"
-                  >
-                    {labelVariant(v)}
-                  </button>
-                ))}
+                {(p.variants || []).map((v) => {
+                  const taken = usedTypes?.has(`${p.id}:${v}`);
+                  return (
+                    <button
+                      key={v}
+                      onClick={() => !taken && onPick(p.id, v)}
+                      disabled={taken}
+                      title={taken ? 'Already added for this brand' : undefined}
+                      className={`px-4 py-2 text-sm rounded-md border font-medium transition ${
+                        taken
+                          ? 'border-slate-200 bg-slate-50 text-slate-400 cursor-not-allowed'
+                          : 'border-slate-200 hover:border-brand-300 hover:bg-brand-50 hover:text-brand-700 text-slate-700'
+                      }`}
+                    >
+                      {labelVariant(v)}{taken ? ' ✓' : ''}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           ))}

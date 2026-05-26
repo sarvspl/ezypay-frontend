@@ -101,7 +101,7 @@ export default function DevicesPage() {
       {devices && devices.length > 0 && (
         <div className="grid gap-3">
           {devices.map((d) => (
-            <DeviceCard key={d.id} device={d} onDelete={() => onDelete(d)} />
+            <DeviceCard key={d.id} device={d} onDelete={() => onDelete(d)} onUpdated={load} />
           ))}
         </div>
       )}
@@ -193,11 +193,45 @@ function StatCard({ label, value, icon, tone }) {
 }
 
 /* ─── device card ─── */
-function DeviceCard({ device, onDelete }) {
+function DeviceCard({ device, onDelete, onUpdated }) {
   const isOnline = device.is_online;
   const title = device.model
     ? `${device.manufacturer ? device.manufacturer + ' ' : ''}${device.model}`
     : 'Unknown device';
+
+  const [editing, setEditing] = useState(false);
+  const [form, setForm] = useState({ binder_name: '', telegram: '', whatsapp: '' });
+  const [saving, setSaving] = useState(false);
+  const [err, setErr] = useState(null);
+
+  const openEdit = () => {
+    setForm({
+      binder_name: device.binder_name || '',
+      telegram: device.telegram_handle || '',
+      whatsapp: device.whatsapp || '',
+    });
+    setErr(null);
+    setEditing(true);
+  };
+
+  const save = async () => {
+    setSaving(true);
+    setErr(null);
+    try {
+      const token = merchantAuth.get();
+      await api.merchantUpdateDevice(token, device.id, {
+        binder_name: form.binder_name.trim(),
+        telegram: form.telegram.trim(),
+        whatsapp: form.whatsapp.trim(),
+      });
+      setEditing(false);
+      await onUpdated?.();
+    } catch (e) {
+      setErr(e?.data?.error || e?.message || 'Could not save');
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
     <div className="card p-5">
@@ -214,29 +248,48 @@ function DeviceCard({ device, onDelete }) {
               {device.os_version && <span>Android {device.os_version} · </span>}
               Last seen {timeAgo(device.last_seen_at)}
             </p>
-            {device.binder_name && (
-              <div className="mt-1.5 flex items-center gap-2 flex-wrap">
+            <div className="mt-1.5 flex items-center gap-2 flex-wrap">
+              {device.binder_name && (
                 <span className="text-xs text-slate-600">
                   Bound by <span className="font-medium text-slate-800">{device.binder_name}</span>
                 </span>
-                {device.telegram_handle && (
-                  <a
-                    href={`https://t.me/${device.telegram_handle}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 rounded-full bg-[#229ED9]/10 text-[#229ED9] hover:bg-[#229ED9]/20 px-2 py-0.5 text-[11px] font-semibold transition"
-                    title={`Chat with @${device.telegram_handle} on Telegram`}
-                  >
-                    <TelegramIcon /> @{device.telegram_handle}
-                  </a>
-                )}
-              </div>
-            )}
+              )}
+              {device.telegram_handle && (
+                <a
+                  href={`https://t.me/${device.telegram_handle}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 rounded-full bg-[#229ED9]/10 text-[#229ED9] hover:bg-[#229ED9]/20 px-2 py-0.5 text-[11px] font-semibold transition"
+                  title={`Chat with @${device.telegram_handle} on Telegram`}
+                >
+                  <TelegramIcon /> @{device.telegram_handle}
+                </a>
+              )}
+              {device.whatsapp && (
+                <a
+                  href={`https://wa.me/${device.whatsapp}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 rounded-full bg-[#25D366]/10 text-[#128C7E] hover:bg-[#25D366]/20 px-2 py-0.5 text-[11px] font-semibold transition"
+                  title={`Chat on WhatsApp (${device.whatsapp})`}
+                >
+                  <WhatsAppIcon /> WhatsApp
+                </a>
+              )}
+            </div>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
           <StatusBadge online={isOnline} enabled={device.is_enabled} />
+          <button
+            onClick={openEdit}
+            className="text-slate-400 hover:text-brand-600 p-1.5 rounded hover:bg-brand-50 transition"
+            aria-label="Edit contacts"
+            title="Edit Telegram / WhatsApp"
+          >
+            <PencilIcon />
+          </button>
           <button
             onClick={onDelete}
             className="text-slate-400 hover:text-rose-600 p-1.5 rounded hover:bg-rose-50 transition"
@@ -247,6 +300,34 @@ function DeviceCard({ device, onDelete }) {
           </button>
         </div>
       </div>
+
+      {editing && (
+        <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-4 space-y-3">
+          <div>
+            <label className="block text-xs font-medium text-slate-600 mb-1">Name</label>
+            <input value={form.binder_name} onChange={(e) => setForm({ ...form, binder_name: e.target.value })}
+              placeholder="e.g. Rahim (Shop counter)" className="input !py-2" />
+          </div>
+          <div className="grid sm:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-medium text-slate-600 mb-1">Telegram username</label>
+              <input value={form.telegram} onChange={(e) => setForm({ ...form, telegram: e.target.value })}
+                placeholder="@rahim_pay" className="input !py-2 font-mono" />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-slate-600 mb-1">WhatsApp number</label>
+              <input value={form.whatsapp} onChange={(e) => setForm({ ...form, whatsapp: e.target.value })}
+                placeholder="8801XXXXXXXXX" inputMode="numeric" className="input !py-2 font-mono" />
+            </div>
+          </div>
+          <p className="text-[11px] text-slate-400">Leave a field empty to remove that contact. WhatsApp uses the full international number (no +).</p>
+          {err && <div className="text-xs text-rose-600 bg-rose-50 border border-rose-200 rounded p-2">{err}</div>}
+          <div className="flex justify-end gap-2">
+            <button onClick={() => setEditing(false)} disabled={saving} className="text-sm text-slate-600 hover:text-slate-900 px-3 py-1.5">Cancel</button>
+            <button onClick={save} disabled={saving} className="btn-primary !py-1.5">{saving ? 'Saving…' : 'Save'}</button>
+          </div>
+        </div>
+      )}
 
       <div className="mt-4 rounded-md bg-slate-50/70 border border-slate-200 px-3 py-2.5">
         <div className="text-xs text-slate-500 mb-0.5">Device ID</div>
@@ -386,6 +467,8 @@ function I(props) { return <svg width="18" height="18" viewBox="0 0 24 24" fill=
 function PhoneIcon()  { return <I><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></I>; }
 function SignalIcon() { return <I><path d="M2 20h.01"/><path d="M7 20v-4"/><path d="M12 20v-8"/><path d="M17 20V8"/><path d="M22 4v16"/></I>; }
 function TelegramIcon() { return <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor" aria-hidden><path d="M21.94 4.66a1.2 1.2 0 0 0-1.27-.18L3.4 11.3c-.86.34-.85 1.57.02 1.9l4.2 1.56 1.62 5.06c.2.62 1 .8 1.45.32l2.3-2.45 4.36 3.2c.55.4 1.34.1 1.49-.56l3.06-14.2a1.2 1.2 0 0 0-.46-1.27ZM9.7 14.13l-.6 3.74-1.27-3.96 8.9-5.6-7.03 5.82Z"/></svg>; }
+function WhatsAppIcon() { return <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor" aria-hidden><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2 22l5.25-1.38a9.9 9.9 0 0 0 4.79 1.22h.01c5.46 0 9.9-4.45 9.9-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2Zm5.8 14.13c-.24.68-1.42 1.32-1.95 1.36-.5.05-.98.23-3.3-.69-2.79-1.1-4.56-3.96-4.7-4.15-.14-.19-1.12-1.49-1.12-2.84 0-1.35.71-2.01.96-2.29.25-.27.54-.34.72-.34.18 0 .36 0 .52.01.17.01.39-.06.61.47.24.55.79 1.9.86 2.04.07.14.12.3.02.49-.1.19-.14.3-.28.47-.14.16-.3.37-.42.49-.14.14-.29.29-.12.57.17.28.74 1.22 1.59 1.98 1.1.98 2.02 1.28 2.3 1.42.28.14.45.12.61-.07.16-.19.7-.82.89-1.1.18-.28.37-.23.61-.14.25.09 1.58.75 1.85.89.27.14.45.21.52.32.07.12.07.66-.17 1.34Z"/></svg>; }
+function PencilIcon() { return <I><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></I>; }
 function PulseIcon()  { return <I><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></I>; }
 function OffIcon()    { return <I><line x1="2" y1="2" x2="22" y2="22"/><path d="M8.5 16.5a5 5 0 0 1 7 0"/><path d="M2 8.82a15 15 0 0 1 4.17-2.65"/><path d="M10.66 5c4.01-.36 8.14.9 11.34 3.76"/><path d="M16.85 11.25a10 10 0 0 1 2.22 1.68"/><path d="M5 12.55a10 10 0 0 1 5.17-2.39"/><line x1="12" y1="20" x2="12.01" y2="20"/></I>; }
 function TrashIcon()  { return <I><polyline points="3 6 5 6 21 6"/><path d="M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/></I>; }

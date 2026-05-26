@@ -101,7 +101,7 @@ export default function ConsoleTicketDetailPage() {
             </div>
             <h1 className="mt-2 text-xl font-bold text-slate-900 break-words">{ticket.subject}</h1>
             <div className="mt-1 text-xs text-slate-500">
-              Created {new Date(ticket.created_at).toLocaleString(undefined, { timeZone: 'Asia/Dhaka' })}
+              Created {new Date(ticket.created_at).toLocaleString('en-US', { timeZone: 'Asia/Dhaka' })}
             </div>
           </div>
 
@@ -116,7 +116,7 @@ export default function ConsoleTicketDetailPage() {
                       : 'bg-white border border-slate-200 text-slate-800'
                   }`}>
                     <div className="text-[10px] uppercase tracking-wider opacity-70 mb-0.5">
-                      {isAdmin ? 'You (Admin)' : ticket.merchant_name} · {new Date(m.created_at).toLocaleString([], { timeZone: 'Asia/Dhaka', dateStyle: 'short', timeStyle: 'short' })}
+                      {isAdmin ? 'You (Admin)' : ticket.merchant_name} · {new Date(m.created_at).toLocaleString('en-US', { timeZone: 'Asia/Dhaka', dateStyle: 'short', timeStyle: 'short' })}
                     </div>
                     <div className="whitespace-pre-wrap break-words">{m.body}</div>
                   </div>

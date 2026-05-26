@@ -89,7 +89,7 @@ export default function ConsoleMerchantDetailPage() {
                 <div className="font-semibold">This merchant is suspended.</div>
                 <div className="text-rose-700/90 mt-0.5">
                   {merchant.suspended_reason || 'No reason provided.'}
-                  {merchant.suspended_at && <span className="text-rose-600/70"> · {new Date(merchant.suspended_at).toLocaleString(undefined, { timeZone: 'Asia/Dhaka' })}</span>}
+                  {merchant.suspended_at && <span className="text-rose-600/70"> · {new Date(merchant.suspended_at).toLocaleString('en-US', { timeZone: 'Asia/Dhaka' })}</span>}
                 </div>
                 <div className="text-xs text-rose-600/80 mt-1">Login, API key requests, and APK polls are blocked while suspended.</div>
               </div>
@@ -102,7 +102,7 @@ export default function ConsoleMerchantDetailPage() {
               <Field label="Country"         value={merchant.country} />
               <Field label="State"           value={merchant.state} />
               <Field label="Wallet balance"  value={Number(merchant.wallet_balance).toFixed(2)} />
-              <Field label="Joined"          value={new Date(merchant.created_at).toLocaleString(undefined, { timeZone: 'Asia/Dhaka' })} />
+              <Field label="Joined"          value={new Date(merchant.created_at).toLocaleString('en-US', { timeZone: 'Asia/Dhaka' })} />
             </section>
 
             <section className="card p-6 mt-6">
@@ -190,7 +190,7 @@ function WalletSection({ merchantId }) {
                 <tbody className="divide-y divide-slate-100">
                   {recharges.map((r) => (
                     <tr key={r.session_id}>
-                      <td className="py-2 px-2 text-slate-600">{new Date(r.created_at).toLocaleString(undefined, { timeZone: 'Asia/Dhaka' })}</td>
+                      <td className="py-2 px-2 text-slate-600">{new Date(r.created_at).toLocaleString('en-US', { timeZone: 'Asia/Dhaka' })}</td>
                       <td className="py-2 px-2 font-semibold">{r.currency} {Number(r.amount).toFixed(2)}</td>
                       <td className="py-2 px-2 text-slate-700">{r.provider ? `${r.provider}${r.variant ? ' · ' + r.variant : ''}` : <span className="text-slate-400">—</span>}</td>
                       <td className="py-2 px-2 font-mono text-xs text-slate-700">{r.txnid_submitted || <span className="text-slate-400">—</span>}</td>
@@ -223,7 +223,7 @@ function WalletSection({ merchantId }) {
                   <div key={row.id} className="py-3 flex items-center justify-between gap-3">
                     <div className="min-w-0">
                       <div className="text-sm font-medium text-slate-900">{prettyKind(row.kind)}</div>
-                      <div className="text-xs text-slate-500">{new Date(row.created_at).toLocaleString(undefined, { timeZone: 'Asia/Dhaka' })}{row.note ? ` · ${row.note}` : ''}</div>
+                      <div className="text-xs text-slate-500">{new Date(row.created_at).toLocaleString('en-US', { timeZone: 'Asia/Dhaka' })}{row.note ? ` · ${row.note}` : ''}</div>
                     </div>
                     <div className="text-right shrink-0">
                       <div className={`font-semibold tabular-nums ${credit ? 'text-emerald-700' : 'text-rose-700'}`}>
