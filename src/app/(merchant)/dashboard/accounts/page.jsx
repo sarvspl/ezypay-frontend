@@ -16,6 +16,8 @@ export default function AccountsPage() {
   const [accounts, setAccounts] = useState(null);
   const [fees, setFees] = useState({ full: 0, account: 0 });
   const [error, setError] = useState(null);
+  const [showAdd, setShowAdd] = useState(false);
+  const [newName, setNewName] = useState('');
   const [creating, setCreating] = useState(false);
   const [unlockTarget, setUnlockTarget] = useState(null);
 
@@ -37,7 +39,9 @@ export default function AccountsPage() {
     setCreating(true);
     try {
       const token = merchantAuth.get();
-      await api.merchantCreateAccount(token, {});
+      await api.merchantCreateAccount(token, { label: newName.trim() || undefined });
+      setShowAdd(false);
+      setNewName('');
       await load();
     } catch (e) { alert(e.message); }
     finally { setCreating(false); }
@@ -54,10 +58,36 @@ export default function AccountsPage() {
             An extra account unlocks for {fees.account > 0 ? formatMoney(fees.account, merchant?.currency) : 'free'} and gives you a new device key.
           </p>
         </div>
-        <button onClick={addAccount} disabled={creating} className="btn-primary whitespace-nowrap">
-          {creating ? 'Adding…' : '+ Add account'}
-        </button>
+        {!showAdd && (
+          <button onClick={() => { setShowAdd(true); setNewName(''); }} className="btn-primary whitespace-nowrap">
+            + Add account
+          </button>
+        )}
       </div>
+
+      {showAdd && (
+        <div className="card p-4 sm:p-5">
+          <label className="label">Account name</label>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <input
+              autoFocus
+              value={newName}
+              onChange={(e) => setNewName(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter' && !creating) addAccount(); }}
+              maxLength={120}
+              placeholder="e.g. Counter 2 / Branch — Dhanmondi"
+              className="input flex-1"
+            />
+            <div className="flex gap-2">
+              <button onClick={addAccount} disabled={creating} className="btn-primary whitespace-nowrap">
+                {creating ? 'Creating…' : 'Create account'}
+              </button>
+              <button onClick={() => { setShowAdd(false); setNewName(''); }} disabled={creating} className="btn-secondary">Cancel</button>
+            </div>
+          </div>
+          <p className="text-xs text-slate-500 mt-1.5">Optional — you can rename it later. The new account starts locked; unlock it to get its device key.</p>
+        </div>
+      )}
 
       {error && <div className="card p-4 text-sm text-rose-600 bg-rose-50 border-rose-200">{error}</div>}
       {!accounts && !error && <div className="card p-10 text-center text-slate-500">Loading accounts…</div>}
