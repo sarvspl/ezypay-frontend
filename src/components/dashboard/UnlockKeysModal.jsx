@@ -11,7 +11,7 @@ import { formatMoney } from '@/lib/money';
  * fee from the merchant's wallet, then calls onUnlocked() (which should refresh
  * the merchant so the now-revealed keys appear).
  */
-export default function UnlockKeysModal({ open, onClose, merchant, onUnlocked, brandId = null, fee: feeOverride, title }) {
+export default function UnlockKeysModal({ open, onClose, merchant, onUnlocked, brandId = null, accountId = null, fee: feeOverride, title }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
 
@@ -27,7 +27,9 @@ export default function UnlockKeysModal({ open, onClose, merchant, onUnlocked, b
     setError(null);
     try {
       const token = merchantAuth.get();
-      const r = brandId
+      const r = accountId
+        ? await api.merchantUnlockAccount(token, accountId)
+        : brandId
         ? await api.merchantUnlockBrand(token, brandId)
         : await api.merchantUnlockKeys(token);
       await onUnlocked?.(r);
@@ -49,7 +51,9 @@ export default function UnlockKeysModal({ open, onClose, merchant, onUnlocked, b
           <div className="min-w-0">
             <h2 className="text-lg font-bold text-slate-900">{title || 'Unlock integration keys'}</h2>
             <p className="mt-1 text-sm text-slate-600">
-              {brandId
+              {accountId
+                ? "This account's device auth key unlocks with a one-time payment from your wallet."
+                : brandId
                 ? "This brand's API key & secret key unlock with a one-time payment from your wallet."
                 : 'Your API key and device auth key unlock with a one-time payment from your wallet.'}
             </p>

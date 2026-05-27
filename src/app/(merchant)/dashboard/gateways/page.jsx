@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { api } from '@/lib/api';
 import { merchantAuth } from '@/lib/auth';
 import { getProviderFromList, labelVariant, FALLBACK_PROVIDERS } from '@/lib/providers';
@@ -10,8 +11,8 @@ export default function GatewaysPage() {
   const router = useRouter();
   const [gateways, setGateways] = useState(null);
   const [providers, setProviders] = useState(FALLBACK_PROVIDERS);
-  const [brands, setBrands] = useState([]);
-  const [brandId, setBrandId] = useState('');          // selected brand to view/add under
+  const [accounts, setAccounts] = useState([]);
+  const [accountId, setAccountId] = useState('');      // selected account to view/add under
   const [error, setError] = useState(null);
   const [showAdd, setShowAdd] = useState(false);
   const [adding, setAdding] = useState(null);          // { provider, variant }
@@ -21,16 +22,16 @@ export default function GatewaysPage() {
     setError(null);
     const token = merchantAuth.get();
     try {
-      const [g, p, b] = await Promise.all([
+      const [g, p, a] = await Promise.all([
         api.merchantListGateways(token),
         api.listProviders(),
-        api.merchantListBrands(token),
+        api.merchantListAccounts(token),
       ]);
       setGateways(g.gateways);
       if (p.providers && p.providers.length) setProviders(p.providers);
-      const bl = b.brands || [];
-      setBrands(bl);
-      setBrandId((cur) => cur || bl.find((x) => x.is_default)?.id || bl[0]?.id || '');
+      const al = a.accounts || [];
+      setAccounts(al);
+      setAccountId((cur) => cur || al.find((x) => x.is_default)?.id || al[0]?.id || '');
     } catch (e) {
       if (e.status === 401) { merchantAuth.clear(); router.replace('/login'); }
       else setError(e.message);
@@ -38,9 +39,10 @@ export default function GatewaysPage() {
   };
   useEffect(() => { load(); }, []); // eslint-disable-line
 
-  // Gateways belong to a brand; show only the selected brand's.
-  const visibleGateways = gateways && brandId
-    ? gateways.filter((g) => g.brand_id === brandId)
+  const selectedAccount = accounts.find((a) => a.id === accountId) || null;
+  // Gateways belong to an account; show only the selected account's.
+  const visibleGateways = gateways && accountId
+    ? gateways.filter((g) => g.account_id === accountId)
     : gateways;
   const usedTypes = new Set((visibleGateways || []).map((g) => `${g.provider}:${g.variant}`));
 
@@ -51,7 +53,7 @@ export default function GatewaysPage() {
 
   const onCreate = async (form) => {
     const token = merchantAuth.get();
-    const body = { provider: adding.provider, variant: adding.variant, brand_id: brandId, ...form };
+    const body = { provider: adding.provider, variant: adding.variant, account_id: accountId, ...form };
     const r = await api.merchantCreateGateway(token, body);
     setGateways((gs) => [...(gs || []), r.gateway]);
     setAdding(null);
@@ -96,27 +98,39 @@ export default function GatewaysPage() {
           <h2 className="text-xl font-bold text-slate-900">Payment gateways</h2>
           <p className="text-sm text-slate-600 mt-1 max-w-2xl">
             Wallet accounts where your customers send payments. Each gateway is matched against
-            incoming SMS to verify the transaction. Up to <strong>8 per brand</strong> — one of each provider type.
+            incoming SMS to verify the transaction. Up to <strong>8 per account</strong> — one of each provider type.
+            At checkout, numbers of the same type rotate (round-robin) across your accounts.
           </p>
         </div>
         <div className="flex items-center gap-2">
-          {brands.length > 1 && (
+          {accounts.length > 1 && (
             <select
-              value={brandId}
-              onChange={(e) => { setBrandId(e.target.value); setAdding(null); setExpandedId(null); }}
+              value={accountId}
+              onChange={(e) => { setAccountId(e.target.value); setAdding(null); setExpandedId(null); }}
               className="input !py-2 max-w-[220px]"
-              title="Gateways are per brand/domain"
+              title="Gateways are per account"
             >
-              {brands.map((b) => (
-                <option key={b.id} value={b.id}>{b.name} · {b.domain}</option>
+              {accounts.map((a, i) => (
+                <option key={a.id} value={a.id}>{a.label || (a.is_default ? 'Primary' : `Account ${i + 1}`)}{a.keys_unlocked ? '' : ' (locked)'}</option>
               ))}
             </select>
           )}
-          <button onClick={() => setShowAdd(true)} className="btn-primary whitespace-nowrap">
+          <button
+            onClick={() => setShowAdd(true)}
+            disabled={selectedAccount && !selectedAccount.keys_unlocked}
+            className="btn-primary whitespace-nowrap disabled:opacity-50"
+            title={selectedAccount && !selectedAccount.keys_unlocked ? 'Unlock this account first (Accounts page)' : undefined}
+          >
             <PlusIcon /> <span className="ml-2">Add Gateway</span>
           </button>
         </div>
       </div>
+
+      {selectedAccount && !selectedAccount.keys_unlocked && (
+        <div className="card p-4 text-sm text-amber-800 bg-amber-50 border-amber-200">
+          This account is locked. <Link href="/dashboard/accounts" className="font-semibold underline">Unlock it</Link> to add gateways.
+        </div>
+      )}
 
       {error && (
         <div className="card p-4 text-sm text-rose-600 bg-rose-50 border-rose-200">{error}</div>

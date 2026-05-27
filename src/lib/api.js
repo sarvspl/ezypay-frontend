@@ -66,6 +66,11 @@ export const api = {
   merchantUnlockBrand:  (token, id) => request(`/api/merchant/brands/${id}/unlock`, { method: 'POST', token }),
   merchantDeleteBrand:  (token, id) => request(`/api/merchant/brands/${id}`, { method: 'DELETE', token }),
 
+  // Accounts (receiving units: own device key + up to 8 gateways)
+  merchantListAccounts:  (token) => request('/api/merchant/accounts', { token }),
+  merchantCreateAccount: (token, body) => request('/api/merchant/accounts', { method: 'POST', body, token }),
+  merchantUnlockAccount: (token, id) => request(`/api/merchant/accounts/${id}/unlock`, { method: 'POST', token }),
+
   // Devices
   merchantListDevices:        (token) => request('/api/merchant/devices', { token }),
   merchantListDeviceHistory:  (token) => request('/api/merchant/devices/history', { token }),

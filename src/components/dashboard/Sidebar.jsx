@@ -17,7 +17,7 @@ const NAV = [
   {
     section: 'Integration',
     items: [
-      { label: 'Brands',   href: '/dashboard/brands',   icon: <StoreIcon /> },
+      { label: 'Accounts', href: '/dashboard/accounts', icon: <StoreIcon /> },
       { label: 'Devices',  href: '/dashboard/devices',  icon: <PhoneIcon /> },
       { label: 'Gateways', href: '/dashboard/gateways', icon: <CardIcon /> },
     ],
