@@ -17,7 +17,6 @@ export default function PayWithGatewayPage() {
   const [gateway, setGateway] = useState(null);
   const [error, setError] = useState(null);
   const [txnid, setTxnid] = useState('');
-  const [senderNo, setSenderNo] = useState('');
   const [proof, setProof] = useState(null);       // compressed data URL
   const [proofName, setProofName] = useState(''); // original filename, for display
   const [proofBusy, setProofBusy] = useState(false);
@@ -80,10 +79,6 @@ export default function PayWithGatewayPage() {
       setError('Please enter the Transaction ID from your wallet SMS.');
       return;
     }
-    if (!senderNo.trim()) {
-      setError('Please enter the mobile/account number you paid from.');
-      return;
-    }
     if (!proof) {
       setError('Please attach a screenshot of your payment confirmation.');
       return;
@@ -93,7 +88,6 @@ export default function PayWithGatewayPage() {
       await api.checkoutSubmit(sessionId, {
         gateway_id: gatewayId,
         txnid: txnid.trim(),
-        sender_account: senderNo.trim(),
         proof_image: proof,
       });
       setVerifying(true);
@@ -207,20 +201,6 @@ export default function PayWithGatewayPage() {
           <p className="text-xs text-slate-500 mt-1">From your {p.name} confirmation SMS</p>
         </div>
 
-        {/* Sender number */}
-        <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1.5">Your {p.name} number</label>
-          <input
-            value={senderNo}
-            onChange={(e) => setSenderNo(e.target.value)}
-            disabled={submitting || verifying}
-            inputMode="numeric"
-            className="input font-mono"
-            placeholder="e.g. 01XXXXXXXXX"
-          />
-          <p className="text-xs text-slate-500 mt-1">The number/account you paid from.</p>
-        </div>
-
         {/* Payment screenshot */}
         <div>
           <label className="block text-sm font-medium text-slate-700 mb-1.5">Payment screenshot</label>
@@ -273,7 +253,7 @@ export default function PayWithGatewayPage() {
 
         <button
           type="submit"
-          disabled={submitting || verifying || proofBusy || !txnid.trim() || !senderNo.trim() || !proof}
+          disabled={submitting || verifying || proofBusy || !txnid.trim() || !proof}
           className="btn-primary w-full !py-2.5"
         >
           {submitting ? 'Submitting…' : verifying ? <><Spinner /> <span className="ml-2">Verifying…</span></> : 'Verify'}
