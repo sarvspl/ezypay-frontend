@@ -120,6 +120,7 @@ export default function ConsoleMerchantDetailPage() {
             </section>
 
             <WalletSection merchantId={id} />
+            <TransactionsSection merchantId={id} />
           </>
         )}
       </div>
@@ -139,12 +140,25 @@ function WalletSection({ merchantId }) {
   const [currency, setCurrency]   = useState('BDT');
   const LIMIT = 20;
 
-  useEffect(() => {
+  const reloadRecharges = () => {
     const token = adminAuth.get();
     api.adminGetMerchantRecharges(token, merchantId, { limit: LIMIT, offset: rPage * LIMIT })
       .then((r) => { setRecharges(r.recharges); setRTotal(r.total); })
       .catch(() => setRecharges([]));
-  }, [merchantId, rPage]);
+  };
+  useEffect(reloadRecharges, [merchantId, rPage]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const onResolveRecharge = async (r, result) => {
+    if (!r.transaction_id) return;
+    const reason = result === 'failed'
+      ? (prompt('Reason for rejection (shown to the merchant):') || 'Rejected by admin')
+      : null;
+    try {
+      const token = adminAuth.get();
+      await api.adminResolvePlatformTransaction(token, r.transaction_id, result, reason);
+      reloadRecharges();
+    } catch (e) { alert(e.message || 'Failed to update'); }
+  };
 
   useEffect(() => {
     const token = adminAuth.get();
@@ -184,7 +198,8 @@ function WalletSection({ merchantId }) {
                     <th className="py-2 px-2">Amount</th>
                     <th className="py-2 px-2">Method</th>
                     <th className="py-2 px-2">TxnID</th>
-                    <th className="py-2 px-2 text-right">Status</th>
+                    <th className="py-2 px-2">Status</th>
+                    <th className="py-2 px-2 text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -194,8 +209,17 @@ function WalletSection({ merchantId }) {
                       <td className="py-2 px-2 font-semibold">{r.currency} {Number(r.amount).toFixed(2)}</td>
                       <td className="py-2 px-2 text-slate-700">{r.provider ? `${r.provider}${r.variant ? ' · ' + r.variant : ''}` : <span className="text-slate-400">—</span>}</td>
                       <td className="py-2 px-2 font-mono text-xs text-slate-700">{r.txnid_submitted || <span className="text-slate-400">—</span>}</td>
-                      <td className="py-2 px-2 text-right">
+                      <td className="py-2 px-2">
                         <SmallStatusPill tx={r.tx_status} session={r.session_status} />
+                      </td>
+                      <td className="py-2 px-2 text-right">
+                        {r.tx_status === 'pending' ? (
+                          <div className="inline-flex gap-1">
+                            <button onClick={() => onResolveRecharge(r, 'success')} className="text-xs font-semibold text-emerald-700 hover:underline">Approve</button>
+                            <span className="text-slate-300">·</span>
+                            <button onClick={() => onResolveRecharge(r, 'failed')}  className="text-xs font-semibold text-rose-600 hover:underline">Reject</button>
+                          </div>
+                        ) : <span className="text-slate-400 text-xs">—</span>}
                       </td>
                     </tr>
                   ))}
@@ -413,6 +437,68 @@ function Field({ label, value, mono }) {
     <div>
       <div className="text-xs uppercase tracking-wide text-slate-500">{label}</div>
       <div className={`mt-1 text-slate-900 ${mono ? 'font-mono text-sm' : ''}`}>{value}</div>
+    </div>
+  );
+}
+
+/* ─── All customer-payment transactions for this merchant ─── */
+function TransactionsSection({ merchantId }) {
+  const [txs, setTxs]     = useState(null);
+  const [tPage, setTPage] = useState(0);
+  const [tTotal, setTTotal] = useState(0);
+  const LIMIT = 20;
+
+  useEffect(() => {
+    const token = adminAuth.get();
+    api.adminListMerchantTransactions(token, merchantId, { limit: LIMIT, offset: tPage * LIMIT })
+      .then((r) => { setTxs(r.transactions || []); setTTotal(r.total || 0); })
+      .catch(() => setTxs([]));
+  }, [merchantId, tPage]);
+
+  return (
+    <div className="card p-6">
+      <h3 className="font-semibold text-slate-900">Transactions</h3>
+      <p className="text-xs text-slate-500 mt-0.5">Every customer payment attempt against this merchant, newest first.</p>
+      {!txs ? (
+        <div className="mt-4 text-slate-500 text-sm">Loading…</div>
+      ) : txs.length === 0 ? (
+        <div className="mt-4 text-sm text-slate-500">No transactions yet.</div>
+      ) : (
+        <>
+          <div className="mt-4 overflow-x-auto">
+            <table className="w-full text-sm min-w-[800px]">
+              <thead className="text-left text-slate-500 text-xs uppercase tracking-wider">
+                <tr>
+                  <th className="py-2 px-2">When</th>
+                  <th className="py-2 px-2">TxnID</th>
+                  <th className="py-2 px-2">Method</th>
+                  <th className="py-2 px-2">Amount</th>
+                  <th className="py-2 px-2">Order</th>
+                  <th className="py-2 px-2 text-right">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {txs.map((t) => (
+                  <tr key={t.id}>
+                    <td className="py-2 px-2 text-slate-600 whitespace-nowrap">{new Date(t.created_at).toLocaleString('en-US', { timeZone: 'Asia/Dhaka', dateStyle: 'short', timeStyle: 'short' })}</td>
+                    <td className="py-2 px-2 font-mono text-xs text-slate-700">{t.txnid_submitted || <span className="text-slate-400">—</span>}</td>
+                    <td className="py-2 px-2 text-slate-700">{t.provider ? `${t.provider}${t.variant ? ' · ' + t.variant : ''}` : <span className="text-slate-400">—</span>}</td>
+                    <td className="py-2 px-2 font-semibold whitespace-nowrap">{t.session_currency || ''} {Number(t.amount).toFixed(2)}</td>
+                    <td className="py-2 px-2 text-slate-700 truncate max-w-[160px]" title={t.order_id || ''}>{t.order_id || <span className="text-slate-400">—</span>}</td>
+                    <td className="py-2 px-2 text-right">
+                      <SmallStatusPill tx={t.status} session={null} />
+                      {t.status === 'failed' && t.failure_reason && (
+                        <div className="text-[11px] text-rose-600 mt-0.5 max-w-[200px] ml-auto" title={t.failure_reason}>{t.failure_reason}</div>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <Pager page={tPage} total={tTotal} limit={LIMIT} onChange={setTPage} />
+        </>
+      )}
     </div>
   );
 }

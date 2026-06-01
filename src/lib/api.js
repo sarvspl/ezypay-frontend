@@ -156,6 +156,10 @@ export const api = {
   adminGetPlatform:           (token) => request('/api/admin/platform', { token }),
   adminGetPlatformSettings:   (token) => request('/api/admin/platform/settings', { token }),
   adminUpdatePlatformSettings:(token, body) => request('/api/admin/platform/settings', { method: 'PUT', body, token }),
+  adminListMerchantTransactions: (token, id, params = {}) => {
+    const qs = new URLSearchParams(params).toString();
+    return request(`/api/admin/merchants/${id}/transactions${qs ? '?' + qs : ''}`, { token });
+  },
   adminListPlatformRecharges: (token, params = {}) => {
     const qs = new URLSearchParams(params).toString();
     return request(`/api/admin/platform/recharges${qs ? '?' + qs : ''}`, { token });

@@ -83,7 +83,8 @@ function WalletPageBody() {
   if (!wallet) return <div className="text-slate-500 text-sm">Loading…</div>;
 
   const isEmpty = Number(wallet.balance) <= 0;
-  const isLow   = !isEmpty && Number(wallet.balance) < 10; // soft heuristic until we expose the configured threshold
+  const threshold = Number(wallet.low_balance_threshold || 0);
+  const isLow = !isEmpty && threshold > 0 && Number(wallet.balance) <= threshold;
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
@@ -119,7 +120,7 @@ function WalletPageBody() {
           <div className="flex-1 min-w-0">
             <div className="font-semibold text-amber-900">Low wallet balance</div>
             <div className="text-sm text-amber-800 mt-0.5">
-              Only {formatMoney(wallet.balance, currency)} remaining — top up soon to avoid interruption.
+              Only {formatMoney(wallet.balance, currency)} remaining — below the {formatMoney(threshold, currency)} threshold. Top up soon to avoid interruption.
             </div>
           </div>
         </div>
@@ -267,8 +268,15 @@ function WalletPageBody() {
                       {row.note ? <span className="block sm:inline sm:before:content-['_·_']">{row.note}</span> : null}
                     </div>
                   </div>
-                  <div className={`font-semibold tabular-nums whitespace-nowrap shrink-0 ${credit ? 'text-emerald-700' : 'text-rose-700'}`}>
-                    {credit ? '+' : ''}{formatMoney(Number(row.amount), currency)}
+                  <div className="text-right shrink-0">
+                    <div className={`font-semibold tabular-nums whitespace-nowrap ${credit ? 'text-emerald-700' : 'text-rose-700'}`}>
+                      {credit ? '+' : '−'}{formatMoney(Math.abs(Number(row.amount)), currency)}
+                    </div>
+                    {row.balance_after != null && (
+                      <div className="text-[11px] text-slate-500 tabular-nums mt-0.5">
+                        Balance {formatMoney(Number(row.balance_after), currency)}
+                      </div>
+                    )}
                   </div>
                 </div>
               );

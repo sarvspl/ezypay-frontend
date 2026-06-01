@@ -155,10 +155,10 @@ function BalanceWarning({ merchant }) {
   if (!wallet) return null;
   const balance = Number(wallet.balance || 0);
   const currency = wallet.currency || merchant.currency || 'BDT';
+  const threshold = Number(wallet.low_balance_threshold || 0);
 
-  // We don't have direct read of platform_settings from merchant scope (yet).
-  // The 402 from any API call is the reliable signal; this banner is
-  // best-effort and shown only when balance is clearly zero or near it.
+  // Configured by the admin under Pricing → "Low balance warning". Red banner
+  // when the wallet is empty, amber when it's at/below the threshold.
   if (balance <= 0) {
     return (
       <div className="rounded-xl border border-rose-200 bg-rose-50 p-4 flex items-start gap-3">
@@ -175,16 +175,15 @@ function BalanceWarning({ merchant }) {
       </div>
     );
   }
-  // Low-balance amber: < 10 of the configured currency (rough heuristic until
-  // we expose platform_settings.low_balance_threshold to merchants).
-  if (balance < 10) {
+  // Low-balance amber: at or below the admin-configured threshold.
+  if (threshold > 0 && balance <= threshold) {
     return (
       <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 flex items-start gap-3">
         <svg className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
         <div className="flex-1 min-w-0">
           <div className="font-semibold text-amber-900">Low wallet balance — {formatMoney(balance, currency)}</div>
           <div className="text-sm text-amber-800 mt-0.5">
-            Top up soon to keep your verifications running smoothly.
+            Below the {formatMoney(threshold, currency)} threshold — top up to keep verifications running smoothly.
           </div>
         </div>
         <Link href="/dashboard/wallet" className="bg-amber-600 hover:bg-amber-700 text-white text-sm font-semibold px-4 py-2 rounded-lg whitespace-nowrap">
