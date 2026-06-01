@@ -133,6 +133,8 @@ function AccountCard({ account, index, unlockFee, currency, onUnlock }) {
     try { await navigator.clipboard.writeText(account.device_auth_key); setCopied(true); setTimeout(() => setCopied(false), 1500); } catch {}
   };
 
+  const c = account.tx_counts || { total: 0, success: 0, failed: 0, pending: 0, success_volume: 0 };
+
   return (
     <div className="card p-5 sm:p-6">
       <div className="flex items-center justify-between flex-wrap gap-2">
@@ -144,6 +146,31 @@ function AccountCard({ account, index, unlockFee, currency, onUnlock }) {
         </div>
         <span className="text-xs text-slate-400">{(account.gateways || []).length}/8 gateways</span>
       </div>
+
+      {/* Per-account transaction stats — which device did how much */}
+      <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-2 text-center">
+        <div className="rounded-md bg-slate-50 border border-slate-200 px-2 py-1.5">
+          <div className="text-[10px] uppercase tracking-wider text-slate-500">Total</div>
+          <div className="text-base font-bold text-slate-900 tabular-nums">{c.total}</div>
+        </div>
+        <div className="rounded-md bg-emerald-50 border border-emerald-200 px-2 py-1.5">
+          <div className="text-[10px] uppercase tracking-wider text-emerald-700">Done</div>
+          <div className="text-base font-bold text-emerald-700 tabular-nums">{c.success}</div>
+        </div>
+        <div className="rounded-md bg-amber-50 border border-amber-200 px-2 py-1.5">
+          <div className="text-[10px] uppercase tracking-wider text-amber-700">Pending</div>
+          <div className="text-base font-bold text-amber-700 tabular-nums">{c.pending}</div>
+        </div>
+        <div className="rounded-md bg-rose-50 border border-rose-200 px-2 py-1.5">
+          <div className="text-[10px] uppercase tracking-wider text-rose-700">Failed</div>
+          <div className="text-base font-bold text-rose-700 tabular-nums">{c.failed}</div>
+        </div>
+      </div>
+      {c.success > 0 && (
+        <div className="mt-1.5 text-xs text-slate-500">
+          Volume confirmed: <strong className="text-slate-800 tabular-nums">{formatMoney(c.success_volume, currency)}</strong>
+        </div>
+      )}
 
       {/* Device auth key */}
       <div className="mt-4">
