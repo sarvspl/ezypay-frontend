@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { api } from '@/lib/api';
+import { api, API_BASE } from '@/lib/api';
 import { adminAuth } from '@/lib/auth';
 import { useGuard } from '@/lib/guard';
 import ConsoleShell from '@/components/console/ConsoleShell';
@@ -138,7 +138,10 @@ function WalletSection({ merchantId }) {
   const [lTotal, setLTotal]       = useState(0);
   const [balance, setBalance]     = useState(null);
   const [currency, setCurrency]   = useState('BDT');
+  const [lightbox, setLightbox]   = useState(null);
   const LIMIT = 20;
+
+  const proofUrl = (r) => (r.proof_image_url ? `${API_BASE}${r.proof_image_url}` : null);
 
   const reloadRecharges = () => {
     const token = adminAuth.get();
@@ -198,6 +201,7 @@ function WalletSection({ merchantId }) {
                     <th className="py-2 px-2">Amount</th>
                     <th className="py-2 px-2">Method</th>
                     <th className="py-2 px-2">TxnID</th>
+                    <th className="py-2 px-2">Proof</th>
                     <th className="py-2 px-2">Status</th>
                     <th className="py-2 px-2 text-right">Actions</th>
                   </tr>
@@ -209,6 +213,15 @@ function WalletSection({ merchantId }) {
                       <td className="py-2 px-2 font-semibold">{r.currency} {Number(r.amount).toFixed(2)}</td>
                       <td className="py-2 px-2 text-slate-700">{r.provider ? `${r.provider}${r.variant ? ' · ' + r.variant : ''}` : <span className="text-slate-400">—</span>}</td>
                       <td className="py-2 px-2 font-mono text-xs text-slate-700">{r.txnid_submitted || <span className="text-slate-400">—</span>}</td>
+                      <td className="py-2 px-2">
+                        {proofUrl(r) ? (
+                          <button type="button" onClick={() => setLightbox(proofUrl(r))} className="block" title="View payment screenshot">
+                            <img src={proofUrl(r)} alt="proof" className="w-8 h-8 rounded object-cover border border-slate-200 hover:ring-2 hover:ring-brand-400 transition" />
+                          </button>
+                        ) : (
+                          <span className="text-slate-400 text-xs">—</span>
+                        )}
+                      </td>
                       <td className="py-2 px-2">
                         <SmallStatusPill tx={r.tx_status} session={r.session_status} />
                       </td>
@@ -267,6 +280,28 @@ function WalletSection({ merchantId }) {
           </>
         )}
       </div>
+
+      {lightbox && (
+        <div
+          className="fixed inset-0 z-40 flex items-center justify-center p-4 bg-slate-900/80"
+          onClick={() => setLightbox(null)}
+        >
+          <button
+            type="button"
+            onClick={() => setLightbox(null)}
+            className="absolute top-4 right-4 text-white/80 hover:text-white p-2"
+            aria-label="Close"
+          >
+            <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+          <img
+            src={lightbox}
+            alt="Payment proof screenshot"
+            onClick={(e) => e.stopPropagation()}
+            className="max-w-full max-h-[85vh] rounded-lg shadow-2xl object-contain"
+          />
+        </div>
+      )}
     </section>
   );
 }

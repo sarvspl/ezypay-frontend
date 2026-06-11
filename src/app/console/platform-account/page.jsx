@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { api } from '@/lib/api';
+import { api, API_BASE } from '@/lib/api';
 import { adminAuth } from '@/lib/auth';
 import { useGuard } from '@/lib/guard';
 import ConsoleShell from '@/components/console/ConsoleShell';
@@ -21,6 +21,9 @@ export default function ConsolePlatformAccountPage() {
   const [showAddGateway, setShowAddGateway] = useState(false);
   const [settings, setSettings] = useState(null);
   const [revenue, setRevenue] = useState(null);
+  const [lightbox, setLightbox] = useState(null);
+
+  const proofUrl = (r) => (r.proof_image_url ? `${API_BASE}${r.proof_image_url}` : null);
 
   const reload = async () => {
     const token = adminAuth.get();
@@ -271,6 +274,7 @@ export default function ConsolePlatformAccountPage() {
                     <th className="px-4 py-3 font-medium">Amount</th>
                     <th className="px-4 py-3 font-medium">Gateway</th>
                     <th className="px-4 py-3 font-medium">TxnID</th>
+                    <th className="px-4 py-3 font-medium">Proof</th>
                     <th className="px-4 py-3 font-medium">Status</th>
                     <th className="px-4 py-3 font-medium text-right">Actions</th>
                   </tr>
@@ -283,6 +287,15 @@ export default function ConsolePlatformAccountPage() {
                       <td className="px-4 py-3 font-semibold">{r.currency} {Number(r.amount).toFixed(2)}</td>
                       <td className="px-4 py-3 text-slate-700">{r.provider ? `${r.provider} · ${r.account_number}` : <span className="text-slate-400">—</span>}</td>
                       <td className="px-4 py-3 font-mono text-xs text-slate-700">{r.txnid_submitted || <span className="text-slate-400">—</span>}</td>
+                      <td className="px-4 py-3">
+                        {proofUrl(r) ? (
+                          <button type="button" onClick={() => setLightbox(proofUrl(r))} className="block" title="View payment screenshot">
+                            <img src={proofUrl(r)} alt="proof" className="w-8 h-8 rounded object-cover border border-slate-200 hover:ring-2 hover:ring-brand-400 transition" />
+                          </button>
+                        ) : (
+                          <span className="text-slate-400 text-xs">—</span>
+                        )}
+                      </td>
                       <td className="px-4 py-3"><RechargeStatusPill tx={r.tx_status} session={r.session_status} /></td>
                       <td className="px-4 py-3 text-right">
                         {r.tx_status === 'pending' ? (
@@ -300,6 +313,28 @@ export default function ConsolePlatformAccountPage() {
           </div>
         </div>
       </div>
+
+      {lightbox && (
+        <div
+          className="fixed inset-0 z-40 flex items-center justify-center p-4 bg-slate-900/80"
+          onClick={() => setLightbox(null)}
+        >
+          <button
+            type="button"
+            onClick={() => setLightbox(null)}
+            className="absolute top-4 right-4 text-white/80 hover:text-white p-2"
+            aria-label="Close"
+          >
+            <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+          <img
+            src={lightbox}
+            alt="Payment proof screenshot"
+            onClick={(e) => e.stopPropagation()}
+            className="max-w-full max-h-[85vh] rounded-lg shadow-2xl object-contain"
+          />
+        </div>
+      )}
     </ConsoleShell>
   );
 }
