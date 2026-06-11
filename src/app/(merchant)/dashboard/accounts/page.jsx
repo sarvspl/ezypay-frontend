@@ -208,6 +208,11 @@ function AccountCard({ account, index, unlockFee, currency, onUnlock }) {
                 <span className="font-semibold capitalize">{g.provider}</span>
                 <span className="text-slate-400">{labelVariant(g.variant)}</span>
                 <span className="font-mono text-slate-700">{g.account_number}</span>
+                {g.success_volume > 0 && (
+                  <span className="bg-emerald-50 text-emerald-700 font-semibold px-1 rounded border border-emerald-100 font-mono text-[10px]">
+                    {formatMoney(g.success_volume, currency)}
+                  </span>
+                )}
                 {!g.is_enabled && <span className="text-rose-500">· off</span>}
               </span>
             ))}
