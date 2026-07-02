@@ -13,6 +13,8 @@ async function request(path, { method = 'GET', body, token } = {}) {
     headers,
     body: body ? JSON.stringify(body) : undefined,
     cache: 'no-store',
+    // Send/receive the httpOnly session cookie the backend sets at login.
+    credentials: 'include',
   });
 
   let data = null;
