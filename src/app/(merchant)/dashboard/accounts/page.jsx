@@ -47,6 +47,17 @@ export default function AccountsPage() {
     finally { setCreating(false); }
   };
 
+  // Issue a new device key for an account. Returns the new key so the card can
+  // reveal it. Refreshes the account list (and merchant profile for the default
+  // account, whose key is mirrored on the dashboard home).
+  const regenerate = async (accountId, isDefault) => {
+    const token = merchantAuth.get();
+    const r = await api.merchantRegenerateAccountKey(token, accountId);
+    await load();
+    if (isDefault) await refreshMerchant?.();
+    return r.device_auth_key;
+  };
+
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-5">
       <div className="flex items-start justify-between flex-wrap gap-3">
@@ -102,6 +113,7 @@ export default function AccountsPage() {
               unlockFee={a.is_default ? fees.full : fees.account}
               currency={merchant?.currency}
               onUnlock={() => setUnlockTarget(a)}
+              onRegenerate={() => regenerate(a.id, a.is_default)}
             />
           ))}
         </div>
@@ -123,14 +135,34 @@ export default function AccountsPage() {
   );
 }
 
-function AccountCard({ account, index, unlockFee, currency, onUnlock }) {
+function AccountCard({ account, index, unlockFee, currency, onUnlock, onRegenerate }) {
   const [show, setShow] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [regenerating, setRegenerating] = useState(false);
   const locked = !account.keys_unlocked;
   const title = account.label || (account.is_default ? 'Primary' : `Account ${index + 1}`);
 
   const copy = async () => {
     try { await navigator.clipboard.writeText(account.device_auth_key); setCopied(true); setTimeout(() => setCopied(false), 1500); } catch {}
+  };
+
+  const regenerate = async () => {
+    const ok = window.confirm(
+      'Generate a new device key for this account?\n\n' +
+      'The phone currently bound to this account will STOP working until you ' +
+      'open the app on that phone and enter the new key. Your old key will no ' +
+      'longer be accepted.'
+    );
+    if (!ok) return;
+    setRegenerating(true);
+    try {
+      await onRegenerate();
+      setShow(true); // reveal the freshly issued key so it can be copied
+    } catch (e) {
+      alert(e?.message || 'Could not regenerate the key.');
+    } finally {
+      setRegenerating(false);
+    }
   };
 
   const c = account.tx_counts || { total: 0, success: 0, failed: 0, pending: 0, success_volume: 0 };
@@ -183,13 +215,26 @@ function AccountCard({ account, index, unlockFee, currency, onUnlock }) {
             </button>
           </div>
         ) : (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <code className="flex-1 min-w-0 break-all font-mono text-sm bg-slate-50 border border-slate-200 rounded px-3 py-2">
               {show ? account.device_auth_key : '••••••' + String(account.device_auth_key || '').slice(-4)}
             </code>
             <button onClick={() => setShow((s) => !s)} className="btn-secondary !py-1.5 text-xs shrink-0">{show ? 'Hide' : 'Show'}</button>
             <button onClick={copy} className={`btn-secondary !py-1.5 text-xs shrink-0 ${copied ? '!text-emerald-600 !border-emerald-300' : ''}`}>{copied ? '✓' : 'Copy'}</button>
+            <button
+              onClick={regenerate}
+              disabled={regenerating}
+              title="Issue a new, stronger device key (disconnects the currently bound phone)"
+              className="btn-secondary !py-1.5 text-xs shrink-0"
+            >
+              {regenerating ? 'Regenerating…' : 'Regenerate'}
+            </button>
           </div>
+        )}
+        {!locked && (
+          <p className="mt-1.5 text-xs text-slate-500">
+            Regenerating issues a new key and disconnects the bound phone — re-open the app and enter the new key to reconnect.
+          </p>
         )}
       </div>
 

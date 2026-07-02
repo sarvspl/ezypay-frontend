@@ -72,6 +72,7 @@ export const api = {
   merchantListAccounts:  (token) => request('/api/merchant/accounts', { token }),
   merchantCreateAccount: (token, body) => request('/api/merchant/accounts', { method: 'POST', body, token }),
   merchantUnlockAccount: (token, id) => request(`/api/merchant/accounts/${id}/unlock`, { method: 'POST', token }),
+  merchantRegenerateAccountKey: (token, id) => request(`/api/merchant/accounts/${id}/regenerate-key`, { method: 'POST', token }),
 
   // Devices
   merchantListDevices:        (token) => request('/api/merchant/devices', { token }),
