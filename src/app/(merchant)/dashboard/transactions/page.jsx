@@ -6,6 +6,7 @@ import { api, API_BASE } from '@/lib/api';
 import { merchantAuth } from '@/lib/auth';
 import { getProvider, labelVariant } from '@/lib/providers';
 import { formatMoney } from '@/lib/money';
+import DateRangeFilter from '@/components/dashboard/DateRangeFilter';
 import { useMerchant } from '../layout';
 
 const proofUrl = (t) => (t.proof_image_url ? `${API_BASE}${t.proof_image_url}` : null);
@@ -17,9 +18,13 @@ export default function TransactionsPage() {
   const { merchant } = useMerchant();
   const currency = merchant?.currency || 'USD';
   const [txs, setTxs] = useState(null);
+  const [limit, setLimit] = useState(null);
   const [error, setError] = useState(null);
   const [q, setQ] = useState('');
   const [tab, setTab] = useState('all');
+  const [range, setRange] = useState('all');   // active preset, or 'custom'
+  const [from, setFrom] = useState('');
+  const [to, setTo] = useState('');
 
   const load = async () => {
     setError(null);
@@ -28,25 +33,38 @@ export default function TransactionsPage() {
       const params = {};
       if (tab !== 'all') params.status = tab;
       if (q.trim())      params.q = q.trim();
+      if (from)          params.from = from;
+      if (to)            params.to = to;
       const r = await api.merchantListTransactions(token, params);
       setTxs(r.transactions);
+      setLimit(r.limit ?? null);
     } catch (e) {
       if (e.status === 401) { merchantAuth.clear(); router.replace('/login'); }
       else setError(e.message);
     }
   };
 
-  // Reload on filter change (debounced for search)
+  // Reload on filter change (debounced for search), then keep polling every 5s
+  // so APK/manual updates show up. The interval must be rebuilt on every filter
+  // change — a `[]`-deps interval would keep firing the first render's `load`
+  // and overwrite search results with the unfiltered list.
   useEffect(() => {
     const t = setTimeout(load, q ? 250 : 0);
-    return () => clearTimeout(t);
-  }, [q, tab]); // eslint-disable-line
+    const i = setInterval(load, 5000);
+    return () => { clearTimeout(t); clearInterval(i); };
+  }, [q, tab, from, to]); // eslint-disable-line
 
-  // Refresh every 5s so APK/manual updates show up
-  useEffect(() => {
-    const t = setInterval(load, 5000);
-    return () => clearInterval(t);
-  }, []); // eslint-disable-line
+  const applyRange = ({ range: r, from: f, to: t }) => {
+    if (r !== undefined) setRange(r);
+    if (f !== undefined) setFrom(f);
+    if (t !== undefined) setTo(t);
+  };
+
+  const dateActive = !!(from || to);
+  const clearFilters = () => {
+    setQ(''); setTab('all');
+    setRange('all'); setFrom(''); setTo('');
+  };
 
   const counts = useMemo(() => {
     const all = txs || [];
@@ -120,35 +138,50 @@ export default function TransactionsPage() {
         </p>
       </div>
 
-      <div className="card p-3 sm:p-4 flex flex-col lg:flex-row gap-3">
-        <div className="flex-1 relative">
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
-            <SearchIcon />
-          </span>
-          <input
-            value={q} onChange={(e) => setQ(e.target.value)}
-            className="input pl-10"
-            placeholder="Search TxnID or Order ID…"
-          />
+      <div className="card p-3 sm:p-4 space-y-3">
+        <div className="flex flex-col lg:flex-row gap-3">
+          <div className="flex-1 relative">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
+              <SearchIcon />
+            </span>
+            <input
+              value={q} onChange={(e) => setQ(e.target.value)}
+              className="input pl-10"
+              placeholder="Search TxnID or Order ID…"
+            />
+          </div>
+
+          <div className="grid grid-cols-4 gap-1 bg-slate-100 rounded-lg p-1 sm:flex sm:flex-wrap">
+            {TABS.map((t) => {
+              const active = tab === t.key;
+              return (
+                <button key={t.key} onClick={() => setTab(t.key)}
+                  className={`flex items-center justify-center gap-1.5 rounded-md px-2 sm:px-3 py-1.5 text-xs sm:text-sm font-medium transition whitespace-nowrap ${
+                    active ? `bg-white shadow-sm ${toneText(t.tone)}` : `${toneText(t.tone)} opacity-70 hover:opacity-100`
+                  }`}>
+                  {t.label}
+                  <span className={`rounded px-1.5 py-0.5 text-[11px] font-semibold ${toneClasses(t.tone)}`}>
+                    {t.count}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
         </div>
 
-        <div className="grid grid-cols-4 gap-1 bg-slate-100 rounded-lg p-1 sm:flex sm:flex-wrap">
-          {TABS.map((t) => {
-            const active = tab === t.key;
-            return (
-              <button key={t.key} onClick={() => setTab(t.key)}
-                className={`flex items-center justify-center gap-1.5 rounded-md px-2 sm:px-3 py-1.5 text-xs sm:text-sm font-medium transition whitespace-nowrap ${
-                  active ? `bg-white shadow-sm ${toneText(t.tone)}` : `${toneText(t.tone)} opacity-70 hover:opacity-100`
-                }`}>
-                {t.label}
-                <span className={`rounded px-1.5 py-0.5 text-[11px] font-semibold ${toneClasses(t.tone)}`}>
-                  {t.count}
-                </span>
-              </button>
-            );
-          })}
-        </div>
+        <DateRangeFilter
+          range={range} from={from} to={to}
+          onChange={applyRange}
+          className="pt-3 border-t border-slate-100"
+        />
       </div>
+
+      {/* The API caps each page, so a wide range can quietly hide older rows. */}
+      {txs && limit && txs.length >= limit && (
+        <div className="card p-3 text-xs text-amber-800 bg-amber-50 border-amber-200">
+          Showing the {limit} most recent matches. Narrow the date range to see older transactions.
+        </div>
+      )}
 
       {error && (
         <div className="card p-4 text-sm text-rose-600 bg-rose-50 border-rose-200">{error}</div>
@@ -178,7 +211,7 @@ export default function TransactionsPage() {
               )}
               {txs && txs.length === 0 && (
                 <tr><td colSpan={10} className="py-16">
-                  <EmptyState filtered={!!(q || tab !== 'all')} onClear={() => { setQ(''); setTab('all'); }} />
+                  <EmptyState filtered={!!(q || tab !== 'all' || dateActive)} onClear={clearFilters} />
                 </td></tr>
               )}
               {txs && txs.map((t) => {
@@ -303,7 +336,7 @@ export default function TransactionsPage() {
         )}
         {txs && txs.length === 0 && (
           <div className="card p-12">
-            <EmptyState filtered={!!(q || tab !== 'all')} onClear={() => { setQ(''); setTab('all'); }} />
+            <EmptyState filtered={!!(q || tab !== 'all' || dateActive)} onClear={clearFilters} />
           </div>
         )}
         {txs && txs.map((t) => {

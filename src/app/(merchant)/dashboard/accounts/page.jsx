@@ -7,6 +7,8 @@ import { api } from '@/lib/api';
 import { merchantAuth } from '@/lib/auth';
 import { formatMoney } from '@/lib/money';
 import { labelVariant } from '@/lib/providers';
+import { formatDay } from '@/lib/dates';
+import DateRangeFilter from '@/components/dashboard/DateRangeFilter';
 import { useMerchant } from '../layout';
 import UnlockKeysModal from '@/components/dashboard/UnlockKeysModal';
 
@@ -20,12 +22,18 @@ export default function AccountsPage() {
   const [newName, setNewName] = useState('');
   const [creating, setCreating] = useState(false);
   const [unlockTarget, setUnlockTarget] = useState(null);
+  const [range, setRange] = useState('all');
+  const [from, setFrom] = useState('');
+  const [to, setTo] = useState('');
 
   const load = async () => {
     setError(null);
     const token = merchantAuth.get();
     try {
-      const r = await api.merchantListAccounts(token);
+      const params = {};
+      if (from) params.from = from;
+      if (to)   params.to = to;
+      const r = await api.merchantListAccounts(token, params);
       setAccounts(r.accounts || []);
       setFees({ full: Number(r.key_unlock_fee || 0), account: Number(r.account_unlock_fee || 0) });
     } catch (e) {
@@ -33,7 +41,15 @@ export default function AccountsPage() {
       else setError(e.message);
     }
   };
-  useEffect(() => { load(); }, []); // eslint-disable-line
+  // Refetch whenever the range changes — the totals are computed server-side.
+  useEffect(() => { load(); }, [from, to]); // eslint-disable-line
+
+  const applyRange = ({ range: r, from: f, to: t }) => {
+    if (r !== undefined) setRange(r);
+    if (f !== undefined) setFrom(f);
+    if (t !== undefined) setTo(t);
+  };
+  const ranged = !!(from || to);
 
   const addAccount = async () => {
     setCreating(true);
@@ -100,6 +116,10 @@ export default function AccountsPage() {
         </div>
       )}
 
+      <div className="card p-3 sm:p-4">
+        <DateRangeFilter range={range} from={from} to={to} onChange={applyRange} />
+      </div>
+
       {error && <div className="card p-4 text-sm text-rose-600 bg-rose-50 border-rose-200">{error}</div>}
       {!accounts && !error && <div className="card p-10 text-center text-slate-500">Loading accounts…</div>}
 
@@ -112,6 +132,7 @@ export default function AccountsPage() {
               index={i}
               unlockFee={a.is_default ? fees.full : fees.account}
               currency={merchant?.currency}
+              ranged={ranged}
               onUnlock={() => setUnlockTarget(a)}
               onRegenerate={() => regenerate(a.id, a.is_default)}
             />
@@ -135,7 +156,7 @@ export default function AccountsPage() {
   );
 }
 
-function AccountCard({ account, index, unlockFee, currency, onUnlock, onRegenerate }) {
+function AccountCard({ account, index, unlockFee, currency, ranged, onUnlock, onRegenerate }) {
   const [show, setShow] = useState(false);
   const [copied, setCopied] = useState(false);
   const [regenerating, setRegenerating] = useState(false);
@@ -200,7 +221,8 @@ function AccountCard({ account, index, unlockFee, currency, onUnlock, onRegenera
       </div>
       {c.success > 0 && (
         <div className="mt-1.5 text-xs text-slate-500">
-          Volume confirmed: <strong className="text-slate-800 tabular-nums">{formatMoney(c.success_volume, currency)}</strong>
+          Volume confirmed{ranged ? ' in range' : ''}:{' '}
+          <strong className="text-slate-800 tabular-nums">{formatMoney(c.success_volume, currency)}</strong>
         </div>
       )}
 
@@ -238,32 +260,97 @@ function AccountCard({ account, index, unlockFee, currency, onUnlock, onRegenera
         )}
       </div>
 
-      {/* Gateways */}
+      {/* Gateways — each expands to its day-by-day confirmed money in */}
       <div className="mt-4">
         <div className="flex items-center justify-between mb-1.5">
-          <span className="text-xs font-medium text-slate-600 uppercase tracking-wide">Gateways</span>
+          <span className="text-xs font-medium text-slate-600 uppercase tracking-wide">
+            Gateways <span className="text-slate-400 normal-case font-normal">· click one for its daily breakdown</span>
+          </span>
           <Link href="/dashboard/gateways" className="text-xs text-brand-600 hover:underline">Manage →</Link>
         </div>
         {(account.gateways || []).length === 0 ? (
           <p className="text-sm text-slate-400">No gateways yet{locked ? ' (unlock first)' : ''}.</p>
         ) : (
-          <div className="flex flex-wrap gap-2">
+          <div className="space-y-1.5">
             {account.gateways.map((g) => (
-              <span key={g.id} className="inline-flex items-center gap-1.5 rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs">
-                <span className="font-semibold capitalize">{g.provider}</span>
-                <span className="text-slate-400">{labelVariant(g.variant)}</span>
-                <span className="font-mono text-slate-700">{g.account_number}</span>
-                {g.success_volume > 0 && (
-                  <span className="bg-emerald-50 text-emerald-700 font-semibold px-1 rounded border border-emerald-100 font-mono text-[10px]">
-                    {formatMoney(g.success_volume, currency)}
-                  </span>
-                )}
-                {!g.is_enabled && <span className="text-rose-500">· off</span>}
-              </span>
+              <GatewayRow key={g.id} gateway={g} currency={currency} ranged={ranged} />
             ))}
           </div>
         )}
       </div>
     </div>
   );
+}
+
+/**
+ * One gateway, collapsed to its range total. Expanding reveals which day the
+ * money arrived on — the figures to reconcile against the provider's own
+ * statement. Only days with a confirmed payment are listed.
+ */
+function GatewayRow({ gateway: g, currency, ranged }) {
+  const [open, setOpen] = useState(false);
+  const days = g.days || [];
+  const hasDays = days.length > 0;
+
+  return (
+    <div className="rounded-md border border-slate-200 bg-slate-50 overflow-hidden">
+      <button
+        type="button"
+        onClick={() => hasDays && setOpen((o) => !o)}
+        aria-expanded={hasDays ? open : undefined}
+        className={`w-full flex items-center gap-2 px-2.5 py-2 text-xs text-left ${
+          hasDays ? 'hover:bg-slate-100 cursor-pointer' : 'cursor-default'
+        }`}
+      >
+        <ChevronIcon
+          className={`w-3.5 h-3.5 shrink-0 transition-transform ${open ? 'rotate-90' : ''} ${
+            hasDays ? 'text-slate-400' : 'text-transparent'
+          }`}
+        />
+        <span className="font-semibold capitalize">{g.provider}</span>
+        <span className="text-slate-400">{labelVariant(g.variant)}</span>
+        <span className="font-mono text-slate-700">{g.account_number}</span>
+        {!g.is_enabled && <span className="text-rose-500">· off</span>}
+
+        <span className="ml-auto flex items-center gap-2 shrink-0">
+          {hasDays && (
+            <span className="text-slate-400 hidden sm:inline">
+              {days.length} {days.length === 1 ? 'day' : 'days'}
+            </span>
+          )}
+          {g.success_volume > 0 ? (
+            <span className="bg-emerald-50 text-emerald-700 font-semibold px-1 rounded border border-emerald-100 font-mono text-[10px]">
+              {formatMoney(g.success_volume, currency)}
+            </span>
+          ) : (
+            <span className="text-slate-400 text-[10px]">{ranged ? 'nothing in range' : 'nothing yet'}</span>
+          )}
+        </span>
+      </button>
+
+      {open && hasDays && (
+        <div className="border-t border-slate-200 bg-white px-2.5 py-1.5">
+          <table className="w-full text-xs">
+            <tbody className="divide-y divide-slate-100">
+              {days.map((d) => (
+                <tr key={d.day}>
+                  <td className="py-1.5 text-slate-700 whitespace-nowrap">{formatDay(d.day)}</td>
+                  <td className="py-1.5 text-slate-400 text-right whitespace-nowrap pr-3">
+                    {d.success_count} {d.success_count === 1 ? 'txn' : 'txns'}
+                  </td>
+                  <td className="py-1.5 text-right font-mono font-semibold text-slate-900 tabular-nums whitespace-nowrap">
+                    {formatMoney(d.success_volume, currency)}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ChevronIcon({ className = 'w-4 h-4' }) {
+  return <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>;
 }
