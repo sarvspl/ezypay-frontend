@@ -24,6 +24,35 @@ export default function PayWithGatewayPage() {
   const [verifying, setVerifying] = useState(false);
   const [showHow, setShowHow] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [pasted, setPasted] = useState(false);
+  const [canPaste, setCanPaste] = useState(false);
+
+  // Only offer a Paste button where the clipboard can actually be read: it needs
+  // a secure context and some browsers omit readText() entirely. Detected after
+  // mount so the server and first client render agree (no hydration mismatch).
+  useEffect(() => {
+    setCanPaste(
+      typeof navigator !== 'undefined' &&
+      !!navigator.clipboard &&
+      typeof navigator.clipboard.readText === 'function'
+    );
+  }, []);
+
+  const pasteTxnid = async () => {
+    setError(null);
+    try {
+      const text = await navigator.clipboard.readText();
+      // Trim + uppercase to match the field's own onChange — a paste from an SMS
+      // often brings a trailing newline or leading space along with the ID.
+      const cleaned = text.trim().toUpperCase();
+      if (!cleaned) return;
+      setTxnid(cleaned);
+      setPasted(true);
+      setTimeout(() => setPasted(false), 1500);
+    } catch {
+      setError('Couldn’t read the clipboard. Please long-press the field to paste, or type the Transaction ID.');
+    }
+  };
 
   useEffect(() => {
     (async () => {
@@ -191,13 +220,26 @@ export default function PayWithGatewayPage() {
         {/* Transaction ID */}
         <div>
           <label className="block text-sm font-medium text-slate-700 mb-1.5">Transaction ID</label>
-          <input
-            value={txnid}
-            onChange={(e) => setTxnid(e.target.value.toUpperCase())}
-            disabled={submitting || verifying}
-            className="input font-mono"
-            placeholder="e.g. ABC12XY34Z"
-          />
+          <div className="flex gap-2">
+            <input
+              value={txnid}
+              onChange={(e) => setTxnid(e.target.value.toUpperCase())}
+              disabled={submitting || verifying}
+              className="input font-mono flex-1 min-w-0"
+              placeholder="e.g. ABC12XY34Z"
+            />
+            {canPaste && (
+              <button
+                type="button"
+                onClick={pasteTxnid}
+                disabled={submitting || verifying}
+                title="Paste the Transaction ID you copied from your SMS"
+                className={`btn-secondary !py-1.5 shrink-0 ${pasted ? '!text-emerald-600 !border-emerald-300' : ''}`}
+              >
+                {pasted ? '✓ Pasted' : <><PasteIcon /><span className="ml-1.5">Paste</span></>}
+              </button>
+            )}
+          </div>
           <p className="text-xs text-slate-500 mt-1">From your {p.name} confirmation SMS</p>
         </div>
 
@@ -411,6 +453,9 @@ function ChevronIcon({ className = '' }) {
 }
 function CopyIcon() {
   return <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>;
+}
+function PasteIcon() {
+  return <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>;
 }
 function UploadIcon() {
   return <svg className="w-6 h-6 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>;
