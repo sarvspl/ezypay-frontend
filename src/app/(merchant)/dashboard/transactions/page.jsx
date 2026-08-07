@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { api, API_BASE } from '@/lib/api';
 import { merchantAuth } from '@/lib/auth';
@@ -18,63 +18,70 @@ export default function TransactionsPage() {
   const { merchant } = useMerchant();
   const currency = merchant?.currency || 'USD';
   const [txs, setTxs] = useState(null);
-  const [limit, setLimit] = useState(null);
   const [error, setError] = useState(null);
   const [q, setQ] = useState('');
   const [tab, setTab] = useState('all');
   const [range, setRange] = useState('all');   // active preset, or 'custom'
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
+  const [counts, setCounts] = useState({ total: 0, pending: 0, success: 0, failed: 0 });
+  const [pageSize, setPageSize] = useState(50);
+  const [page, setPage] = useState(0);          // 0-based; page 0 = newest
 
   const load = async () => {
     setError(null);
     const token = merchantAuth.get();
     try {
-      const params = {};
+      const params = { limit: pageSize, offset: page * pageSize };
       if (tab !== 'all') params.status = tab;
       if (q.trim())      params.q = q.trim();
       if (from)          params.from = from;
       if (to)            params.to = to;
       const r = await api.merchantListTransactions(token, params);
       setTxs(r.transactions);
-      setLimit(r.limit ?? null);
+      if (r.counts) setCounts(r.counts);
     } catch (e) {
       if (e.status === 401) { merchantAuth.clear(); router.replace('/login'); }
       else setError(e.message);
     }
   };
 
-  // Reload on filter change (debounced for search), then keep polling every 5s
-  // so APK/manual updates show up. The interval must be rebuilt on every filter
-  // change — a `[]`-deps interval would keep firing the first render's `load`
-  // and overwrite search results with the unfiltered list.
+  // Reload on filter/page change (debounced for search), then keep polling every
+  // 5s so APK/manual updates show up. The interval must be rebuilt on every
+  // change — a `[]`-deps interval would keep firing the first render's `load`.
   useEffect(() => {
     const t = setTimeout(load, q ? 250 : 0);
     const i = setInterval(load, 5000);
     return () => { clearTimeout(t); clearInterval(i); };
-  }, [q, tab, from, to]); // eslint-disable-line
+  }, [q, tab, from, to, page, pageSize]); // eslint-disable-line
 
+  // Any filter change jumps back to the first (newest) page.
+  const selectTab = (k) => { setTab(k); setPage(0); };
+  const changeQ   = (v) => { setQ(v);   setPage(0); };
   const applyRange = ({ range: r, from: f, to: t }) => {
     if (r !== undefined) setRange(r);
     if (f !== undefined) setFrom(f);
     if (t !== undefined) setTo(t);
+    setPage(0);
   };
+  const changePageSize = (n) => { setPageSize(n); setPage(0); };
 
   const dateActive = !!(from || to);
   const clearFilters = () => {
     setQ(''); setTab('all');
     setRange('all'); setFrom(''); setTo('');
+    setPage(0);
   };
 
-  const counts = useMemo(() => {
-    const all = txs || [];
-    return {
-      all:     all.length,
-      pending: all.filter((t) => t.status === 'pending').length,
-      success: all.filter((t) => t.status === 'success').length,
-      failed:  all.filter((t) => t.status === 'failed').length,
-    };
-  }, [txs]);
+  const pageTotal  = tab === 'all' ? counts.total : (counts[tab] ?? 0);
+  const totalPages = Math.max(1, Math.ceil(pageTotal / pageSize));
+  const firstRow   = pageTotal === 0 ? 0 : page * pageSize + 1;
+  const lastRow    = Math.min(pageTotal, (page + 1) * pageSize);
+
+  // Snap back into range if a filter change shrank the set below the current page.
+  useEffect(() => {
+    if (page > totalPages - 1) setPage(totalPages - 1);
+  }, [totalPages]); // eslint-disable-line
 
   // Manual resolve modal state. Opening it doesn't fire the API call yet —
   // gives the merchant a chance to add an optional reason / note before
@@ -123,7 +130,7 @@ export default function TransactionsPage() {
   };
 
   const TABS = [
-    { key: 'all',     label: 'All',     count: counts.all,     tone: 'slate'  },
+    { key: 'all',     label: 'All',     count: counts.total,   tone: 'slate'  },
     { key: 'pending', label: 'Pending', count: counts.pending, tone: 'amber'  },
     { key: 'success', label: 'Done',    count: counts.success, tone: 'emerald'},
     { key: 'failed',  label: 'Failed',  count: counts.failed,  tone: 'rose'   },
@@ -145,7 +152,7 @@ export default function TransactionsPage() {
               <SearchIcon />
             </span>
             <input
-              value={q} onChange={(e) => setQ(e.target.value)}
+              value={q} onChange={(e) => changeQ(e.target.value)}
               className="input pl-10"
               placeholder="Search TxnID or Order ID…"
             />
@@ -155,7 +162,7 @@ export default function TransactionsPage() {
             {TABS.map((t) => {
               const active = tab === t.key;
               return (
-                <button key={t.key} onClick={() => setTab(t.key)}
+                <button key={t.key} onClick={() => selectTab(t.key)}
                   className={`flex items-center justify-center gap-1.5 rounded-md px-2 sm:px-3 py-1.5 text-xs sm:text-sm font-medium transition whitespace-nowrap ${
                     active ? `bg-white shadow-sm ${toneText(t.tone)}` : `${toneText(t.tone)} opacity-70 hover:opacity-100`
                   }`}>
@@ -176,11 +183,15 @@ export default function TransactionsPage() {
         />
       </div>
 
-      {/* The API caps each page, so a wide range can quietly hide older rows. */}
-      {txs && limit && txs.length >= limit && (
-        <div className="card p-3 text-xs text-amber-800 bg-amber-50 border-amber-200">
-          Showing the {limit} most recent matches. Narrow the date range to see older transactions.
-        </div>
+      {/* Pagination bar — real page-through, newest first. */}
+      {txs && pageTotal > 0 && (
+        <Pager
+          firstRow={firstRow} lastRow={lastRow} total={pageTotal}
+          page={page} totalPages={totalPages}
+          pageSize={pageSize} onPageSize={changePageSize}
+          onNewer={() => setPage((p) => Math.max(0, p - 1))}
+          onOlder={() => setPage((p) => (p + 1 < totalPages ? p + 1 : p))}
+        />
       )}
 
       {error && (
@@ -443,6 +454,17 @@ export default function TransactionsPage() {
         })}
       </div>
 
+      {/* Bottom pager — so you can page on without scrolling back up. */}
+      {txs && pageTotal > pageSize && (
+        <Pager
+          firstRow={firstRow} lastRow={lastRow} total={pageTotal}
+          page={page} totalPages={totalPages}
+          pageSize={pageSize} onPageSize={changePageSize}
+          onNewer={() => setPage((p) => Math.max(0, p - 1))}
+          onOlder={() => setPage((p) => (p + 1 < totalPages ? p + 1 : p))}
+        />
+      )}
+
       {smsView && (
         <div className="fixed inset-0 z-40 flex items-center justify-center p-4 bg-slate-900/50" onClick={() => setSmsView(null)}>
           <div className="bg-white rounded-xl shadow-2xl w-full max-w-md p-6" onClick={(e) => e.stopPropagation()}>
@@ -555,6 +577,46 @@ function ResolveModal({ tx, result, reason, onReasonChange, busy, error, onCance
             className={`disabled:opacity-60 disabled:cursor-not-allowed text-white text-sm font-semibold px-4 py-2 rounded-md ${isSuccess ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-rose-600 hover:bg-rose-700'}`}
           >
             {busy ? 'Working…' : (isSuccess ? 'Confirm Paid' : 'Confirm Failed')}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Pager({ firstRow, lastRow, total, page, totalPages, pageSize, onPageSize, onNewer, onOlder }) {
+  return (
+    <div className="card p-3 flex flex-col sm:flex-row sm:items-center gap-3">
+      <div className="flex items-center gap-2 text-sm text-slate-600">
+        <span className="font-medium text-slate-800 tabular-nums">{firstRow}–{lastRow}</span>
+        <span>of</span>
+        <span className="font-medium text-slate-800 tabular-nums">{total}</span>
+        <span className="text-slate-400">· newest first</span>
+      </div>
+
+      <div className="flex items-center gap-2 sm:ml-auto">
+        <label className="text-xs text-slate-500">Per page</label>
+        <select
+          value={pageSize}
+          onChange={(e) => onPageSize(Number(e.target.value))}
+          className="rounded-md border border-slate-300 text-sm px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500"
+        >
+          {[25, 50, 100, 200].map((n) => <option key={n} value={n}>{n}</option>)}
+        </select>
+
+        <div className="flex items-center gap-1 ml-1">
+          <button
+            onClick={onNewer} disabled={page <= 0}
+            className="rounded-md border border-slate-300 bg-white text-sm font-medium px-3 py-1.5 text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            ‹ Newer
+          </button>
+          <span className="text-xs text-slate-500 px-1 tabular-nums whitespace-nowrap">Page {page + 1} / {totalPages}</span>
+          <button
+            onClick={onOlder} disabled={page >= totalPages - 1}
+            className="rounded-md border border-slate-300 bg-white text-sm font-medium px-3 py-1.5 text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            Older ›
           </button>
         </div>
       </div>

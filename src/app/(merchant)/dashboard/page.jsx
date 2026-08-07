@@ -25,51 +25,47 @@ const EMPTY_STATS = {
 const EMPTY_USAGE = { devices: 0, verifications: 0 };
 const EMPTY_7 = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map((day) => ({ day, count: 0 }));
 
-const DAY_MS = 24 * 60 * 60 * 1000;
-
-/* Derive every Overview number from the merchant's real transactions plus a
-   few side counts (devices, gateways, SMS). Pure function — easy to reason
-   about and re-run on the polling interval. */
-function computeDashboard(txs, { devices, gateways, smsTotal, currency }) {
-  const now = new Date();
-  const startToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const startMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-  const since30 = new Date(now.getTime() - 30 * DAY_MS);
-
+/* Overview numbers come from the server-side aggregate stats (real all-time
+   totals, not a count of a capped page). The transactions list is used only for
+   the newest-few views — recent rows, activity feed, last verification — where a
+   small page is exactly right. `stats` may be null if the endpoint is missing on
+   an older backend; the row-derived fallbacks keep the page working then. */
+function computeDashboard(txs, stats, { devices, gateways, smsTotal, currency }) {
   const at = (t) => new Date(t.created_at);
-  const byStatus = (s) => txs.filter((t) => t.status === s);
-
-  const last30 = txs.filter((t) => at(t) >= since30);
-  const s30 = last30.filter((t) => t.status === 'success').length;
-  const f30 = last30.filter((t) => t.status === 'failed').length;
-
-  // 7-day volume buckets (oldest → today).
-  const last7 = [];
-  for (let i = 6; i >= 0; i--) {
-    const start = new Date(startToday.getTime() - i * DAY_MS);
-    const end = new Date(start.getTime() + DAY_MS);
-    last7.push({
-      day: start.toLocaleDateString(undefined, { timeZone: 'Asia/Dhaka', weekday: 'short' }),
-      count: txs.filter((t) => { const c = at(t); return c >= start && c < end; }).length,
-    });
-  }
-
   const sorted = [...txs].sort((a, b) => at(b) - at(a));
+
   const activity = sorted.slice(0, 6).map((t) => ({
     status: t.status,
     title: `Payment ${t.status === 'success' ? 'verified' : t.status === 'failed' ? 'failed' : 'pending'} · ${formatMoney(t.amount, currency)}`,
     time: at(t).toLocaleString('en-US', { timeZone: 'Asia/Dhaka', dateStyle: 'short', timeStyle: 'short' }),
   }));
 
+  // Prefer server aggregates; fall back to the loaded rows only if stats is
+  // unavailable (so the page degrades instead of breaking).
+  const a = stats?.all_time || {};
+  const s30 = stats?.rate30?.success ?? 0;
+  const f30 = stats?.rate30?.failed ?? 0;
+  const rate = stats ? ((s30 + f30) > 0 ? Math.round((s30 / (s30 + f30)) * 100) : null) : null;
+
+  // 7-day buckets straight from the server (zero-filled, REPORT_TZ days),
+  // mapped to weekday labels for the chart. Falls back to a flat week if the
+  // stats endpoint isn't there.
+  const last7 = stats?.last7?.length
+    ? stats.last7.map((d) => ({
+        day: new Date(`${d.date}T00:00:00Z`).toLocaleDateString(undefined, { timeZone: 'UTC', weekday: 'short' }),
+        count: Number(d.count) || 0,
+      }))
+    : EMPTY_7;
+
   return {
     currency,
     stats: {
-      today: txs.filter((t) => at(t) >= startToday).length,
-      pending: byStatus('pending').length,
-      successRate: (s30 + f30) > 0 ? Math.round((s30 / (s30 + f30)) * 100) : null,
-      totalVerifications: txs.length,
-      successCount: byStatus('success').length,
-      failedCount: byStatus('failed').length,
+      today: stats?.today ?? 0,
+      pending: a.pending ?? 0,
+      successRate: rate,
+      totalVerifications: a.total ?? 0,
+      successCount: a.success ?? 0,
+      failedCount: a.failed ?? 0,
       smsRead: smsTotal,
       avgTime: null,
       walletsMonitored: gateways,
@@ -77,7 +73,7 @@ function computeDashboard(txs, { devices, gateways, smsTotal, currency }) {
     },
     usage: {
       devices,
-      verifications: txs.filter((t) => at(t) >= startMonth).length,
+      verifications: stats?.month ?? 0,
     },
     last7,
     lastVerification: sorted[0] || null,
@@ -96,8 +92,9 @@ export default function DashboardPage() {
     const token = merchantAuth.get();
     if (!token) return;
     const load = async () => {
-      const [txR, devR, gwR, smsR] = await Promise.all([
+      const [txR, statsR, devR, gwR, smsR] = await Promise.all([
         api.merchantListTransactions(token).catch(() => ({ transactions: [] })),
+        api.merchantStats(token).catch(() => null),
         api.merchantListDevices(token).catch(() => ({ devices: [] })),
         api.merchantListGateways(token).catch(() => ({ gateways: [] })),
         api.merchantListSms(token).catch(() => ({ stats: {} })),
@@ -106,7 +103,7 @@ export default function DashboardPage() {
       const devices  = (devR.devices || []).length;
       const gateways = (gwR.gateways || []).filter((g) => g.is_enabled !== false).length;
       const smsTotal = Number(smsR.stats?.total || 0);
-      setData(computeDashboard(txR.transactions || [], { devices, gateways, smsTotal, currency }));
+      setData(computeDashboard(txR.transactions || [], statsR, { devices, gateways, smsTotal, currency }));
     };
     load();
     const t = setInterval(load, 10000); // keep the overview live

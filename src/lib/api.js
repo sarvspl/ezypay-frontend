@@ -97,6 +97,7 @@ export const api = {
   },
   merchantResolveTransaction: (token, id, result, reason) =>
     request(`/api/merchant/transactions/${id}/resolve`, { method: 'POST', body: { result, reason }, token }),
+  merchantStats: (token) => request('/api/merchant/stats', { token }),
 
   // SMS (merchant dashboard)
   merchantListSms: (token, params = {}) => {
